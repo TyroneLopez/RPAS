@@ -1349,8 +1349,9 @@
       // SUPABASE CONFIGURATION
       // Replace these with your actual Supabase credentials
       // =============================================
-      const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
-      const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+      const SUPABASE_URL = "https://wkgacywvsndwiezqdcxj.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrZ2FjeXd2c25kd2llenFkY3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMzU3MDksImV4cCI6MjA4ODcxMTcwOX0.jRJR4F-rN4xF87maTcpzi4OB3oFbQFEI6Vg8TYd2uno";
 
       const { createClient } = supabase;
       const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1726,16 +1727,14 @@
               .eq("id", user.id)
               .single();
             if (!existing) {
-              await sb
-                .from("profiles")
-                .insert({
-                  id: user.id,
-                  email: user.email,
-                  full_name: user.user_metadata.full_name || user.email,
-                  avatar_url: user.user_metadata.avatar_url || null,
-                  role: "researcher",
-                  status: "pending",
-                });
+              await sb.from("profiles").insert({
+                id: user.id,
+                email: user.email,
+                full_name: user.user_metadata.full_name || user.email,
+                avatar_url: user.user_metadata.avatar_url || null,
+                role: "researcher",
+                status: "pending",
+              });
               msgAlert.innerHTML =
                 '<div class="alert alert-warning">⏳ Account created! Waiting for admin approval.</div>';
               await sb.auth.signOut();
