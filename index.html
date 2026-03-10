@@ -1688,6 +1688,14 @@
     </div>
     <script>
       (async () => {
+        // Handle OAuth callback from hash
+        if (
+          window.location.hash &&
+          window.location.hash.includes("access_token")
+        ) {
+          await sb.auth.getSession();
+        }
+
         const params = new URLSearchParams(window.location.search);
         const msgAlert = document.getElementById("msg-alert");
         if (params.get("msg") === "pending") {
@@ -1711,7 +1719,7 @@
             const { error } = await sb.auth.signInWithOAuth({
               provider: "google",
               options: {
-                redirectTo: window.location.origin + window.location.pathname,
+                redirectTo: "https://tyronelopez.github.io/RPAS/",
               },
             });
             if (error) {
