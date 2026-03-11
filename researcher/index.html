@@ -2183,6 +2183,14 @@
               url: publicUrl,
               uploaded_by: profile.id,
             });
+            // Also save to service_requests for quick access
+            await sb
+              .from("service_requests")
+              .update({
+                attachment_url: publicUrl,
+                attachment_name: file.name,
+              })
+              .eq("id", req.id);
           }
         }
 
