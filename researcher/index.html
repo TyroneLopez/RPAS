@@ -1360,6 +1360,7 @@
         under_review: "Under Review",
         in_progress: "In Progress",
         for_revision: "For Revision",
+        resubmitted: "Resubmitted",
         completed: "Completed",
         cancelled: "Cancelled",
       };
@@ -2357,20 +2358,32 @@
           researcher_response: response || null,
         });
 
-        // Update service_requests with latest data
-        const updates = { title, abstract, revision_count: revNumber };
+        // Update service_requests with latest data + change status to resubmitted
+        const updates = {
+          title,
+          abstract,
+          revision_count: revNumber,
+          status: "resubmitted",
+        };
         if (attachmentUrl) {
           updates.attachment_url = attachmentUrl;
           updates.attachment_name = attachmentName;
         }
         await sb.from("service_requests").update(updates).eq("id", requestId);
 
+        // Log status change
+        await sb.from("request_updates").insert({
+          request_id: requestId,
+          status: "resubmitted",
+          notes: `Researcher submitted Revision #${revNumber}.`,
+        });
+
         // Notify analyst
         const req = allRequests.find((r) => r.id === requestId);
         if (req?.analyst_id) {
           await sb.from("notifications").insert({
             user_id: req.analyst_id,
-            message: `Researcher submitted Revision #${revNumber} for "${req.service_type}".`,
+            message: `Researcher submitted Revision #${revNumber} for "${req.service_type}". Please review.`,
             type: "revision_submitted",
           });
         }
