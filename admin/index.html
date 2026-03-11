@@ -2143,11 +2143,11 @@
               req.title +
               "</div></div>"
             : "") +
-          (req.description
-            ? '<div style="margin-bottom:8px;"><div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Description / Notes from Researcher</div><div style="font-size:13px;padding:10px;background:white;border-radius:6px;border:1px solid var(--gray-200);line-height:1.6;">' +
-              req.description +
+          (req.abstract
+            ? '<div style="margin-bottom:8px;"><div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Researcher Abstract</div><div style="font-size:13px;padding:10px;background:white;border-radius:6px;border:1px solid var(--gray-200);line-height:1.6;">' +
+              req.abstract +
               "</div></div>"
-            : '<div style="margin-bottom:8px;padding:10px;background:white;border-radius:6px;border:1px solid var(--gray-200);font-size:13px;color:var(--gray-400);">No description provided.</div>') +
+            : '<div style="margin-bottom:8px;padding:10px;background:white;border-radius:6px;border:1px solid var(--gray-200);font-size:13px;color:var(--gray-400);">No abstract provided.</div>') +
           (req.analyst_id
             ? '<div><div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Currently Assigned To</div><div style="font-weight:600;font-size:13px;color:var(--green);">&#10003; ' +
               (req.analyst?.full_name || "—") +
