@@ -1981,6 +1981,38 @@
             .join("") ||
           '<div style="color:var(--gray-400);font-size:13px;">No updates yet</div>';
 
+        // Load revisions
+        const { data: revisions } = await sb
+          .from("revisions")
+          .select("*")
+          .eq("request_id", id)
+          .order("revision_number", { ascending: false });
+
+        const revisionsHtml =
+          revisions && revisions.length
+            ? revisions
+                .map(
+                  (r) => `
+  <div style="border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--gray-50);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-weight:700;color:var(--green);">Revision #${r.revision_number}</span>
+      <span style="font-size:12px;color:var(--gray-400);">${formatDate(r.created_at)}</span>
+    </div>
+    ${r.title ? `<div style="margin-bottom:6px;"><span style="font-size:11px;color:var(--gray-400);text-transform:uppercase;">Title</span><div style="font-weight:600;font-size:14px;">${r.title}</div></div>` : ""}
+    ${r.abstract ? `<div style="margin-bottom:6px;"><span style="font-size:11px;color:var(--gray-400);text-transform:uppercase;">Abstract</span><div style="font-size:13px;color:var(--gray-700);line-height:1.6;">${r.abstract}</div></div>` : ""}
+    ${r.attachment_url ? `<div style="margin-bottom:8px;"><a href="${r.attachment_url}" target="_blank" class="btn btn-outline btn-sm">📎 ${r.attachment_name || "Download Attachment"}</a></div>` : ""}
+    ${r.analyst_comment ? `<div style="margin-bottom:6px;padding:10px;background:var(--warning-light);border-left:3px solid var(--warning);border-radius:6px;"><span style="font-size:11px;font-weight:700;color:var(--warning);">ANALYST COMMENT</span><div style="font-size:13px;margin-top:4px;">${r.analyst_comment}</div></div>` : ""}
+    ${r.researcher_response ? `<div style="padding:10px;background:var(--green-light);border-left:3px solid var(--green);border-radius:6px;"><span style="font-size:11px;font-weight:700;color:var(--green);">YOUR RESPONSE</span><div style="font-size:13px;margin-top:4px;">${r.researcher_response}</div></div>` : ""}
+  </div>
+`,
+                )
+                .join("")
+            : "";
+
+        const showRevisionForm = req.status === "for_revision";
+        const nextRevNum =
+          revisions && revisions.length ? revisions[0].revision_number + 1 : 1;
+
         document.getElementById("view-body").innerHTML = `
     <div style="margin-bottom:24px;">
       <div class="stepper">${stepHtml}</div>
@@ -2015,6 +2047,48 @@
         </div>
       </div>
     </div>
+  ${
+    revisionsHtml
+      ? `
+    <div class="divider"></div>
+    <h4 style="margin-bottom:12px;">🔄 Revision History (${revisions.length})</h4>
+    ${revisionsHtml}
+    `
+      : ""
+  }
+    ${
+      showRevisionForm
+        ? `
+    <div class="divider"></div>
+    <h4 style="margin-bottom:12px;">✏️ Submit Revision #${nextRevNum}</h4>
+    <div style="background:var(--warning-light);border-left:3px solid var(--warning);padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--warning);">
+      ⚠️ Your analyst has requested a revision. Please update your submission below.
+    </div>
+    <div class="form-group">
+      <label class="form-label">Updated Research Title</label>
+      <input type="text" class="form-control" id="rev-title-${id}" value="${req.title || ""}" placeholder="Updated title...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Updated Abstract</label>
+      <textarea class="form-control" id="rev-abstract-${id}" style="min-height:120px;" placeholder="Updated abstract...">${req.abstract || ""}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Response to Analyst</label>
+      <textarea class="form-control" id="rev-response-${id}" style="min-height:80px;" placeholder="Explain what changes you made..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Upload Revised File (optional)</label>
+      <div class="file-drop" onclick="document.getElementById('rev-file-${id}').click()" style="padding:16px;">
+        <div>📎 Click to upload revised file</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">PDF, DOCX, XLSX up to 20MB</div>
+      </div>
+      <input type="file" id="rev-file-${id}" style="display:none" accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.jpeg,.png" onchange="showRevFileName(this, '${id}')">
+      <div id="rev-file-name-${id}" style="margin-top:6px;font-size:13px;color:var(--gray-500);"></div>
+    </div>
+    <button class="btn btn-primary" onclick="submitRevision('${id}', ${nextRevNum})">📤 Submit Revision #${nextRevNum}</button>
+    `
+        : ""
+    }
   `;
 
         // Scroll chat to bottom
@@ -2211,6 +2285,96 @@
         showToast("Request submitted successfully!", "success");
         btn.disabled = false;
         btn.textContent = "Submit Request";
+        await loadRequests();
+      }
+
+      function showRevFileName(input, reqId) {
+        const f = input.files[0];
+        if (f)
+          document.getElementById(`rev-file-name-${reqId}`).textContent =
+            `📄 ${f.name}`;
+      }
+
+      async function submitRevision(requestId, revNumber) {
+        const title = document
+          .getElementById(`rev-title-${requestId}`)
+          ?.value.trim();
+        const abstract = document
+          .getElementById(`rev-abstract-${requestId}`)
+          ?.value.trim();
+        const response = document
+          .getElementById(`rev-response-${requestId}`)
+          ?.value.trim();
+        const fileInput = document.getElementById(`rev-file-${requestId}`);
+        const file = fileInput?.files[0];
+
+        if (!title) {
+          showToast("Please enter an updated title", "error");
+          return;
+        }
+
+        const btn = document.querySelector(
+          `#modal-view-request button[onclick*="submitRevision"]`,
+        );
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "Submitting...";
+        }
+
+        let attachmentUrl = null;
+        let attachmentName = null;
+
+        if (file) {
+          const path = `${profile.id}/${requestId}/revision-${revNumber}-${file.name}`;
+          const { data: uploaded } = await sb.storage
+            .from("attachments")
+            .upload(path, file, { upsert: true });
+          if (uploaded) {
+            const {
+              data: { publicUrl },
+            } = sb.storage.from("attachments").getPublicUrl(path);
+            attachmentUrl = publicUrl;
+            attachmentName = file.name;
+            await sb.from("attachments").insert({
+              request_id: requestId,
+              filename: `[Revision #${revNumber}] ${file.name}`,
+              url: publicUrl,
+              uploaded_by: profile.id,
+            });
+          }
+        }
+
+        // Save revision record
+        await sb.from("revisions").insert({
+          request_id: requestId,
+          revision_number: revNumber,
+          title,
+          abstract,
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName,
+          researcher_response: response || null,
+        });
+
+        // Update service_requests with latest data
+        const updates = { title, abstract, revision_count: revNumber };
+        if (attachmentUrl) {
+          updates.attachment_url = attachmentUrl;
+          updates.attachment_name = attachmentName;
+        }
+        await sb.from("service_requests").update(updates).eq("id", requestId);
+
+        // Notify analyst
+        const req = allRequests.find((r) => r.id === requestId);
+        if (req?.analyst_id) {
+          await sb.from("notifications").insert({
+            user_id: req.analyst_id,
+            message: `Researcher submitted Revision #${revNumber} for "${req.service_type}".`,
+            type: "revision_submitted",
+          });
+        }
+
+        showToast(`Revision #${revNumber} submitted!`, "success");
+        closeModal("modal-view-request");
         await loadRequests();
       }
 
