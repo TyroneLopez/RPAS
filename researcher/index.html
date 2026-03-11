@@ -546,6 +546,10 @@
         background: #d1fae5;
         color: #065f46;
       }
+      .badge-resubmitted {
+        background: #ede9fe;
+        color: #6d28d9;
+      }
       .badge-cancelled {
         background: #f3f4f6;
         color: #9ca3af;
@@ -1606,6 +1610,7 @@
                 <option value="under_review">Under Review</option>
                 <option value="in_progress">In Progress</option>
                 <option value="for_revision">For Revision</option>
+                <option value="resubmitted">Resubmitted</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
@@ -1814,13 +1819,17 @@
       }
 
       async function loadRequests() {
-        const { data } = await sb
+        const { data, error } = await sb
           .from("service_requests")
           .select(
-            "*, analyst:analyst_id(full_name), updates:request_updates(id,status,notes,created_at)",
+            "*, analyst:analyst_id(id,full_name), updates:request_updates(id,status,notes,created_at), attachments(id,filename,url)",
           )
           .eq("researcher_id", profile.id)
           .order("created_at", { ascending: false });
+        if (error) {
+          console.error("loadRequests error:", error.message);
+          return;
+        }
         allRequests = data || [];
         document.getElementById("nb-requests").textContent = allRequests.filter(
           (r) => r.status !== "completed" && r.status !== "cancelled",
@@ -2329,10 +2338,13 @@
 
         if (file) {
           const path = `${profile.id}/${requestId}/revision-${revNumber}-${file.name}`;
-          const { data: uploaded } = await sb.storage
+          const { data: uploaded, error: uploadError } = await sb.storage
             .from("attachments")
             .upload(path, file, { upsert: true });
-          if (uploaded) {
+          if (uploadError) {
+            console.error("Revision upload error:", uploadError.message);
+            showToast(`File upload failed: ${uploadError.message}`, "error");
+          } else {
             const {
               data: { publicUrl },
             } = sb.storage.from("attachments").getPublicUrl(path);
