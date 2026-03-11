@@ -2358,7 +2358,7 @@
           researcher_response: response || null,
         });
 
-        // Update service_requests with latest data + change status to resubmitted
+        // Update service_requests with latest data + resubmitted status
         const updates = {
           title,
           abstract,
@@ -2369,7 +2369,22 @@
           updates.attachment_url = attachmentUrl;
           updates.attachment_name = attachmentName;
         }
-        await sb.from("service_requests").update(updates).eq("id", requestId);
+        const { error: updateError } = await sb
+          .from("service_requests")
+          .update(updates)
+          .eq("id", requestId);
+        if (updateError) {
+          console.error("Update error:", updateError.message);
+          showToast(
+            "Failed to update request status: " + updateError.message,
+            "error",
+          );
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = `📤 Submit Revision #${revNumber}`;
+          }
+          return;
+        }
 
         // Log status change
         await sb.from("request_updates").insert({
