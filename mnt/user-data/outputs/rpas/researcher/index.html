@@ -1346,9 +1346,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../assets/js/supabase.js"></script>
     <script>
-      // Supabase config loaded from external file
-    </script>
-    <script>
       // =============================================
       // SHARED AUTH LOGIC
       // =============================================
@@ -2032,13 +2029,11 @@
         const msg = input.value.trim();
         if (!msg) return;
         input.value = "";
-        await sb
-          .from("messages")
-          .insert({
-            request_id: requestId,
-            sender_id: profile.id,
-            message: msg,
-          });
+        await sb.from("messages").insert({
+          request_id: requestId,
+          sender_id: profile.id,
+          message: msg,
+        });
         await viewRequest(requestId);
       }
 
@@ -2182,33 +2177,27 @@
             const {
               data: { publicUrl },
             } = sb.storage.from("attachments").getPublicUrl(path);
-            await sb
-              .from("attachments")
-              .insert({
-                request_id: req.id,
-                filename: file.name,
-                url: publicUrl,
-                uploaded_by: profile.id,
-              });
+            await sb.from("attachments").insert({
+              request_id: req.id,
+              filename: file.name,
+              url: publicUrl,
+              uploaded_by: profile.id,
+            });
           }
         }
 
         // Log status
-        await sb
-          .from("request_updates")
-          .insert({
-            request_id: req.id,
-            status: "submitted",
-            notes: "Request submitted by researcher.",
-          });
+        await sb.from("request_updates").insert({
+          request_id: req.id,
+          status: "submitted",
+          notes: "Request submitted by researcher.",
+        });
         // Notify admin
-        await sb
-          .from("notifications")
-          .insert({
-            user_id: profile.id,
-            message: `Your request for "${service}" has been submitted successfully.`,
-            type: "request_submitted",
-          });
+        await sb.from("notifications").insert({
+          user_id: profile.id,
+          message: `Your request for "${service}" has been submitted successfully.`,
+          type: "request_submitted",
+        });
 
         closeModal("modal-new-request");
         showToast("Request submitted successfully!", "success");

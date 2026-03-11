@@ -9,7 +9,6 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lora:wght@600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="icon" href="data:," />
     <style>
       /* =============================================
    RPAS — ACI Global Stylesheet
@@ -1345,25 +1344,7 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-      // =============================================
-      // SUPABASE CONFIGURATION
-      // Replace these with your actual Supabase credentials
-      // =============================================
-      const SUPABASE_URL = "https://wkgacywvsndwiezqdcxj.supabase.co";
-      const SUPABASE_ANON_KEY =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrZ2FjeXd2c25kd2llenFkY3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMzU3MDksImV4cCI6MjA4ODcxMTcwOX0.jRJR4F-rN4xF87maTcpzi4OB3oFbQFEI6Vg8TYd2uno";
-
-      const { createClient } = supabase;
-      const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        global: {
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          },
-        },
-      });
-    </script>
+    <script src="assets/js/supabase.js"></script>
     <script>
       // =============================================
       // SHARED AUTH LOGIC
@@ -1685,25 +1666,25 @@
             <p style="font-size: 12px; color: var(--gray-400)">
               For account issues, contact the RPAS Office<br />
               <a
-                href="mailto:rpas@aldersgate.edu.ph"
+                href="/cdn-cgi/l/email-protection#b5c7c5d4c6f5d4d9d1d0c7c6d2d4c1d09bd0d1c09bc5dd"
                 style="color: var(--green); font-weight: 500"
-                >rpas@aldersgate.edu.ph</a
+                ><span
+                  class="__cf_email__"
+                  data-cfemail="0f7d7f6e7c4f6e636b6a7d7c686e7b6a216a6b7a217f67"
+                  >[email&#160;protected]</span
+                ></a
               >
             </p>
           </div>
         </div>
       </div>
     </div>
+    <script
+      data-cfasync="false"
+      src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"
+    ></script>
     <script>
       (async () => {
-        // Handle OAuth callback from hash
-        if (
-          window.location.hash &&
-          window.location.hash.includes("access_token")
-        ) {
-          await sb.auth.getSession();
-        }
-
         const params = new URLSearchParams(window.location.search);
         const msgAlert = document.getElementById("msg-alert");
         if (params.get("msg") === "pending") {
@@ -1727,7 +1708,7 @@
             const { error } = await sb.auth.signInWithOAuth({
               provider: "google",
               options: {
-                redirectTo: "https://tyronelopez.github.io/rpas",
+                redirectTo: window.location.origin + window.location.pathname,
               },
             });
             if (error) {
@@ -1764,11 +1745,14 @@
             }
             if (existing.status === "rejected") {
               msgAlert.innerHTML =
-                '<div class="alert alert-danger">❌ Your account has been rejected. Contact RPAS.</div>';
+                '<div class="alert alert-danger">❌ Your account has been rejected. Contact RPAS Office.</div>';
               await sb.auth.signOut();
               return;
             }
-            redirectToRole(existing.role);
+            if (existing.status === "approved") {
+              redirectToRole(existing.role);
+              return;
+            }
           }
         });
       })();

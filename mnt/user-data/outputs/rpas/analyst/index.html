@@ -1346,9 +1346,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../assets/js/supabase.js"></script>
     <script>
-      // Supabase config loaded from external file
-    </script>
-    <script>
       // =============================================
       // SHARED AUTH LOGIC
       // =============================================
@@ -1981,23 +1978,19 @@
         const msg = input.value.trim();
         if (!msg) return;
         input.value = "";
-        await sb
-          .from("messages")
-          .insert({
-            request_id: requestId,
-            sender_id: profile.id,
-            message: msg,
-          });
+        await sb.from("messages").insert({
+          request_id: requestId,
+          sender_id: profile.id,
+          message: msg,
+        });
         // Notify researcher
         const task = allTasks.find((t) => t.id === requestId);
         if (task)
-          await sb
-            .from("notifications")
-            .insert({
-              user_id: task.researcher_id,
-              message: `New message from analyst on your "${task.service_type}" request.`,
-              type: "new_message",
-            });
+          await sb.from("notifications").insert({
+            user_id: task.researcher_id,
+            message: `New message from analyst on your "${task.service_type}" request.`,
+            type: "new_message",
+          });
         await openTask(requestId);
       }
 
@@ -2037,14 +2030,12 @@
           .from("service_requests")
           .update({ status })
           .eq("id", currentTaskId);
-        await sb
-          .from("request_updates")
-          .insert({
-            request_id: currentTaskId,
-            status,
-            notes: notes || null,
-            updated_by: profile.id,
-          });
+        await sb.from("request_updates").insert({
+          request_id: currentTaskId,
+          status,
+          notes: notes || null,
+          updated_by: profile.id,
+        });
 
         // Upload result files
         for (const file of resultFiles) {
@@ -2056,15 +2047,13 @@
             const {
               data: { publicUrl },
             } = sb.storage.from("attachments").getPublicUrl(path);
-            await sb
-              .from("attachments")
-              .insert({
-                request_id: currentTaskId,
-                filename: file.name,
-                url: publicUrl,
-                uploaded_by: profile.id,
-                is_result: true,
-              });
+            await sb.from("attachments").insert({
+              request_id: currentTaskId,
+              filename: file.name,
+              url: publicUrl,
+              uploaded_by: profile.id,
+              is_result: true,
+            });
           }
         }
 
