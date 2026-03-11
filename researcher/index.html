@@ -1633,7 +1633,7 @@
                     <tr>
                       <th>#</th>
                       <th>Service</th>
-                      <th>Title / Notes</th>
+                      <th>Title / Abstract</th>
                       <th>Submitted</th>
                       <th>Status</th>
                       <th>Analyst</th>
@@ -1698,11 +1698,11 @@
             />
           </div>
           <div class="form-group">
-            <label class="form-label">Description / Notes</label>
+            <label class="form-label">Research Abstract</label>
             <textarea
               class="form-control"
               id="new-notes"
-              placeholder="Briefly describe your research and what you need help with..."
+              placeholder="Provide your research abstract (100–150 words). It must clearly state the purpose of your study and the methods to be used. Write it as a stand-alone paragraph that is readable without the rest of the manuscript. To increase discoverability, include 5–8 relevant keywords at the end of your abstract."
             ></textarea>
           </div>
           <div class="form-group">
@@ -1993,7 +1993,7 @@
       <div><span class="text-muted">Assigned Analyst</span><div style="font-weight:600;margin-top:2px;">${req.analyst?.full_name || "Not yet assigned"}</div></div>
     </div>
     ${req.title ? `<div style="margin-bottom:16px;"><span class="text-muted">Research Title</span><div style="font-weight:600;margin-top:2px;">${req.title}</div></div>` : ""}
-    ${req.notes ? `<div style="margin-bottom:20px;"><span class="text-muted">Notes</span><div style="margin-top:4px;font-size:14px;color:var(--gray-700);">${req.notes}</div></div>` : ""}
+    ${req.abstract ? `<div style="margin-bottom:20px;"><span class="text-muted">Abstract</span><div style="margin-top:4px;font-size:14px;color:var(--gray-700);">${req.abstract}</div></div>` : ""}
     <div class="divider"></div>
     <div style="margin-bottom:20px;">
       <h4 style="margin-bottom:12px;">📎 Attachments</h4>
@@ -2154,7 +2154,7 @@
             researcher_id: profile.id,
             service_type: service,
             title,
-            notes,
+            abstract: notes,
             status: "submitted",
           })
           .select()
