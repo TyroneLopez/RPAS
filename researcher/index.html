@@ -2244,28 +2244,30 @@
         // Upload files
         for (const file of selectedFiles) {
           const path = `${profile.id}/${req.id}/${file.name}`;
-          const { data: uploaded } = await sb.storage
+          const { data: uploaded, error: uploadError } = await sb.storage
             .from("attachments")
-            .upload(path, file);
-          if (uploaded) {
-            const {
-              data: { publicUrl },
-            } = sb.storage.from("attachments").getPublicUrl(path);
-            await sb.from("attachments").insert({
-              request_id: req.id,
-              filename: file.name,
-              url: publicUrl,
-              uploaded_by: profile.id,
-            });
-            // Also save to service_requests for quick access
-            await sb
-              .from("service_requests")
-              .update({
-                attachment_url: publicUrl,
-                attachment_name: file.name,
-              })
-              .eq("id", req.id);
+            .upload(path, file, { upsert: true });
+          if (uploadError) {
+            console.error("Upload error:", uploadError.message);
+            showToast(`File upload failed: ${uploadError.message}`, "error");
+            continue;
           }
+          const {
+            data: { publicUrl },
+          } = sb.storage.from("attachments").getPublicUrl(path);
+          await sb.from("attachments").insert({
+            request_id: req.id,
+            filename: file.name,
+            url: publicUrl,
+            uploaded_by: profile.id,
+          });
+          await sb
+            .from("service_requests")
+            .update({
+              attachment_url: publicUrl,
+              attachment_name: file.name,
+            })
+            .eq("id", req.id);
         }
 
         // Log status
