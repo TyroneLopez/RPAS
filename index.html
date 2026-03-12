@@ -1722,6 +1722,20 @@
               btn.disabled = false;
             }
           });
+        // Show any message saved before a signOut redirect
+        const savedMsg = sessionStorage.getItem("rpas_msg");
+        if (savedMsg) {
+          msgAlert.innerHTML = savedMsg;
+          sessionStorage.removeItem("rpas_msg");
+        }
+
+        function showAndRedirect(html) {
+          sessionStorage.setItem("rpas_msg", html);
+          sb.auth.signOut().then(() => {
+            window.location.href = getRootPath() + "index.html";
+          });
+        }
+
         sb.auth.onAuthStateChange(async (event, session) => {
           if (event === "SIGNED_IN" && session) {
             const user = session.user;
@@ -1731,7 +1745,6 @@
               .eq("id", user.id)
               .single();
             if (!existing) {
-              const emailConfirmed = !!user.email_confirmed_at;
               await sb.from("profiles").insert({
                 id: user.id,
                 email: user.email,
@@ -1739,24 +1752,15 @@
                 avatar_url: user.user_metadata.avatar_url || null,
                 role: "researcher",
                 status: "pending",
-                email_confirmed: emailConfirmed,
+                email_confirmed: !!user.email_confirmed_at,
               });
-              if (!emailConfirmed) {
-                msgAlert.innerHTML =
-                  '<div class="alert alert-info">📧 A verification email has been sent. Please verify your email before your account can be reviewed by the admin.</div>';
-              } else {
-                msgAlert.innerHTML =
-                  '<div class="alert alert-warning">⏳ Account created! Waiting for admin approval.</div>';
-              }
-              await sb.auth.signOut();
+              showAndRedirect(
+                '<div class="alert alert-warning">⏳ <strong>Account registered!</strong> Your account is now pending admin approval. You will be notified once it has been reviewed. For inquiries, contact the RPAS Office.</div>',
+              );
               return;
             }
-            // If returning user now has confirmed email, sync it to profile
-            if (
-              existing &&
-              !existing.email_confirmed &&
-              user.email_confirmed_at
-            ) {
+            // Sync email_confirmed if newly verified
+            if (!existing.email_confirmed && user.email_confirmed_at) {
               await sb
                 .from("profiles")
                 .update({ email_confirmed: true })
@@ -1764,20 +1768,15 @@
               existing.email_confirmed = true;
             }
             if (existing.status === "pending") {
-              if (!existing.email_confirmed) {
-                msgAlert.innerHTML =
-                  '<div class="alert alert-info">📧 Please verify your email first. Check your inbox for a confirmation link before admin can review your account.</div>';
-              } else {
-                msgAlert.innerHTML =
-                  '<div class="alert alert-warning">⏳ Email verified! Your account is pending admin approval.</div>';
-              }
-              await sb.auth.signOut();
+              showAndRedirect(
+                '<div class="alert alert-warning">⏳ <strong>Account pending.</strong> Your account is still awaiting admin approval. Please wait — you will be notified once approved. For inquiries, contact the RPAS Office.</div>',
+              );
               return;
             }
             if (existing.status === "rejected") {
-              msgAlert.innerHTML =
-                '<div class="alert alert-danger">❌ Your account has been rejected. Contact RPAS Office.</div>';
-              await sb.auth.signOut();
+              showAndRedirect(
+                '<div class="alert alert-danger">❌ <strong>Account rejected.</strong> Your account was not approved. For more information, please contact the RPAS Office.</div>',
+              );
               return;
             }
             if (existing.status === "approved") {
