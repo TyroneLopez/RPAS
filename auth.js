@@ -58,6 +58,12 @@ async function requireAuth(expectedRole) {
     window.location.href = getRootPath() + "index.html";
     return null;
   }
+  // Phase 1.4 — Email verification check
+  if (!session.user.email_confirmed_at) {
+    await sb.auth.signOut();
+    window.location.href = getRootPath() + "index.html?msg=verify";
+    return null;
+  }
   const profile = await getProfile(session.user.id);
   if (!profile || profile.status !== "approved") {
     await sb.auth.signOut();
@@ -124,4 +130,52 @@ function showToast(msg, type = "success") {
     t.classList.remove("show");
     setTimeout(() => t.remove(), 300);
   }, 3000);
+}
+
+// =============================================
+// PHASE 1.3 — EMAIL NOTIFICATION TRIGGERS
+// Call these after key events to send DB notifications
+// Supabase Edge Functions or triggers handle actual email delivery
+// =============================================
+
+async function createNotification(userId, message, type = "system") {
+  if (!userId) return;
+  await sb.from("notifications").insert({
+    user_id: userId,
+    message: message,
+    type: type,
+    is_read: false,
+  });
+}
+
+async function notifyStatusChange(request, newStatus, analystId, researcherId) {
+  const label = STATUS_LABELS[newStatus] || newStatus;
+  if (researcherId) {
+    await createNotification(
+      researcherId,
+      "Your request status has been updated to: " + label,
+      "status",
+    );
+  }
+}
+
+async function notifyNewAssignment(analystId, researcherName, serviceType) {
+  if (!analystId) return;
+  await createNotification(
+    analystId,
+    "New request assigned to you: " +
+      serviceType +
+      " from " +
+      (researcherName || "a researcher"),
+    "assignment",
+  );
+}
+
+async function notifyNewMessage(recipientId, senderName) {
+  if (!recipientId) return;
+  await createNotification(
+    recipientId,
+    "New message from " + (senderName || "someone"),
+    "message",
+  );
 }

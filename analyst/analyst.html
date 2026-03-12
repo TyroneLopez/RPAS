@@ -822,6 +822,183 @@
         display: block;
       }
 
+      /* ---- NOTIFICATION POPUP (Phase 1.1) ---- */
+      .notif-wrapper {
+        position: relative;
+      }
+      .notif-count {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: var(--danger);
+        color: white;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 700;
+        min-width: 18px;
+        height: 18px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border: 2px solid white;
+        line-height: 1;
+      }
+      .notif-count.show {
+        display: flex;
+      }
+      .notif-panel {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 360px;
+        max-height: 480px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+        border: 1px solid var(--gray-200);
+        z-index: 1000;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .notif-panel.open {
+        display: flex;
+      }
+      .notif-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid var(--gray-100);
+        flex-shrink: 0;
+      }
+      .notif-panel-header h4 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0;
+      }
+      .notif-mark-all {
+        font-size: 12px;
+        color: var(--green);
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .notif-mark-all:hover {
+        background: var(--gray-100);
+      }
+      .notif-panel-body {
+        overflow-y: auto;
+        flex: 1;
+      }
+      .notif-item {
+        display: flex;
+        gap: 10px;
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--gray-50);
+        transition: background 0.15s;
+        text-align: left;
+        width: 100%;
+        background: none;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+      }
+      .notif-item:hover {
+        background: var(--gray-50);
+      }
+      .notif-item.unread {
+        background: #f0f9f0;
+      }
+      .notif-item.unread:hover {
+        background: #e6f5e6;
+      }
+      .notif-item-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--gold-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+      .notif-item-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .notif-item-msg {
+        font-size: 13px;
+        color: var(--gray-800);
+        line-height: 1.4;
+        margin-bottom: 3px;
+      }
+      .notif-item.unread .notif-item-msg {
+        font-weight: 600;
+      }
+      .notif-item-time {
+        font-size: 11px;
+        color: var(--gray-400);
+      }
+      .notif-unread-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--green);
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 4px;
+        display: none;
+      }
+      .notif-item.unread .notif-unread-dot {
+        display: block;
+      }
+      .notif-empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--gray-400);
+        font-size: 14px;
+      }
+      .notif-empty-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+      .profile-avatar-upload {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 16px;
+        cursor: pointer;
+      }
+      .profile-avatar-upload .user-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 28px;
+        border-radius: 50%;
+      }
+      .profile-avatar-upload .avatar-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+        color: white;
+        font-size: 20px;
+      }
+      .profile-avatar-upload:hover .avatar-overlay {
+        opacity: 1;
+      }
+
       /* ---- TOAST ---- */
       .toast {
         position: fixed;
@@ -1522,6 +1699,13 @@
               <div class="user-role">Data Analyst</div>
             </div>
           </div>
+          <button
+            class="btn-signout"
+            style="margin-top: 6px"
+            onclick="openProfileModal()"
+          >
+            <span>✏️</span> Edit Profile
+          </button>
           <button class="btn-signout" onclick="signOut()">
             <span>🚪</span> Sign Out
           </button>
@@ -1545,9 +1729,29 @@
             </div>
           </div>
           <div class="topbar-actions">
-            <button class="notif-btn" onclick="showSection('notifications')">
-              🔔<span class="notif-dot" id="notif-dot"></span>
-            </button>
+            <div class="notif-wrapper" id="notif-wrapper">
+              <button
+                class="notif-btn"
+                id="notif-btn"
+                onclick="toggleNotifPanel(event)"
+              >
+                🔔<span class="notif-count" id="notif-count"></span>
+              </button>
+              <div class="notif-panel" id="notif-panel">
+                <div class="notif-panel-header">
+                  <h4>Notifications</h4>
+                  <button class="notif-mark-all" onclick="markAllRead()">
+                    Mark all read
+                  </button>
+                </div>
+                <div class="notif-panel-body" id="notif-panel-body">
+                  <div class="notif-empty">
+                    <div class="notif-empty-icon">🔔</div>
+                    No notifications yet
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -1732,434 +1936,676 @@
     </div>
 
     <script>
-      let profile = null;
-      let allTasks = [];
-      let currentTaskId = null;
-      let resultFiles = [];
+          let profile = null;
+          let allTasks = [];
+          let currentTaskId = null;
+          let resultFiles = [];
 
-      (async () => {
-        const auth = await requireAuth("analyst");
-        if (!auth) return;
-        profile = auth.profile;
-        document.getElementById("sidebar-name").textContent =
-          profile.full_name || "Analyst";
-        if (profile.avatar_url)
-          document.getElementById("sidebar-avatar").innerHTML =
-            `<img src="${profile.avatar_url}" alt="">`;
-        else
-          document.getElementById("sidebar-avatar").textContent =
-            (profile.full_name || "A")[0].toUpperCase();
-        await loadAll();
+          (async () => {
+            const auth = await requireAuth("analyst");
+            if (!auth) return;
+            profile = auth.profile;
+            document.getElementById("sidebar-name").textContent =
+              profile.full_name || "Analyst";
+            if (profile.avatar_url)
+              document.getElementById("sidebar-avatar").innerHTML =
+                `<img src="${profile.avatar_url}" alt="">`;
+            else
+              document.getElementById("sidebar-avatar").textContent =
+                (profile.full_name || "A")[0].toUpperCase();
+            await loadAll();
 
-        sb.channel("analyst-tasks")
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "service_requests",
-              filter: `analyst_id=eq.${profile.id}`,
-            },
-            () => loadAll(),
-          )
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "notifications",
-              filter: `user_id=eq.${profile.id}`,
-            },
-            () => loadNotifications(),
-          )
-          .subscribe();
-      })();
+            sb.channel("analyst-tasks")
+              .on(
+                "postgres_changes",
+                {
+                  event: "*",
+                  schema: "public",
+                  table: "service_requests",
+                  filter: `analyst_id=eq.${profile.id}`,
+                },
+                () => loadAll(),
+              )
+              .on(
+                "postgres_changes",
+                {
+                  event: "*",
+                  schema: "public",
+                  table: "notifications",
+                  filter: `user_id=eq.${profile.id}`,
+                },
+                () => loadNotifications(),
+              )
+              .subscribe();
+          })();
 
-      async function loadAll() {
-        await Promise.all([loadTasks(), loadNotifications()]);
-      }
+          async function loadAll() {
+            await Promise.all([loadTasks(), loadNotifications()]);
+          }
 
-      async function loadTasks() {
-        const { data } = await sb
-          .from("service_requests")
-          .select(
-            "*, researcher:researcher_id(full_name, email), updates:request_updates(id,status,notes,created_at)",
-          )
-          .eq("analyst_id", profile.id)
-          .order("created_at", { ascending: false });
-        allTasks = data || [];
-        const active = allTasks.filter(
-          (t) => !["completed", "cancelled"].includes(t.status),
-        );
-        document.getElementById("nb-tasks").textContent = active.length;
-        renderStats();
-        renderActiveTable(active.slice(0, 5));
-        renderTasksTable(allTasks);
-      }
+          async function loadTasks() {
+            const { data } = await sb
+              .from("service_requests")
+              .select(
+                "*, researcher:researcher_id(full_name, email), updates:request_updates(id,status,notes,created_at)",
+              )
+              .eq("analyst_id", profile.id)
+              .order("created_at", { ascending: false });
+            allTasks = data || [];
+            const active = allTasks.filter(
+              (t) => !["completed", "cancelled"].includes(t.status),
+            );
+            document.getElementById("nb-tasks").textContent = active.length;
+            renderStats();
+            renderActiveTable(active.slice(0, 5));
+            renderTasksTable(allTasks);
+          }
 
-      function renderStats() {
-        const total = allTasks.length;
-        const active = allTasks.filter(
-          (t) => !["completed", "cancelled"].includes(t.status),
-        ).length;
-        const completed = allTasks.filter(
-          (t) => t.status === "completed",
-        ).length;
-        const revision = allTasks.filter(
-          (t) => t.status === "for_revision",
-        ).length;
-        document.getElementById("stats-grid").innerHTML = `
-    <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${total}</div><div class="stat-label">Total Assigned</div></div></div>
-    <div class="stat-card"><div class="stat-icon blue">⚙️</div><div class="stat-info"><div class="stat-value">${active}</div><div class="stat-label">Active Tasks</div></div></div>
-    <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div></div>
-    <div class="stat-card"><div class="stat-icon red">✏️</div><div class="stat-info"><div class="stat-value">${revision}</div><div class="stat-label">For Revision</div></div></div>
-  `;
-      }
+          function renderStats() {
+            const total = allTasks.length;
+            const active = allTasks.filter(
+              (t) => !["completed", "cancelled"].includes(t.status),
+            ).length;
+            const completed = allTasks.filter(
+              (t) => t.status === "completed",
+            ).length;
+            const revision = allTasks.filter(
+              (t) => t.status === "for_revision",
+            ).length;
+            document.getElementById("stats-grid").innerHTML = `
+        <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${total}</div><div class="stat-label">Total Assigned</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue">⚙️</div><div class="stat-info"><div class="stat-value">${active}</div><div class="stat-label">Active Tasks</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div></div>
+        <div class="stat-card"><div class="stat-icon red">✏️</div><div class="stat-info"><div class="stat-value">${revision}</div><div class="stat-label">For Revision</div></div></div>
+      `;
+          }
 
-      function renderActiveTable(list) {
-        const tbody = document.getElementById("active-tbody");
-        if (!list.length) {
-          tbody.innerHTML =
-            '<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">✅</div><h3>No active tasks</h3></div></td></tr>';
-          return;
-        }
-        tbody.innerHTML = list
-          .map(
-            (t) => `<tr>
-    <td><strong>${t.researcher?.full_name || "Unknown"}</strong><div style="font-size:12px;color:var(--gray-400)">${t.researcher?.email || ""}</div></td>
-    <td>${t.service_type}</td>
-    <td>${formatDate(t.created_at)}</td>
-    <td><span class="badge badge-${t.status}">${STATUS_LABELS[t.status]}</span></td>
-    <td><button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">Open →</button></td>
-  </tr>`,
-          )
-          .join("");
-      }
+          function renderActiveTable(list) {
+            const tbody = document.getElementById("active-tbody");
+            if (!list.length) {
+              tbody.innerHTML =
+                '<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">✅</div><h3>No active tasks</h3></div></td></tr>';
+              return;
+            }
+            tbody.innerHTML = list
+              .map(
+                (t) => `<tr>
+        <td><strong>${t.researcher?.full_name || "Unknown"}</strong><div style="font-size:12px;color:var(--gray-400)">${t.researcher?.email || ""}</div></td>
+        <td>${t.service_type}</td>
+        <td>${formatDate(t.created_at)}</td>
+        <td><span class="badge badge-${t.status}">${STATUS_LABELS[t.status]}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">Open →</button></td>
+      </tr>`,
+              )
+              .join("");
+          }
 
-      function filterTasks() {
-        const q = document.getElementById("task-search").value.toLowerCase();
-        const st = document.getElementById("task-filter-status").value;
-        let filtered = allTasks;
-        if (q)
-          filtered = filtered.filter(
-            (t) =>
-              t.service_type.toLowerCase().includes(q) ||
-              (t.researcher?.full_name || "").toLowerCase().includes(q),
+          function filterTasks() {
+            const q = document.getElementById("task-search").value.toLowerCase();
+            const st = document.getElementById("task-filter-status").value;
+            let filtered = allTasks;
+            if (q)
+              filtered = filtered.filter(
+                (t) =>
+                  t.service_type.toLowerCase().includes(q) ||
+                  (t.researcher?.full_name || "").toLowerCase().includes(q),
+              );
+            if (st) filtered = filtered.filter((t) => t.status === st);
+            renderTasksTable(filtered);
+          }
+
+          function renderTasksTable(list) {
+            const tbody = document.getElementById("tasks-tbody");
+            if (!list.length) {
+              tbody.innerHTML =
+                '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No tasks found</h3></div></td></tr>';
+              return;
+            }
+            tbody.innerHTML = list
+              .map(
+                (t) => `<tr>
+        <td><strong>${t.researcher?.full_name || "Unknown"}</strong></td>
+        <td>${t.service_type}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title || "—"}</td>
+        <td>${formatDate(t.created_at)}</td>
+        <td><span class="badge badge-${t.status}">${STATUS_LABELS[t.status]}</span></td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">View</button>
+          <button class="btn btn-primary btn-sm" onclick="openUpdateStatus('${t.id}')">Update</button>
+        </td>
+      </tr>`,
+              )
+              .join("");
+          }
+
+          async function openTask(id) {
+            const task = allTasks.find((t) => t.id === id);
+            if (!task) return;
+            currentTaskId = id;
+            document.getElementById("task-modal-title").textContent =
+              `${task.service_type} — ${task.researcher?.full_name || ""}`;
+
+            const steps = STATUS_STEPS;
+            const ci = steps.indexOf(task.status);
+            const stepHtml = steps
+              .map(
+                (s, i) => `
+        <div class="step ${i < ci ? "done" : i === ci ? "active" : ""}">
+          <div class="step-dot">${i < ci ? "✓" : i + 1}</div>
+          <div class="step-label">${STATUS_LABELS[s]}</div>
+        </div>`,
+              )
+              .join("");
+
+            const { data: msgs } = await sb
+              .from("messages")
+              .select("*, sender:sender_id(full_name)")
+              .eq("request_id", id)
+              .order("created_at");
+            const { data: attachments } = await sb
+              .from("attachments")
+              .select("*")
+              .eq("request_id", id);
+
+            const msgHtml =
+              (msgs || [])
+                .map((m) => {
+                  const isMe = m.sender_id === profile.id;
+                  return `<div class="chat-bubble ${isMe ? "me" : "them"}">
+          ${!isMe ? `<div style="font-size:11px;font-weight:600;margin-bottom:4px;opacity:.8">${m.sender?.full_name || "Researcher"}</div>` : ""}
+          ${m.message}<div class="time">${timeAgo(m.created_at)}</div>
+        </div>`;
+                })
+                .join("") ||
+              '<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:20px;">No messages yet</div>';
+
+            const attHtml =
+              (attachments || [])
+                .map(
+                  (a) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;margin-bottom:6px;">
+          <span>📄</span><span style="flex:1;font-size:13px;">${a.filename}</span>
+          <a href="${a.url}" target="_blank" class="btn btn-ghost btn-sm">Download</a>
+        </div>`,
+                )
+                .join("") ||
+              '<div style="color:var(--gray-400);font-size:13px;">No files</div>';
+
+            const updates = (task.updates || []).sort(
+              (a, b) => new Date(b.created_at) - new Date(a.created_at),
+            );
+            const timelineHtml =
+              updates
+                .map(
+                  (u) => `
+        <div class="timeline-item">
+          <div class="timeline-date">${formatDate(u.created_at)}</div>
+          <div class="timeline-content">Status: <strong>${STATUS_LABELS[u.status] || u.status}</strong>${u.notes ? ` — ${u.notes}` : ""}</div>
+        </div>`,
+                )
+                .join("") ||
+              '<div style="color:var(--gray-400);font-size:13px;">No updates yet</div>';
+
+            document.getElementById("task-modal-body").innerHTML = `
+        <div style="margin-bottom:24px;"><div class="stepper">${stepHtml}</div></div>
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div><span class="text-muted">Researcher</span><div style="font-weight:600;">${task.researcher?.full_name || "—"}</div></div>
+          <div><span class="text-muted">Email</span><div style="font-weight:600;">${task.researcher?.email || "—"}</div></div>
+          <div><span class="text-muted">Service</span><div style="font-weight:600;">${task.service_type}</div></div>
+          <div><span class="text-muted">Status</span><div style="margin-top:2px;"><span class="badge badge-${task.status}">${STATUS_LABELS[task.status]}</span></div></div>
+        </div>
+        ${task.title ? `<div style="margin-bottom:12px;"><span class="text-muted">Title</span><div style="font-weight:600;">${task.title}</div></div>` : ""}
+        ${task.notes ? `<div style="margin-bottom:16px;"><span class="text-muted">Notes</span><div style="font-size:14px;">${task.notes}</div></div>` : ""}
+        <div style="margin-bottom:16px;text-align:right;">
+          <button class="btn btn-gold" onclick="closeModal('modal-task');openUpdateStatus('${id}')">📝 Update Status</button>
+        </div>
+        <div class="divider"></div>
+        <div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;">📎 Attachments (${(attachments || []).length})</h4>${attHtml}</div>
+        <div class="divider"></div>
+        <div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;">📅 Timeline</h4><div class="timeline">${timelineHtml}</div></div>
+        <div class="divider"></div>
+        <h4 style="margin-bottom:8px;">💬 Messages</h4>
+        <div class="card" style="border:1px solid var(--gray-200);">
+          <div class="chat-wrap">
+            <div class="chat-messages">${msgHtml}</div>
+            <div class="chat-input-row">
+              <input type="text" class="form-control" id="msg-input-${id}" placeholder="Message the researcher..." onkeydown="if(event.key==='Enter')sendMessage('${id}')">
+              <button class="btn btn-primary btn-sm" onclick="sendMessage('${id}')">Send</button>
+            </div>
+          </div>
+        </div>
+      `;
+            setTimeout(() => {
+              const c = document.querySelector(".chat-messages");
+              if (c) c.scrollTop = c.scrollHeight;
+            }, 100);
+            openModal("modal-task");
+          }
+
+          async function sendMessage(requestId) {
+            const input = document.getElementById(`msg-input-${requestId}`);
+            const msg = input.value.trim();
+            if (!msg) return;
+            input.value = "";
+            await sb.from("messages").insert({
+              request_id: requestId,
+              sender_id: profile.id,
+              message: msg,
+            });
+            // Notify researcher
+            const task = allTasks.find((t) => t.id === requestId);
+            if (task)
+              await sb.from("notifications").insert({
+                user_id: task.researcher_id,
+                message: `New message from analyst on your "${task.service_type}" request.`,
+                type: "new_message",
+              });
+            await openTask(requestId);
+          }
+
+          function openUpdateStatus(id) {
+            currentTaskId = id;
+            const task = allTasks.find((t) => t.id === id);
+            if (task)
+              document.getElementById("update-status-val").value = task.status;
+            document.getElementById("update-status-notes").value = "";
+            document.getElementById("result-file-list").innerHTML = "";
+            resultFiles = [];
+            openModal("modal-update-status");
+          }
+
+          function handleResultFiles(input) {
+            resultFiles = Array.from(input.files);
+            document.getElementById("result-file-list").innerHTML = resultFiles
+              .map(
+                (f) =>
+                  `<div style="padding:6px 10px;background:var(--gray-50);border-radius:6px;margin-bottom:4px;font-size:13px;">📄 ${f.name}</div>`,
+              )
+              .join("");
+          }
+
+          async function saveStatusUpdate() {
+            if (!currentTaskId) return;
+            const status = document.getElementById("update-status-val").value;
+            const notes = document
+              .getElementById("update-status-notes")
+              .value.trim();
+
+            const btn = document.querySelector("#modal-update-status .btn-primary");
+            btn.disabled = true;
+            btn.textContent = "Saving...";
+
+            await sb
+              .from("service_requests")
+              .update({ status })
+              .eq("id", currentTaskId);
+            await sb.from("request_updates").insert({
+              request_id: currentTaskId,
+              status,
+              notes: notes || null,
+              updated_by: profile.id,
+            });
+
+            // Upload result files
+            for (const file of resultFiles) {
+              const path = `results/${currentTaskId}/${file.name}`;
+              const { data: uploaded } = await sb.storage
+                .from("attachments")
+                .upload(path, file, { upsert: true });
+              if (uploaded) {
+                const {
+                  data: { publicUrl },
+                } = sb.storage.from("attachments").getPublicUrl(path);
+                await sb.from("attachments").insert({
+                  request_id: currentTaskId,
+                  filename: file.name,
+                  url: publicUrl,
+                  uploaded_by: profile.id,
+                  is_result: true,
+                });
+              }
+            }
+
+            // Notify researcher
+            const task = allTasks.find((t) => t.id === currentTaskId);
+            if (task) {
+              await sb.from("notifications").insert({
+                user_id: task.researcher_id,
+                message: `Your "${task.service_type}" request status updated to: ${STATUS_LABELS[status]}.${notes ? " Note: " + notes : ""}`,
+                type: "status_update",
+              });
+            }
+
+            closeModal("modal-update-status");
+            showToast("Status updated!", "success");
+            btn.disabled = false;
+            btn.textContent = "Update Status";
+            await loadTasks();
+          }
+
+          async function loadNotifications() {
+            const { data } = await sb
+              .from("notifications")
+              .select("*")
+              .eq("user_id", profile.id)
+              .order("created_at", { ascending: false });
+            const notifs = data || [];
+            const unread = notifs.filter((n) => !n.is_read).length;
+            const badge = document.getElementById("nb-notifs");
+            if (unread > 0) {
+              badge.textContent = unread;
+              badge.style.display = "";
+              document.getElementById("notif-dot").classList.add("show");
+            } else {
+              badge.style.display = "none";
+              document.getElementById("notif-dot").classList.remove("show");
+            }
+
+            const list = document.getElementById("notif-list");
+            if (!notifs.length) {
+              list.innerHTML =
+                '<div class="empty-state"><div class="empty-state-icon">🔔</div><h3>No notifications</h3></div>';
+              return;
+            }
+            list.innerHTML = notifs
+              .map(
+                (n) => `
+        <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 20px;border-bottom:1px solid var(--gray-100);background:${n.is_read ? "" : "var(--gold-light)"};">
+          <div style="font-size:22px;flex-shrink:0;">🔔</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:${n.is_read ? "400" : "600"}">${n.message}</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${timeAgo(n.created_at)}</div>
+          </div>
+          ${!n.is_read ? `<button class="btn btn-ghost btn-sm" onclick="markRead('${n.id}')">✓</button>` : ""}
+        </div>`,
+              )
+              .join("");
+          }
+
+          async function markRead(id) {
+            await sb.from("notifications").update({ is_read: true }).eq("id", id);
+            await loadNotifications();
+          }
+          async function markAllRead() {
+            await sb
+              .from("notifications")
+              .update({ is_read: true })
+              .eq("user_id", profile.id);
+            await loadNotifications();
+          }
+
+          function showSection(id, btn) {
+            ["dashboard", "my-tasks", "notifications"].forEach(
+              (s) =>
+                (document.getElementById(`section-${s}`).style.display =
+                  s === id ? "" : "none"),
+            );
+            document
+              .querySelectorAll(".nav-item")
+              .forEach((el) => el.classList.remove("active"));
+            if (btn) btn.classList.add("active");
+            const titles = {
+              dashboard: "Dashboard",
+              "my-tasks": "Assigned Tasks",
+              notifications: "Notifications",
+            };
+            document.getElementById("page-title").textContent = titles[id] || id;
+            document.getElementById("sidebar").classList.remove("open");
+          }
+
+          function openModal(id) {
+            document.getElementById(id).classList.add("open");
+          }
+          function closeModal(id) {
+            document.getElementById(id).classList.remove("open");
+          }
+          document.querySelectorAll(".modal-overlay").forEach((o) =>
+            o.addEventListener("click", (e) => {
+              if (e.target === o) o.classList.remove("open");
+            }),
           );
-        if (st) filtered = filtered.filter((t) => t.status === st);
-        renderTasksTable(filtered);
-      }
 
-      function renderTasksTable(list) {
-        const tbody = document.getElementById("tasks-tbody");
-        if (!list.length) {
-          tbody.innerHTML =
-            '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No tasks found</h3></div></td></tr>';
-          return;
-        }
-        tbody.innerHTML = list
-          .map(
-            (t) => `<tr>
-    <td><strong>${t.researcher?.full_name || "Unknown"}</strong></td>
-    <td>${t.service_type}</td>
-    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title || "—"}</td>
-    <td>${formatDate(t.created_at)}</td>
-    <td><span class="badge badge-${t.status}">${STATUS_LABELS[t.status]}</span></td>
-    <td style="display:flex;gap:6px;">
-      <button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">View</button>
-      <button class="btn btn-primary btn-sm" onclick="openUpdateStatus('${t.id}')">Update</button>
-    </td>
-  </tr>`,
-          )
-          .join("");
-      }
+          // ============================================================
+          // PHASE 1.1 — NOTIFICATION BELL POPUP
+          // ============================================================
+          let notifData = [];
 
-      async function openTask(id) {
-        const task = allTasks.find((t) => t.id === id);
-        if (!task) return;
-        currentTaskId = id;
-        document.getElementById("task-modal-title").textContent =
-          `${task.service_type} — ${task.researcher?.full_name || ""}`;
+          function toggleNotifPanel(e) {
+            e.stopPropagation();
+            const panel = document.getElementById('notif-panel');
+            panel.classList.toggle('open');
+            if (panel.classList.contains('open')) loadNotifPanel();
+          }
 
-        const steps = STATUS_STEPS;
-        const ci = steps.indexOf(task.status);
-        const stepHtml = steps
-          .map(
-            (s, i) => `
-    <div class="step ${i < ci ? "done" : i === ci ? "active" : ""}">
-      <div class="step-dot">${i < ci ? "✓" : i + 1}</div>
-      <div class="step-label">${STATUS_LABELS[s]}</div>
-    </div>`,
-          )
-          .join("");
+          document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('notif-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+              const panel = document.getElementById('notif-panel');
+              if (panel) panel.classList.remove('open');
+            }
+          });
 
-        const { data: msgs } = await sb
-          .from("messages")
-          .select("*, sender:sender_id(full_name)")
-          .eq("request_id", id)
-          .order("created_at");
-        const { data: attachments } = await sb
-          .from("attachments")
-          .select("*")
-          .eq("request_id", id);
+          async function loadNotifPanel() {
+            const { data } = await sb.from('notifications')
+              .select('*').eq('user_id', analystProfile.id)
+              .order('created_at', { ascending: false }).limit(30);
+            notifData = data || [];
+            renderNotifPanel();
+          }
 
-        const msgHtml =
-          (msgs || [])
-            .map((m) => {
-              const isMe = m.sender_id === profile.id;
-              return `<div class="chat-bubble ${isMe ? "me" : "them"}">
-      ${!isMe ? `<div style="font-size:11px;font-weight:600;margin-bottom:4px;opacity:.8">${m.sender?.full_name || "Researcher"}</div>` : ""}
-      ${m.message}<div class="time">${timeAgo(m.created_at)}</div>
-    </div>`;
-            })
-            .join("") ||
-          '<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:20px;">No messages yet</div>';
+          function renderNotifPanel() {
+            const body = document.getElementById('notif-panel-body');
+            if (!notifData.length) {
+              body.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">&#128276;</div>No notifications yet</div>';
+              return;
+            }
+            const icons = { status: '&#128203;', message: '&#128172;', assignment: '&#128100;', payment: '&#128176;', system: '&#9881;' };
+            body.innerHTML = notifData.map(function(n) {
+              const icon = icons[n.type] || '&#128276;';
+              return '<button class="notif-item ' + (n.is_read ? '' : 'unread') + '" onclick="handleNotifClick('' + n.id + '', '' + (n.type||'') + '')">' +
+                '<div class="notif-item-icon">' + icon + '</div>' +
+                '<div class="notif-item-body">' +
+                  '<div class="notif-item-msg">' + n.message + '</div>' +
+                  '<div class="notif-item-time">' + timeAgo(n.created_at) + '</div>' +
+                '</div>' +
+                '<div class="notif-unread-dot"></div>' +
+              '</button>';
+            }).join('');
+            const unread = notifData.filter(function(n) { return !n.is_read; }).length;
+            const countEl = document.getElementById('notif-count');
+            if (unread > 0) {
+              countEl.textContent = unread > 99 ? '99+' : unread;
+              countEl.classList.add('show');
+            } else {
+              countEl.classList.remove('show');
+            }
+          }
 
-        const attHtml =
-          (attachments || [])
-            .map(
-              (a) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;margin-bottom:6px;">
-      <span>📄</span><span style="flex:1;font-size:13px;">${a.filename}</span>
-      <a href="${a.url}" target="_blank" class="btn btn-ghost btn-sm">Download</a>
-    </div>`,
-            )
-            .join("") ||
-          '<div style="color:var(--gray-400);font-size:13px;">No files</div>';
+          async function handleNotifClick(id, type) {
+            await sb.from('notifications').update({ is_read: true }).eq('id', id);
+            const n = notifData.find(function(x) { return x.id === id; });
+            if (n) n.is_read = true;
+            renderNotifPanel();
+            document.getElementById('notif-panel').classList.remove('open');
+            if (type === 'message') showSection('messages', null);
+            else if (type === 'status' || type === 'assignment') showSection('requests', null);
+          }
 
-        const updates = (task.updates || []).sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at),
-        );
-        const timelineHtml =
-          updates
-            .map(
-              (u) => `
-    <div class="timeline-item">
-      <div class="timeline-date">${formatDate(u.created_at)}</div>
-      <div class="timeline-content">Status: <strong>${STATUS_LABELS[u.status] || u.status}</strong>${u.notes ? ` — ${u.notes}` : ""}</div>
-    </div>`,
-            )
-            .join("") ||
-          '<div style="color:var(--gray-400);font-size:13px;">No updates yet</div>';
+          async function markAllRead() {
+            await sb.from('notifications').update({ is_read: true })
+              .eq('user_id', analystProfile.id).eq('is_read', false);
+            notifData.forEach(function(n) { n.is_read = true; });
+            renderNotifPanel();
+          }
 
-        document.getElementById("task-modal-body").innerHTML = `
-    <div style="margin-bottom:24px;"><div class="stepper">${stepHtml}</div></div>
-    <div class="grid-2" style="margin-bottom:20px;">
-      <div><span class="text-muted">Researcher</span><div style="font-weight:600;">${task.researcher?.full_name || "—"}</div></div>
-      <div><span class="text-muted">Email</span><div style="font-weight:600;">${task.researcher?.email || "—"}</div></div>
-      <div><span class="text-muted">Service</span><div style="font-weight:600;">${task.service_type}</div></div>
-      <div><span class="text-muted">Status</span><div style="margin-top:2px;"><span class="badge badge-${task.status}">${STATUS_LABELS[task.status]}</span></div></div>
-    </div>
-    ${task.title ? `<div style="margin-bottom:12px;"><span class="text-muted">Title</span><div style="font-weight:600;">${task.title}</div></div>` : ""}
-    ${task.notes ? `<div style="margin-bottom:16px;"><span class="text-muted">Notes</span><div style="font-size:14px;">${task.notes}</div></div>` : ""}
-    <div style="margin-bottom:16px;text-align:right;">
-      <button class="btn btn-gold" onclick="closeModal('modal-task');openUpdateStatus('${id}')">📝 Update Status</button>
-    </div>
-    <div class="divider"></div>
-    <div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;">📎 Attachments (${(attachments || []).length})</h4>${attHtml}</div>
-    <div class="divider"></div>
-    <div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;">📅 Timeline</h4><div class="timeline">${timelineHtml}</div></div>
-    <div class="divider"></div>
-    <h4 style="margin-bottom:8px;">💬 Messages</h4>
-    <div class="card" style="border:1px solid var(--gray-200);">
-      <div class="chat-wrap">
-        <div class="chat-messages">${msgHtml}</div>
-        <div class="chat-input-row">
-          <input type="text" class="form-control" id="msg-input-${id}" placeholder="Message the researcher..." onkeydown="if(event.key==='Enter')sendMessage('${id}')">
-          <button class="btn btn-primary btn-sm" onclick="sendMessage('${id}')">Send</button>
+          async function refreshNotifCount() {
+            const { data } = await sb.from('notifications')
+              .select('id').eq('user_id', analystProfile.id).eq('is_read', false);
+            const count = (data || []).length;
+            const countEl = document.getElementById('notif-count');
+            if (count > 0) {
+              countEl.textContent = count > 99 ? '99+' : count;
+              countEl.classList.add('show');
+            } else {
+              countEl.classList.remove('show');
+            }
+          }
+
+          // ============================================================
+          // PHASE 1.2 — PROFILE EDITING
+          // ============================================================
+          let pendingAvatarFile = null;
+
+          function openProfileModal() {
+            document.getElementById('profile-name-input').value = analystProfile.full_name || '';
+            document.getElementById('profile-contact-input').value = analystProfile.contact_number || '';
+            document.getElementById('profile-email-input').value = analystProfile.email || '';
+            const av = document.getElementById('profile-modal-avatar');
+            if (analystProfile.avatar_url) {
+              av.innerHTML = '<img src="' + analystProfile.avatar_url + '" style="width:100%;height:100%;object-fit:cover;">';
+            } else {
+              av.textContent = (analystProfile.full_name || '?')[0].toUpperCase();
+            }
+            pendingAvatarFile = null;
+            openModal('modal-profile');
+          }
+
+          function previewAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            pendingAvatarFile = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              document.getElementById('profile-modal-avatar').innerHTML =
+                '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+            };
+            reader.readAsDataURL(file);
+          }
+
+          async function saveProfile() {
+            const name = document.getElementById('profile-name-input').value.trim();
+            const contact = document.getElementById('profile-contact-input').value.trim();
+            if (!name) { showToast('Please enter your full name', 'error'); return; }
+            let avatarUrl = analystProfile.avatar_url;
+            if (pendingAvatarFile) {
+              const ext = pendingAvatarFile.name.split('.').pop();
+              const path = 'avatars/' + analystProfile.id + '.' + ext;
+              const { error: upErr } = await sb.storage.from('attachments').upload(path, pendingAvatarFile, { upsert: true });
+              if (!upErr) {
+                const { data: urlData } = sb.storage.from('attachments').getPublicUrl(path);
+                avatarUrl = urlData.publicUrl;
+              }
+            }
+            const { error } = await sb.from('profiles').update({
+              full_name: name, contact_number: contact, avatar_url: avatarUrl
+            }).eq('id', analystProfile.id);
+            if (error) { showToast('Failed to save profile', 'error'); return; }
+            analystProfile.full_name = name;
+            analystProfile.contact_number = contact;
+            analystProfile.avatar_url = avatarUrl;
+            document.getElementById('sidebar-name').textContent = name;
+            if (avatarUrl) {
+              document.getElementById('sidebar-avatar').innerHTML = '<img src="' + avatarUrl + '" alt="">';
+            } else {
+              document.getElementById('sidebar-avatar').textContent = name[0].toUpperCase();
+            }
+            closeModal('modal-profile');
+            showToast('Profile updated!');
+          }
+    </script>
+
+    <!-- PROFILE EDIT MODAL (Phase 1.2) -->
+    <div
+      class="modal-overlay"
+      id="modal-profile"
+      onclick="if (event.target === this) closeModal('modal-profile');"
+    >
+      <div class="modal" style="max-width: 420px">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Profile</h3>
+          <button class="modal-close" onclick="closeModal('modal-profile')">
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div
+            class="profile-avatar-upload"
+            onclick="document.getElementById('avatar-file-input').click()"
+          >
+            <div
+              class="user-avatar"
+              id="profile-modal-avatar"
+              style="
+                background: var(--gold-light);
+                color: var(--green-dark);
+                width: 80px;
+                height: 80px;
+                font-size: 28px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+              "
+            >
+              ?
+            </div>
+            <div class="avatar-overlay">&#128247;</div>
+          </div>
+          <input
+            type="file"
+            id="avatar-file-input"
+            accept="image/*"
+            style="display: none"
+            onchange="previewAvatar(event)"
+          />
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="profile-name-input"
+              placeholder="Your full name"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Number</label>
+            <input
+              type="text"
+              class="form-control"
+              id="profile-contact-input"
+              placeholder="e.g. 09xx-xxx-xxxx"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input
+              type="text"
+              class="form-control"
+              id="profile-email-input"
+              disabled
+              style="background: var(--gray-50); color: var(--gray-400)"
+            />
+            <div
+              style="font-size: 11px; color: var(--gray-400); margin-top: 4px"
+            >
+              Email cannot be changed
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-secondary"
+            onclick="closeModal('modal-profile')"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="saveProfile()">
+            Save Changes
+          </button>
         </div>
       </div>
     </div>
-  `;
-        setTimeout(() => {
-          const c = document.querySelector(".chat-messages");
-          if (c) c.scrollTop = c.scrollHeight;
-        }, 100);
-        openModal("modal-task");
-      }
-
-      async function sendMessage(requestId) {
-        const input = document.getElementById(`msg-input-${requestId}`);
-        const msg = input.value.trim();
-        if (!msg) return;
-        input.value = "";
-        await sb.from("messages").insert({
-          request_id: requestId,
-          sender_id: profile.id,
-          message: msg,
-        });
-        // Notify researcher
-        const task = allTasks.find((t) => t.id === requestId);
-        if (task)
-          await sb.from("notifications").insert({
-            user_id: task.researcher_id,
-            message: `New message from analyst on your "${task.service_type}" request.`,
-            type: "new_message",
-          });
-        await openTask(requestId);
-      }
-
-      function openUpdateStatus(id) {
-        currentTaskId = id;
-        const task = allTasks.find((t) => t.id === id);
-        if (task)
-          document.getElementById("update-status-val").value = task.status;
-        document.getElementById("update-status-notes").value = "";
-        document.getElementById("result-file-list").innerHTML = "";
-        resultFiles = [];
-        openModal("modal-update-status");
-      }
-
-      function handleResultFiles(input) {
-        resultFiles = Array.from(input.files);
-        document.getElementById("result-file-list").innerHTML = resultFiles
-          .map(
-            (f) =>
-              `<div style="padding:6px 10px;background:var(--gray-50);border-radius:6px;margin-bottom:4px;font-size:13px;">📄 ${f.name}</div>`,
-          )
-          .join("");
-      }
-
-      async function saveStatusUpdate() {
-        if (!currentTaskId) return;
-        const status = document.getElementById("update-status-val").value;
-        const notes = document
-          .getElementById("update-status-notes")
-          .value.trim();
-
-        const btn = document.querySelector("#modal-update-status .btn-primary");
-        btn.disabled = true;
-        btn.textContent = "Saving...";
-
-        await sb
-          .from("service_requests")
-          .update({ status })
-          .eq("id", currentTaskId);
-        await sb.from("request_updates").insert({
-          request_id: currentTaskId,
-          status,
-          notes: notes || null,
-          updated_by: profile.id,
-        });
-
-        // Upload result files
-        for (const file of resultFiles) {
-          const path = `results/${currentTaskId}/${file.name}`;
-          const { data: uploaded } = await sb.storage
-            .from("attachments")
-            .upload(path, file, { upsert: true });
-          if (uploaded) {
-            const {
-              data: { publicUrl },
-            } = sb.storage.from("attachments").getPublicUrl(path);
-            await sb.from("attachments").insert({
-              request_id: currentTaskId,
-              filename: file.name,
-              url: publicUrl,
-              uploaded_by: profile.id,
-              is_result: true,
-            });
-          }
-        }
-
-        // Notify researcher
-        const task = allTasks.find((t) => t.id === currentTaskId);
-        if (task) {
-          await sb.from("notifications").insert({
-            user_id: task.researcher_id,
-            message: `Your "${task.service_type}" request status updated to: ${STATUS_LABELS[status]}.${notes ? " Note: " + notes : ""}`,
-            type: "status_update",
-          });
-        }
-
-        closeModal("modal-update-status");
-        showToast("Status updated!", "success");
-        btn.disabled = false;
-        btn.textContent = "Update Status";
-        await loadTasks();
-      }
-
-      async function loadNotifications() {
-        const { data } = await sb
-          .from("notifications")
-          .select("*")
-          .eq("user_id", profile.id)
-          .order("created_at", { ascending: false });
-        const notifs = data || [];
-        const unread = notifs.filter((n) => !n.is_read).length;
-        const badge = document.getElementById("nb-notifs");
-        if (unread > 0) {
-          badge.textContent = unread;
-          badge.style.display = "";
-          document.getElementById("notif-dot").classList.add("show");
-        } else {
-          badge.style.display = "none";
-          document.getElementById("notif-dot").classList.remove("show");
-        }
-
-        const list = document.getElementById("notif-list");
-        if (!notifs.length) {
-          list.innerHTML =
-            '<div class="empty-state"><div class="empty-state-icon">🔔</div><h3>No notifications</h3></div>';
-          return;
-        }
-        list.innerHTML = notifs
-          .map(
-            (n) => `
-    <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 20px;border-bottom:1px solid var(--gray-100);background:${n.is_read ? "" : "var(--gold-light)"};">
-      <div style="font-size:22px;flex-shrink:0;">🔔</div>
-      <div style="flex:1;">
-        <div style="font-size:14px;font-weight:${n.is_read ? "400" : "600"}">${n.message}</div>
-        <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${timeAgo(n.created_at)}</div>
-      </div>
-      ${!n.is_read ? `<button class="btn btn-ghost btn-sm" onclick="markRead('${n.id}')">✓</button>` : ""}
-    </div>`,
-          )
-          .join("");
-      }
-
-      async function markRead(id) {
-        await sb.from("notifications").update({ is_read: true }).eq("id", id);
-        await loadNotifications();
-      }
-      async function markAllRead() {
-        await sb
-          .from("notifications")
-          .update({ is_read: true })
-          .eq("user_id", profile.id);
-        await loadNotifications();
-      }
-
-      function showSection(id, btn) {
-        ["dashboard", "my-tasks", "notifications"].forEach(
-          (s) =>
-            (document.getElementById(`section-${s}`).style.display =
-              s === id ? "" : "none"),
-        );
-        document
-          .querySelectorAll(".nav-item")
-          .forEach((el) => el.classList.remove("active"));
-        if (btn) btn.classList.add("active");
-        const titles = {
-          dashboard: "Dashboard",
-          "my-tasks": "Assigned Tasks",
-          notifications: "Notifications",
-        };
-        document.getElementById("page-title").textContent = titles[id] || id;
-        document.getElementById("sidebar").classList.remove("open");
-      }
-
-      function openModal(id) {
-        document.getElementById(id).classList.add("open");
-      }
-      function closeModal(id) {
-        document.getElementById(id).classList.remove("open");
-      }
-      document.querySelectorAll(".modal-overlay").forEach((o) =>
-        o.addEventListener("click", (e) => {
-          if (e.target === o) o.classList.remove("open");
-        }),
-      );
-    </script>
+    <input type="hidden" id="avatar-pending-url" value="" />
   </body>
 </html>
