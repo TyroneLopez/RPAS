@@ -12,7 +12,7 @@ A web-based service tracking system for students and researchers to monitor the 
 rpas/
 ├── index.html                  ← Login page
 ├── admin/admin.html            ← Admin dashboard
-├── analyst/analyst.html          ← Data Analyst dashboard
+├── analyst/analyst.html        ← Data Analyst dashboard
 ├── researcher/index.html       ← Researcher/Student dashboard
 ├── assets/
 │   ├── css/style.css           ← Global styles (ACI brand colors)

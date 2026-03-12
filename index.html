@@ -1429,11 +1429,10 @@
 
       function redirectToRole(role) {
         const root = getRootPath();
-        if (role === ROLES.ADMIN)
-          window.location.href = root + "admin/admin.html";
+        if (role === ROLES.ADMIN) window.location.href = root + "admin.html";
         else if (role === ROLES.ANALYST)
-          window.location.href = root + "analyst/analyst.html";
-        else window.location.href = root + "researcher/researcher.html";
+          window.location.href = root + "analyst.html";
+        else window.location.href = root + "researcher.html";
       }
 
       function getRootPath() {
@@ -1732,6 +1731,7 @@
               .eq("id", user.id)
               .single();
             if (!existing) {
+              const emailConfirmed = !!user.email_confirmed_at;
               await sb.from("profiles").insert({
                 id: user.id,
                 email: user.email,
@@ -1739,15 +1739,38 @@
                 avatar_url: user.user_metadata.avatar_url || null,
                 role: "researcher",
                 status: "pending",
+                email_confirmed: emailConfirmed,
               });
-              msgAlert.innerHTML =
-                '<div class="alert alert-warning">⏳ Account created! Waiting for admin approval.</div>';
+              if (!emailConfirmed) {
+                msgAlert.innerHTML =
+                  '<div class="alert alert-info">📧 A verification email has been sent. Please verify your email before your account can be reviewed by the admin.</div>';
+              } else {
+                msgAlert.innerHTML =
+                  '<div class="alert alert-warning">⏳ Account created! Waiting for admin approval.</div>';
+              }
               await sb.auth.signOut();
               return;
             }
+            // If returning user now has confirmed email, sync it to profile
+            if (
+              existing &&
+              !existing.email_confirmed &&
+              user.email_confirmed_at
+            ) {
+              await sb
+                .from("profiles")
+                .update({ email_confirmed: true })
+                .eq("id", user.id);
+              existing.email_confirmed = true;
+            }
             if (existing.status === "pending") {
-              msgAlert.innerHTML =
-                '<div class="alert alert-warning">⏳ Your account is pending admin approval.</div>';
+              if (!existing.email_confirmed) {
+                msgAlert.innerHTML =
+                  '<div class="alert alert-info">📧 Please verify your email first. Check your inbox for a confirmation link before admin can review your account.</div>';
+              } else {
+                msgAlert.innerHTML =
+                  '<div class="alert alert-warning">⏳ Email verified! Your account is pending admin approval.</div>';
+              }
               await sb.auth.signOut();
               return;
             }
