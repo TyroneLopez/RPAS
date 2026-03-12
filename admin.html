@@ -2319,11 +2319,20 @@
 
       async function approveUser(id) {
         await sb.from("profiles").update({ status: "approved" }).eq("id", id);
+        // In-app notification
         await sb.from("notifications").insert({
           user_id: id,
           message: "Your RPAS account has been approved! You can now log in.",
           type: "account_approved",
         });
+        // Email notification via Edge Function
+        const { data: approvedUser } = await sb
+          .from("profiles")
+          .select("*")
+          .eq("id", id)
+          .single();
+        if (approvedUser)
+          await sendEmailNotification("account_approved", approvedUser);
         showToast("User approved!", "success");
         await loadUsers();
       }
@@ -2347,6 +2356,21 @@
       async function rejectUser(id) {
         if (!confirm("Reject this user account?")) return;
         await sb.from("profiles").update({ status: "rejected" }).eq("id", id);
+        // In-app notification
+        await sb.from("notifications").insert({
+          user_id: id,
+          message:
+            "Your RPAS account registration was not approved. Please contact RPAS for assistance.",
+          type: "account_rejected",
+        });
+        // Email notification via Edge Function
+        const { data: rejectedUser } = await sb
+          .from("profiles")
+          .select("*")
+          .eq("id", id)
+          .single();
+        if (rejectedUser)
+          await sendEmailNotification("account_rejected", rejectedUser);
         showToast("User rejected.", "warning");
         await loadUsers();
       }
@@ -2491,13 +2515,36 @@
               message: msg.trim(),
               type: "assignment",
             });
-          // Notify analyst
+          // Notify analyst (in-app + email)
           if (analystId && analystId !== req.analyst_id) {
             await sb.from("notifications").insert({
               user_id: analystId,
               message: `You have been assigned a new request: "${req.service_type}" from ${req.researcher?.full_name || "a researcher"}.`,
               type: "assignment",
             });
+            const { data: analystData } = await sb
+              .from("profiles")
+              .select("*")
+              .eq("id", analystId)
+              .single();
+            if (analystData)
+              await sendEmailNotification("new_assignment", analystData, {
+                service_type: req.service_type,
+                researcher_name: req.researcher?.full_name || "a researcher",
+              });
+          }
+          // Notify researcher of status change via email
+          if (status && req.researcher_id) {
+            const { data: resData } = await sb
+              .from("profiles")
+              .select("*")
+              .eq("id", req.researcher_id)
+              .single();
+            if (resData)
+              await sendEmailNotification("status_update", resData, {
+                service_type: req.service_type,
+                new_status: STATUS_LABELS[status] || status,
+              });
           }
         }
         closeModal("modal-assign");
@@ -2945,6 +2992,36 @@
 
         closeModal("modal-profile");
         showToast("Profile updated successfully!");
+      }
+
+      // ============================================================
+      // EMAIL NOTIFICATION via Supabase Edge Function (Phase 1.3)
+      // ============================================================
+      async function sendEmailNotification(type, userProfile, extra = {}) {
+        try {
+          const {
+            data: { session },
+          } = await sb.auth.getSession();
+          if (!session) return;
+          await fetch(
+            "https://wkgacywvsndwiezqdcxj.supabase.co/functions/v1/send-email",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + session.access_token,
+              },
+              body: JSON.stringify({
+                type: type,
+                to: userProfile.email,
+                name: userProfile.full_name || userProfile.email,
+                ...extra,
+              }),
+            },
+          );
+        } catch (e) {
+          console.warn("Email notification failed (non-critical):", e.message);
+        }
       }
     </script>
 

@@ -1109,6 +1109,109 @@
         margin-bottom: 32px;
       }
 
+      .auth-tabs {
+        display: flex;
+        gap: 0;
+        margin-bottom: 24px;
+        border-bottom: 2px solid var(--gray-200);
+      }
+      .auth-tab {
+        flex: 1;
+        background: none;
+        border: none;
+        padding: 10px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-400);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition:
+          color 0.2s,
+          border-color 0.2s;
+      }
+      .auth-tab.active {
+        color: var(--green);
+        border-bottom-color: var(--green);
+      }
+      .auth-panel {
+        display: none;
+      }
+      .auth-panel.active {
+        display: block;
+      }
+      .form-field {
+        margin-bottom: 14px;
+      }
+      .form-field label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 5px;
+      }
+      .form-field input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--gray-300);
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+        font-family: "Inter", sans-serif;
+      }
+      .form-field input:focus {
+        border-color: var(--green);
+      }
+      .btn-email {
+        width: 100%;
+        padding: 12px;
+        background: var(--green);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 4px;
+        transition: background 0.2s;
+        font-family: "Inter", sans-serif;
+      }
+      .btn-email:hover {
+        background: #155a28;
+      }
+      .btn-email:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .auth-switch {
+        text-align: center;
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--gray-500);
+      }
+      .auth-switch a {
+        color: var(--green);
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .or-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 18px 0;
+        color: var(--gray-400);
+        font-size: 12px;
+      }
+      .or-divider::before,
+      .or-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--gray-200);
+      }
       .btn-google {
         display: flex;
         align-items: center;
@@ -1617,7 +1720,7 @@
       </div>
       <div class="login-right">
         <div class="login-box">
-          <div style="margin-bottom: 32px">
+          <div style="margin-bottom: 24px">
             <p
               style="
                 font-size: 13px;
@@ -1633,36 +1736,172 @@
             <h2 style="font-size: 30px; margin-bottom: 8px">Sign in to RPAS</h2>
             <p>Access your research service tracker portal</p>
           </div>
+
           <div id="msg-alert"></div>
-          <button class="btn-google" id="btn-google">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
-            </svg>
-            Continue with Google
-          </button>
-          <div class="login-note" style="margin-top: 20px">
-            ⓘ &nbsp;New accounts require <strong>admin approval</strong> before
-            access is granted. You will be notified once approved.
+
+          <!-- AUTH TABS -->
+          <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchTab('google')">
+              Continue with Google
+            </button>
+            <button class="auth-tab" onclick="switchTab('email')">
+              Email & Password
+            </button>
           </div>
+
+          <!-- GOOGLE PANEL -->
+          <div class="auth-panel active" id="panel-google">
+            <button class="btn-google" id="btn-google">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+              Continue with Google
+            </button>
+            <div class="login-note" style="margin-top: 16px">
+              ⓘ &nbsp;New accounts require
+              <strong>admin approval</strong> before access is granted.
+            </div>
+          </div>
+
+          <!-- EMAIL PANEL -->
+          <div class="auth-panel" id="panel-email">
+            <!-- Sign In Form -->
+            <div id="form-signin">
+              <div class="form-field">
+                <label>Email Address</label>
+                <input
+                  type="email"
+                  id="signin-email"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div class="form-field">
+                <label>Password</label>
+                <input
+                  type="password"
+                  id="signin-password"
+                  placeholder="Your password"
+                />
+              </div>
+              <button
+                class="btn-email"
+                id="btn-signin"
+                onclick="handleEmailSignIn()"
+              >
+                Sign In
+              </button>
+              <div class="auth-switch">
+                Don't have an account?
+                <a onclick="showEmailForm('signup')">Create one</a>
+                &nbsp;·&nbsp;
+                <a onclick="showEmailForm('reset')">Forgot password?</a>
+              </div>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div id="form-signup" style="display: none">
+              <div class="form-field">
+                <label>Full Name</label>
+                <input
+                  type="text"
+                  id="signup-name"
+                  placeholder="Your full name"
+                />
+              </div>
+              <div class="form-field">
+                <label>Email Address</label>
+                <input
+                  type="email"
+                  id="signup-email"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div class="form-field">
+                <label
+                  >Password
+                  <span style="font-size: 11px; color: var(--gray-400)"
+                    >(min. 8 characters)</span
+                  ></label
+                >
+                <input
+                  type="password"
+                  id="signup-password"
+                  placeholder="Create a password"
+                />
+              </div>
+              <div class="form-field">
+                <label>Confirm Password</label>
+                <input
+                  type="password"
+                  id="signup-confirm"
+                  placeholder="Repeat your password"
+                />
+              </div>
+              <button
+                class="btn-email"
+                id="btn-signup"
+                onclick="handleEmailSignUp()"
+              >
+                Create Account
+              </button>
+              <div class="auth-switch">
+                Already have an account?
+                <a onclick="showEmailForm('signin')">Sign in</a>
+              </div>
+            </div>
+
+            <!-- Reset Password Form -->
+            <div id="form-reset" style="display: none">
+              <p
+                style="
+                  font-size: 13px;
+                  color: var(--gray-600);
+                  margin-bottom: 16px;
+                "
+              >
+                Enter your email and we'll send you a link to reset your
+                password.
+              </p>
+              <div class="form-field">
+                <label>Email Address</label>
+                <input
+                  type="email"
+                  id="reset-email"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <button
+                class="btn-email"
+                id="btn-reset"
+                onclick="handlePasswordReset()"
+              >
+                Send Reset Link
+              </button>
+              <div class="auth-switch">
+                <a onclick="showEmailForm('signin')">← Back to Sign In</a>
+              </div>
+            </div>
+          </div>
+
           <div
             style="
-              margin-top: 32px;
-              padding-top: 24px;
+              margin-top: 24px;
+              padding-top: 20px;
               border-top: 1px solid var(--gray-200);
               text-align: center;
             "
@@ -1670,13 +1909,9 @@
             <p style="font-size: 12px; color: var(--gray-400)">
               For account issues, contact the RPAS Office<br />
               <a
-                href="/cdn-cgi/l/email-protection#b5c7c5d4c6f5d4d9d1d0c7c6d2d4c1d09bd0d1c09bc5dd"
+                href="mailto:rpas@aldersgate.edu.ph"
                 style="color: var(--green); font-weight: 500"
-                ><span
-                  class="__cf_email__"
-                  data-cfemail="0f7d7f6e7c4f6e636b6a7d7c686e7b6a216a6b7a217f67"
-                  >[email&#160;protected]</span
-                ></a
+                >rpas@aldersgate.edu.ph</a
               >
             </p>
           </div>
@@ -1684,16 +1919,72 @@
       </div>
     </div>
     <script>
+      // ── UI HELPERS ──────────────────────────────────────────
+      function switchTab(tab) {
+        document.querySelectorAll(".auth-tab").forEach((t, i) => {
+          t.classList.toggle(
+            "active",
+            (i === 0 && tab === "google") || (i === 1 && tab === "email"),
+          );
+        });
+        document
+          .getElementById("panel-google")
+          .classList.toggle("active", tab === "google");
+        document
+          .getElementById("panel-email")
+          .classList.toggle("active", tab === "email");
+      }
+
+      function showEmailForm(form) {
+        ["signin", "signup", "reset"].forEach(
+          (f) =>
+            (document.getElementById("form-" + f).style.display =
+              f === form ? "" : "none"),
+        );
+        document.getElementById("msg-alert").innerHTML = "";
+      }
+
+      function showMsg(html) {
+        document.getElementById("msg-alert").innerHTML = html;
+        document
+          .getElementById("msg-alert")
+          .scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      function setLoading(btnId, loading, label) {
+        const btn = document.getElementById(btnId);
+        btn.disabled = loading;
+        btn.textContent = loading ? "Please wait..." : label;
+      }
+
+      // ── MAIN AUTH FLOW ────────────────────────────────────────
       (async () => {
-        const params = new URLSearchParams(window.location.search);
         const msgAlert = document.getElementById("msg-alert");
-        if (params.get("msg") === "verify") {
-          msgAlert.innerHTML =
-            '<div class="alert alert-warning">📧 Please verify your email first. Check your inbox for a confirmation link.</div>';
-        } else if (params.get("msg") === "pending") {
-          msgAlert.innerHTML =
-            '<div class="alert alert-warning">⏳ <strong>Account pending approval.</strong> Please wait while the admin reviews your registration. You will be notified once approved.</div>';
+
+        // Show any session-stored message (after signOut redirect)
+        const savedMsg = sessionStorage.getItem("rpas_msg");
+        if (savedMsg) {
+          msgAlert.innerHTML = savedMsg;
+          sessionStorage.removeItem("rpas_msg");
         }
+
+        // Handle ?msg= query params
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("msg") === "verify") {
+          showMsg(
+            '<div class="alert alert-warning">📧 <strong>Check your email.</strong> Click the verification link we sent you, then come back here to sign in.</div>',
+          );
+        } else if (params.get("msg") === "pending") {
+          showMsg(
+            '<div class="alert alert-warning">⏳ Your account is pending admin approval. Please wait.</div>',
+          );
+        } else if (params.get("msg") === "reset") {
+          showMsg(
+            '<div class="alert alert-success">✅ Password reset email sent! Check your inbox.</div>',
+          );
+        }
+
+        // If already logged in and approved → redirect
         const session = await getSession();
         if (session) {
           const profile = await getProfile(session.user.id);
@@ -1702,6 +1993,8 @@
             return;
           }
         }
+
+        // ── GOOGLE SIGN IN ──
         document
           .getElementById("btn-google")
           .addEventListener("click", async () => {
@@ -1716,65 +2009,241 @@
             });
             if (error) {
               btn.disabled = false;
+              btn.textContent = "Continue with Google";
             }
           });
-        // Show any message saved before a signOut redirect
-        const savedMsg = sessionStorage.getItem("rpas_msg");
-        if (savedMsg) {
-          msgAlert.innerHTML = savedMsg;
-          sessionStorage.removeItem("rpas_msg");
-        }
 
-        function showAndRedirect(html) {
-          sessionStorage.setItem("rpas_msg", html);
-          sb.auth.signOut().then(() => {
-            window.location.href = getRootPath() + "index.html";
-          });
-        }
-
+        // ── AUTH STATE CHANGE (Google OAuth callback + email confirm) ──
         sb.auth.onAuthStateChange(async (event, session) => {
           if (event === "SIGNED_IN" && session) {
-            const user = session.user;
-            const { data: existing } = await sb
-              .from("profiles")
-              .select("*")
-              .eq("id", user.id)
-              .single();
-            if (!existing) {
-              // New user — create profile and show pending message
-              await sb.from("profiles").insert({
-                id: user.id,
-                email: user.email,
-                full_name: user.user_metadata.full_name || user.email,
-                avatar_url: user.user_metadata.avatar_url || null,
-                role: "researcher",
-                status: "pending",
-                email_confirmed: true, // Google OAuth always verifies email
-              });
-              showAndRedirect(
-                '<div class="alert alert-warning">⏳ <strong>Account registered!</strong> Your account is now pending admin approval. Please wait while the admin reviews your registration. For inquiries, contact the RPAS Office.</div>',
-              );
-              return;
-            }
-            if (existing.status === "pending") {
-              showAndRedirect(
-                '<div class="alert alert-warning">⏳ <strong>Account pending approval.</strong> Your account is still awaiting admin review. You will be notified once approved. For inquiries, contact the RPAS Office.</div>',
-              );
-              return;
-            }
-            if (existing.status === "rejected") {
-              showAndRedirect(
-                '<div class="alert alert-danger">❌ <strong>Account rejected.</strong> Your account was not approved. For more information, please contact the RPAS Office.</div>',
-              );
-              return;
-            }
-            if (existing.status === "approved") {
-              redirectToRole(existing.role);
-              return;
-            }
+            await handleSignedIn(session.user);
+          }
+          if (event === "PASSWORD_RECOVERY") {
+            // User clicked reset link — handled by Supabase redirect
           }
         });
       })();
+
+      // ── SHARED: handle any signed-in user ────────────────────
+      async function handleSignedIn(user) {
+        const { data: existing } = await sb
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        // Email/password user who hasn't verified yet
+        if (
+          !user.email_confirmed_at &&
+          user.app_metadata?.provider === "email"
+        ) {
+          await sb.auth.signOut();
+          showMsg(
+            '<div class="alert alert-warning">📧 <strong>Please verify your email first.</strong> Check your inbox for a confirmation link, then sign in again.</div>',
+          );
+          return;
+        }
+
+        if (!existing) {
+          // New user — create profile
+          await sb.from("profiles").insert({
+            id: user.id,
+            email: user.email,
+            full_name:
+              user.user_metadata?.full_name ||
+              user.user_metadata?.name ||
+              user.email,
+            avatar_url: user.user_metadata?.avatar_url || null,
+            role: "researcher",
+            status: "pending",
+            email_confirmed: true,
+          });
+          // Notify all admins
+          const { data: admins } = await sb
+            .from("profiles")
+            .select("id")
+            .eq("role", "admin")
+            .eq("status", "approved");
+          if (admins?.length) {
+            for (const admin of admins) {
+              await sb.from("notifications").insert({
+                user_id: admin.id,
+                message:
+                  "New user registered and awaiting approval: " +
+                  (user.user_metadata?.full_name || user.email),
+                type: "system",
+                is_read: false,
+              });
+            }
+          }
+          // Send welcome email via Edge Function
+          await sendEmail("welcome", {
+            to: user.email,
+            name: user.user_metadata?.full_name || user.email,
+          });
+          showAndRedirect(
+            '<div class="alert alert-warning" style="line-height:1.7;">' +
+              "✅ <strong>Account created successfully!</strong><br>" +
+              "Your account is now <strong>pending review</strong>. " +
+              "The RPAS admin will review and approve your registration.<br><br>" +
+              "📧 You will be notified by email once your account has been approved.<br>" +
+              '<span style="font-size:13px;color:#6b7280;">For inquiries, contact the RPAS Office.</span>' +
+              "</div>",
+          );
+          return;
+        }
+
+        if (existing.status === "pending") {
+          showAndRedirect(
+            '<div class="alert alert-warning" style="line-height:1.7;">' +
+              "⏳ <strong>Account pending approval.</strong><br>" +
+              "Your registration is still under review. Please wait for the admin to approve your account.<br><br>" +
+              '<span style="font-size:13px;color:#6b7280;">For inquiries, contact the RPAS Office.</span>' +
+              "</div>",
+          );
+          return;
+        }
+
+        if (existing.status === "rejected") {
+          showAndRedirect(
+            '<div class="alert alert-danger" style="line-height:1.7;">' +
+              "❌ <strong>Account not approved.</strong><br>" +
+              "Your registration was reviewed and was not approved.<br><br>" +
+              '<span style="font-size:13px;color:#6b7280;">For more information, please contact the RPAS Office.</span>' +
+              "</div>",
+          );
+          return;
+        }
+
+        if (existing.status === "approved") {
+          redirectToRole(existing.role);
+        }
+      }
+
+      function showAndRedirect(html) {
+        sessionStorage.setItem("rpas_msg", html);
+        sb.auth.signOut().then(() => {
+          window.location.href = getRootPath() + "index.html";
+        });
+      }
+
+      // ── EMAIL SIGN IN ─────────────────────────────────────────
+      async function handleEmailSignIn() {
+        const email = document.getElementById("signin-email").value.trim();
+        const password = document.getElementById("signin-password").value;
+        if (!email || !password) {
+          showMsg(
+            '<div class="alert alert-warning">Please enter your email and password.</div>',
+          );
+          return;
+        }
+        setLoading("btn-signin", true);
+        const { data, error } = await sb.auth.signInWithPassword({
+          email,
+          password,
+        });
+        setLoading("btn-signin", false, "Sign In");
+        if (error) {
+          showMsg(
+            '<div class="alert alert-danger">❌ ' +
+              (error.message === "Invalid login credentials"
+                ? "Incorrect email or password."
+                : error.message) +
+              "</div>",
+          );
+          return;
+        }
+        await handleSignedIn(data.user);
+      }
+
+      // ── EMAIL SIGN UP ─────────────────────────────────────────
+      async function handleEmailSignUp() {
+        const name = document.getElementById("signup-name").value.trim();
+        const email = document.getElementById("signup-email").value.trim();
+        const password = document.getElementById("signup-password").value;
+        const confirm = document.getElementById("signup-confirm").value;
+        if (!name || !email || !password || !confirm) {
+          showMsg(
+            '<div class="alert alert-warning">Please fill in all fields.</div>',
+          );
+          return;
+        }
+        if (password.length < 8) {
+          showMsg(
+            '<div class="alert alert-warning">Password must be at least 8 characters.</div>',
+          );
+          return;
+        }
+        if (password !== confirm) {
+          showMsg(
+            '<div class="alert alert-danger">❌ Passwords do not match.</div>',
+          );
+          return;
+        }
+        setLoading("btn-signup", true);
+        const { error } = await sb.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: name },
+            emailRedirectTo: window.location.origin + window.location.pathname,
+          },
+        });
+        setLoading("btn-signup", false, "Create Account");
+        if (error) {
+          showMsg(
+            '<div class="alert alert-danger">❌ ' + error.message + "</div>",
+          );
+          return;
+        }
+        showMsg(
+          '<div class="alert alert-success" style="line-height:1.7;">' +
+            "📧 <strong>Verify your email!</strong><br>" +
+            "We sent a confirmation link to <strong>" +
+            email +
+            "</strong>.<br>" +
+            "Click it to verify your account, then come back here to sign in.<br>" +
+            '<span style="font-size:13px;color:#6b7280;">Check your spam folder if you don\'t see it.</span>' +
+            "</div>",
+        );
+      }
+
+      // ── PASSWORD RESET ────────────────────────────────────────
+      async function handlePasswordReset() {
+        const email = document.getElementById("reset-email").value.trim();
+        if (!email) {
+          showMsg(
+            '<div class="alert alert-warning">Please enter your email address.</div>',
+          );
+          return;
+        }
+        setLoading("btn-reset", true);
+        const { error } = await sb.auth.resetPasswordForEmail(email, {
+          redirectTo:
+            window.location.origin + window.location.pathname + "?msg=reset",
+        });
+        setLoading("btn-reset", false, "Send Reset Link");
+        if (error) {
+          showMsg(
+            '<div class="alert alert-danger">❌ ' + error.message + "</div>",
+          );
+          return;
+        }
+        showMsg(
+          '<div class="alert alert-success">✅ Reset link sent! Check your inbox (and spam folder).</div>',
+        );
+      }
+
+      // ── EMAIL SENDING via Edge Function ──────────────────────
+      async function sendEmail(type, payload) {
+        try {
+          await sb.functions.invoke("send-email", {
+            body: { type, ...payload },
+          });
+        } catch (e) {
+          console.warn("Email send failed (non-blocking):", e);
+        }
+      }
     </script>
   </body>
 </html>

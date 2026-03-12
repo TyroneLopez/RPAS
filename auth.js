@@ -1,8 +1,8 @@
 // =============================================
-// SHARED AUTH LOGIC
+// SHARED AUTH LOGIC — RPAS
 // =============================================
-// Using var to avoid redeclaration errors when loaded
-// alongside inline dashboard scripts that define the same constants
+// Using var to prevent redeclaration errors across
+// inline dashboard scripts that share this file
 
 var ROLES = { ADMIN: "admin", ANALYST: "analyst", RESEARCHER: "researcher" };
 var STATUS_LABELS = {
@@ -60,7 +60,6 @@ async function requireAuth(expectedRole) {
     window.location.href = getRootPath() + "index.html";
     return null;
   }
-  // Google OAuth auto-verifies email — no email check needed
   const profile = await getProfile(session.user.id);
   if (!profile || profile.status !== "approved") {
     await sb.auth.signOut();
@@ -82,7 +81,7 @@ function redirectToRole(role) {
 }
 
 function getRootPath() {
-  return ""; // All files are flat at root level
+  return "";
 }
 
 async function signOut() {
@@ -121,48 +120,121 @@ function showToast(msg, type = "success") {
   }, 3000);
 }
 
-// =============================================
-// PHASE 1.3 — IN-APP NOTIFICATION HELPERS
-// =============================================
+// ── EMAIL (Supabase Edge Function → Resend.com) ───────────────
 
-async function createNotification(userId, message, type = "system") {
-  if (!userId) return;
-  await sb.from("notifications").insert({
-    user_id: userId,
-    message: message,
-    type: type,
-    is_read: false,
-  });
-}
-
-async function notifyStatusChange(request, newStatus, analystId, researcherId) {
-  const label = STATUS_LABELS[newStatus] || newStatus;
-  if (researcherId) {
-    await createNotification(
-      researcherId,
-      "Your request status has been updated to: " + label,
-      "status",
-    );
+async function sendEmail(type, payload) {
+  try {
+    await sb.functions.invoke("send-email", { body: { type, ...payload } });
+  } catch (e) {
+    console.warn("sendEmail non-blocking fail:", e);
   }
 }
 
-async function notifyNewAssignment(analystId, researcherName, serviceType) {
-  if (!analystId) return;
-  await createNotification(
-    analystId,
-    "New request assigned to you: " +
-      serviceType +
-      " from " +
-      (researcherName || "a researcher"),
-    "assignment",
-  );
+// ── IN-APP NOTIFICATIONS ──────────────────────────────────────
+
+async function createNotification(userId, message, type = "system") {
+  if (!userId) return;
+  await sb
+    .from("notifications")
+    .insert({ user_id: userId, message, type, is_read: false });
 }
 
-async function notifyNewMessage(recipientId, senderName) {
-  if (!recipientId) return;
+// ── TRIGGERS (in-app + email together) ───────────────────────
+
+async function notifyAccountApproved(userProfile) {
   await createNotification(
-    recipientId,
-    "New message from " + (senderName || "someone"),
+    userProfile.id,
+    "Your RPAS account has been approved! You can now sign in.",
+    "system",
+  );
+  await sendEmail("account_approved", {
+    to: userProfile.email,
+    name: userProfile.full_name || userProfile.email,
+  });
+}
+
+async function notifyAccountRejected(userProfile, reason = "") {
+  await createNotification(
+    userProfile.id,
+    "Your RPAS account registration was not approved. Contact the RPAS Office for details.",
+    "system",
+  );
+  await sendEmail("account_rejected", {
+    to: userProfile.email,
+    name: userProfile.full_name || userProfile.email,
+    reason,
+  });
+}
+
+async function notifyAdminsNewUser(userEmail, userName) {
+  const { data: admins } = await sb
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("role", "admin")
+    .eq("status", "approved");
+  if (!admins?.length) return;
+  for (const admin of admins) {
+    await createNotification(
+      admin.id,
+      `New user registered and awaiting approval: ${userName || userEmail}`,
+      "system",
+    );
+    await sendEmail("admin_new_user", {
+      to: admin.email,
+      name: admin.full_name || "Admin",
+      user_name: userName || userEmail,
+      user_email: userEmail,
+    });
+  }
+}
+
+async function notifyStatusChange(request, newStatus, researcherProfile) {
+  const label = STATUS_LABELS[newStatus] || newStatus;
+  if (!researcherProfile) return;
+  await createNotification(
+    researcherProfile.id,
+    `Your request status has been updated to: ${label}`,
+    "status",
+  );
+  await sendEmail("status_update", {
+    to: researcherProfile.email,
+    name: researcherProfile.full_name || researcherProfile.email,
+    service_type: request?.service_type || "—",
+    status_label: label,
+    note: request?.admin_note || "",
+  });
+}
+
+async function notifyNewAssignment(
+  analystProfile,
+  researcherName,
+  serviceType,
+) {
+  if (!analystProfile) return;
+  await createNotification(
+    analystProfile.id,
+    `New request assigned to you: ${serviceType} from ${researcherName || "a researcher"}`,
+    "assignment",
+  );
+  await sendEmail("new_assignment", {
+    to: analystProfile.email,
+    name: analystProfile.full_name || analystProfile.email,
+    service_type: serviceType,
+    researcher_name: researcherName,
+  });
+}
+
+async function notifyNewMessage(recipientProfile, senderName, preview = "") {
+  if (!recipientProfile) return;
+  await createNotification(
+    recipientProfile.id,
+    `New message from ${senderName || "someone"}`,
     "message",
   );
+  await sendEmail("new_message", {
+    to: recipientProfile.email,
+    name: recipientProfile.full_name || recipientProfile.email,
+    sender_name: senderName,
+    preview,
+  });
 }
