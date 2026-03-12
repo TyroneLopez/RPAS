@@ -959,15 +959,44 @@
       .notif-item.unread .notif-unread-dot {
         display: block;
       }
+      .notif-delete-btn {
+        background: none;
+        border: none;
+        color: var(--gray-400);
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        padding: 2px 4px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        opacity: 0;
+        transition:
+          opacity 0.15s,
+          color 0.15s;
+        align-self: flex-start;
+        margin-top: 2px;
+      }
+      .notif-item:hover .notif-delete-btn {
+        opacity: 1;
+      }
+      .notif-delete-btn:hover {
+        color: var(--danger);
+        background: #fee2e2;
+      }
       .notif-empty {
-        padding: 40px 20px;
+        padding: 48px 24px;
         text-align: center;
         color: var(--gray-400);
-        font-size: 14px;
+        font-size: 13px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
       }
       .notif-empty-icon {
-        font-size: 32px;
-        margin-bottom: 8px;
+        font-size: 40px;
+        margin-bottom: 4px;
+        opacity: 0.6;
       }
 
       /* ---- PROFILE EDIT TRIGGER ---- */
@@ -1543,9 +1572,9 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./assets/js/supabase.js"></script>
-    <script src="./auth.js"></script>
-    <!-- auth.js loaded externally -->
+    <script src="assets/js/supabase.js"></script>
+    <script src="auth.js"></script>
+    <!-- shared auth loaded via auth.js -->
   </head>
   <body>
     <div class="app-layout">
@@ -1640,7 +1669,7 @@
                 <div class="notif-panel-body" id="notif-panel-body">
                   <div class="notif-empty">
                     <div class="notif-empty-icon">🔔</div>
-                    No notifications yet
+                    <div>No notifications yet</div>
                   </div>
                 </div>
               </div>
@@ -1998,12 +2027,8 @@
           .on(
             "postgres_changes",
             { event: "*", schema: "public", table: "profiles" },
-            () => loadUsers(),
-          )
-          .on(
-            "postgres_changes",
             { event: "INSERT", schema: "public", table: "notifications" },
-            () => refreshNotifCount(),
+            () => loadUsers(),
           )
           .subscribe();
       })();
@@ -2117,41 +2142,63 @@
           return;
         }
         el.innerHTML = list
-          .map(
-            (u) => `
+          .map((u) => {
+            const emailVerified = u.email_confirmed === true;
+            const verifiedBadge = emailVerified
+              ? `<span style="font-size:11px;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:99px;">✅ Email Verified</span>`
+              : `<span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:99px;">⏳ Awaiting Email Verification</span>`;
+            const actionButtons = emailVerified
+              ? `<button class="btn btn-primary btn-sm" onclick="approveUserWithRole('${u.id}')">✓ Approve</button>
+                   <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">✗ Reject</button>`
+              : `<button class="btn btn-sm" disabled style="opacity:0.4;cursor:not-allowed;">✓ Approve</button>
+                   <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">✗ Reject</button>`;
+            return `
     <div style="display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid var(--gray-100);">
       <div class="user-avatar" style="background:var(--gold-light);color:var(--green-dark);width:44px;height:44px;">${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : u.full_name?.[0] || "?"}</div>
       <div style="flex:1;">
         <div style="font-weight:600;font-size:15px;">${u.full_name || "Unknown"}</div>
         <div style="font-size:13px;color:var(--gray-400);">${u.email}</div>
         <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">Registered: ${formatDate(u.created_at)}</div>
+        <div style="margin-top:5px;">${verifiedBadge}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-        <div class="form-group" style="margin:0;display:flex;gap:6px;align-items:center;">
+        ${
+          emailVerified
+            ? `<div class="form-group" style="margin:0;display:flex;gap:6px;align-items:center;">
           <label style="font-size:12px;color:var(--gray-500);">Role:</label>
           <select class="form-control" id="role-${u.id}" style="width:auto;font-size:13px;padding:5px 8px;">
             <option value="researcher">Researcher</option>
             <option value="analyst">Data Analyst</option>
             <option value="admin">Admin</option>
           </select>
-        </div>
+        </div>`
+            : `<div style="font-size:12px;color:var(--gray-400);max-width:160px;text-align:right;">User must verify email before approval</div>`
+        }
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary btn-sm" onclick="approveUserWithRole('${u.id}')">✓ Approve</button>
-          <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">✗ Reject</button>
+          ${actionButtons}
         </div>
       </div>
-    </div>`,
-          )
+    </div>`;
+          })
           .join("");
       }
 
       async function approveUser(id) {
         await sb.from("profiles").update({ status: "approved" }).eq("id", id);
+        // In-app notification
         await sb.from("notifications").insert({
           user_id: id,
           message: "Your RPAS account has been approved! You can now log in.",
           type: "account_approved",
         });
+        // Email notification via Edge Function
+        const { data: approvedUser } = await sb
+          .from("profiles")
+          .select("*")
+          .eq("id", id)
+          .single();
+        if (approvedUser)
+          await sendEmailNotification("account_approved", approvedUser);
         showToast("User approved!", "success");
         await loadUsers();
       }
@@ -2175,6 +2222,21 @@
       async function rejectUser(id) {
         if (!confirm("Reject this user account?")) return;
         await sb.from("profiles").update({ status: "rejected" }).eq("id", id);
+        // In-app notification
+        await sb.from("notifications").insert({
+          user_id: id,
+          message:
+            "Your RPAS account registration was not approved. Please contact RPAS for assistance.",
+          type: "account_rejected",
+        });
+        // Email notification via Edge Function
+        const { data: rejectedUser } = await sb
+          .from("profiles")
+          .select("*")
+          .eq("id", id)
+          .single();
+        if (rejectedUser)
+          await sendEmailNotification("account_rejected", rejectedUser);
         showToast("User rejected.", "warning");
         await loadUsers();
       }
@@ -2319,13 +2381,36 @@
               message: msg.trim(),
               type: "assignment",
             });
-          // Notify analyst
+          // Notify analyst (in-app + email)
           if (analystId && analystId !== req.analyst_id) {
             await sb.from("notifications").insert({
               user_id: analystId,
               message: `You have been assigned a new request: "${req.service_type}" from ${req.researcher?.full_name || "a researcher"}.`,
               type: "assignment",
             });
+            const { data: analystData } = await sb
+              .from("profiles")
+              .select("*")
+              .eq("id", analystId)
+              .single();
+            if (analystData)
+              await sendEmailNotification("new_assignment", analystData, {
+                service_type: req.service_type,
+                researcher_name: req.researcher?.full_name || "a researcher",
+              });
+          }
+          // Notify researcher of status change via email
+          if (status && req.researcher_id) {
+            const { data: resData } = await sb
+              .from("profiles")
+              .select("*")
+              .eq("id", req.researcher_id)
+              .single();
+            if (resData)
+              await sendEmailNotification("status_update", resData, {
+                service_type: req.service_type,
+                new_status: STATUS_LABELS[status] || status,
+              });
           }
         }
         closeModal("modal-assign");
@@ -2590,13 +2675,14 @@
           const icon = icons[n.type] || "&#128276;";
           const cls = n.is_read ? "notif-item" : "notif-item unread";
           return (
-            '<button class="' +
+            '<div class="' +
             cls +
-            '" data-nid="' +
-            (n.id || "") +
-            '" data-ntype="' +
+            '" style="display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gray-50);">' +
+            '<button style="display:flex;gap:10px;flex:1;background:none;border:none;cursor:pointer;text-align:left;padding:0;" onclick="handleNotifClick(\'' +
+            n.id +
+            "', '" +
             (n.type || "") +
-            '" onclick="handleNotifClick(this.dataset.nid, this.dataset.ntype)">' +
+            "')\">" +
             '<div class="notif-item-icon">' +
             icon +
             "</div>" +
@@ -2608,8 +2694,11 @@
             timeAgo(n.created_at) +
             "</div>" +
             "</div>" +
-            '<div class="notif-unread-dot"></div>' +
-            "</button>"
+            "</button>" +
+            '<button class="notif-delete-btn" title="Delete notification" onclick="deleteNotif(\'' +
+            n.id +
+            "')\">×</button>" +
+            "</div>"
           );
         });
         body.innerHTML = items.join("");
@@ -2649,6 +2738,12 @@
           .eq("user_id", adminProfile.id)
           .eq("is_read", false);
         notifData.forEach((n) => (n.is_read = true));
+        renderNotifPanel();
+      }
+
+      async function deleteNotif(id) {
+        await sb.from("notifications").delete().eq("id", id);
+        notifData = notifData.filter((n) => n.id !== id);
         renderNotifPanel();
       }
 
@@ -2763,6 +2858,36 @@
 
         closeModal("modal-profile");
         showToast("Profile updated successfully!");
+      }
+
+      // ============================================================
+      // EMAIL NOTIFICATION via Supabase Edge Function (Phase 1.3)
+      // ============================================================
+      async function sendEmailNotification(type, userProfile, extra = {}) {
+        try {
+          const {
+            data: { session },
+          } = await sb.auth.getSession();
+          if (!session) return;
+          await fetch(
+            "https://wkgacywvsndwiezqdcxj.supabase.co/functions/v1/send-email",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + session.access_token,
+              },
+              body: JSON.stringify({
+                type: type,
+                to: userProfile.email,
+                name: userProfile.full_name || userProfile.email,
+                ...extra,
+              }),
+            },
+          );
+        } catch (e) {
+          console.warn("Email notification failed (non-critical):", e.message);
+        }
       }
     </script>
 

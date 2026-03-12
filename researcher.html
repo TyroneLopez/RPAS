@@ -959,6 +959,30 @@
       .notif-item.unread .notif-unread-dot {
         display: block;
       }
+      .notif-delete-btn {
+        background: none;
+        border: none;
+        color: var(--gray-400);
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        padding: 2px 4px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        opacity: 0;
+        transition:
+          opacity 0.15s,
+          color 0.15s;
+        align-self: flex-start;
+        margin-top: 2px;
+      }
+      .notif-item:hover .notif-delete-btn {
+        opacity: 1;
+      }
+      .notif-delete-btn:hover {
+        color: var(--danger);
+        background: #fee2e2;
+      }
       .notif-empty {
         padding: 40px 20px;
         text-align: center;
@@ -1525,9 +1549,9 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./assets/js/supabase.js"></script>
-    <script src="./auth.js"></script>
-    <!-- auth.js loaded externally -->
+    <script src="assets/js/supabase.js"></script>
+    <script src="auth.js"></script>
+    <!-- shared auth loaded via auth.js -->
   </head>
   <body>
     <div class="app-layout">
@@ -2573,13 +2597,14 @@
           const icon = icons[n.type] || "&#128276;";
           const cls = n.is_read ? "notif-item" : "notif-item unread";
           return (
-            '<button class="' +
+            '<div class="' +
             cls +
-            '" data-nid="' +
-            (n.id || "") +
-            '" data-ntype="' +
+            '" style="display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gray-50);">' +
+            '<button style="display:flex;gap:10px;flex:1;background:none;border:none;cursor:pointer;text-align:left;padding:0;" onclick="handleNotifClick(\'' +
+            n.id +
+            "', '" +
             (n.type || "") +
-            '" onclick="handleNotifClick(this.dataset.nid, this.dataset.ntype)">' +
+            "')\">" +
             '<div class="notif-item-icon">' +
             icon +
             "</div>" +
@@ -2591,8 +2616,11 @@
             timeAgo(n.created_at) +
             "</div>" +
             "</div>" +
-            '<div class="notif-unread-dot"></div>' +
-            "</button>"
+            "</button>" +
+            '<button class="notif-delete-btn" title="Delete notification" onclick="deleteNotif(\'' +
+            n.id +
+            "')\">×</button>" +
+            "</div>"
           );
         });
         body.innerHTML = items.join("");
@@ -2630,6 +2658,12 @@
         notifData.forEach(function (n) {
           n.is_read = true;
         });
+        renderNotifPanel();
+      }
+
+      async function deleteNotif(id) {
+        await sb.from("notifications").delete().eq("id", id);
+        notifData = notifData.filter((n) => n.id !== id);
         renderNotifPanel();
       }
 
