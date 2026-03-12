@@ -1157,6 +1157,17 @@
         padding: 4px;
       }
 
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 99;
+      }
+      .sidebar-overlay.open {
+        display: block;
+      }
+
       @media (max-width: 768px) {
         .sidebar {
           transform: translateX(-100%);
@@ -1606,15 +1617,14 @@
 
       function redirectToRole(role) {
         const root = getRootPath();
-        if (role === ROLES.ADMIN)
-          window.location.href = root + "admin/admin.html";
+        if (role === ROLES.ADMIN) window.location.href = root + "admin.html";
         else if (role === ROLES.ANALYST)
-          window.location.href = root + "analyst/analyst.html";
-        else window.location.href = root + "researcher/index.html";
+          window.location.href = root + "analyst.html";
+        else window.location.href = root + "researcher.html";
       }
 
       function getRootPath() {
-        return "../"; // analyst/analyst.html is one level deep from root
+        return ""; // all files are at root level
       }
 
       async function signOut() {
@@ -1657,6 +1667,11 @@
   <body>
     <div class="app-layout">
       <!-- SIDEBAR -->
+      <div
+        class="sidebar-overlay"
+        id="sidebar-overlay"
+        onclick="toggleSidebar()"
+      ></div>
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
           <div class="sidebar-logo">
@@ -1708,14 +1723,7 @@
       <div class="main-content">
         <header class="topbar">
           <div style="display: flex; align-items: center; gap: 12px">
-            <button
-              class="hamburger"
-              onclick="
-                document.getElementById('sidebar').classList.toggle('open')
-              "
-            >
-              ☰
-            </button>
+            <button class="hamburger" onclick="toggleSidebar()">☰</button>
             <div class="topbar-title">
               <h2 id="page-title">Dashboard</h2>
               <p id="page-sub">Analyst workspace</p>
@@ -2328,6 +2336,11 @@
         await loadNotifications();
       }
 
+      function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("open");
+        document.getElementById("sidebar-overlay").classList.toggle("open");
+      }
+
       function showSection(id, btn) {
         ["dashboard", "my-tasks", "notifications"].forEach(
           (s) =>
@@ -2345,6 +2358,7 @@
         };
         document.getElementById("page-title").textContent = titles[id] || id;
         document.getElementById("sidebar").classList.remove("open");
+        document.getElementById("sidebar-overlay").classList.remove("open");
       }
 
       function openModal(id) {
