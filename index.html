@@ -1992,11 +1992,14 @@
           );
         }
 
-        // If already logged in and approved → redirect
+        let authHandled = false;
+
+        // If already logged in and approved → redirect immediately (no waiting for auth event)
         const session = await getSession();
         if (session) {
           const profile = await getProfile(session.user.id);
           if (profile && profile.status === "approved") {
+            authHandled = true;
             redirectToRole(profile.role);
             return;
           }
@@ -2022,8 +2025,12 @@
           });
 
         // ── AUTH STATE CHANGE (Google OAuth callback + email confirm) ──
+        // Guard: only handle SIGNED_IN from OAuth/email callbacks, not page load
         sb.auth.onAuthStateChange(async (event, session) => {
-          if (event === "SIGNED_IN" && session) {
+          // INITIAL_SESSION fires on every page load — skip it, handled above
+          if (event === "INITIAL_SESSION") return;
+          if (event === "SIGNED_IN" && session && !authHandled) {
+            authHandled = true;
             await handleSignedIn(session.user);
           }
           if (event === "PASSWORD_RECOVERY") {
