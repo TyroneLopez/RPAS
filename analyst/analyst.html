@@ -1606,24 +1606,15 @@
 
       function redirectToRole(role) {
         const root = getRootPath();
-        if (role === ROLES.ADMIN) window.location.href = root + "admin.html";
+        if (role === ROLES.ADMIN)
+          window.location.href = root + "admin/admin.html";
         else if (role === ROLES.ANALYST)
-          window.location.href = root + "analyst.html";
-        else window.location.href = root + "researcher.html";
+          window.location.href = root + "analyst/analyst.html";
+        else window.location.href = root + "researcher/index.html";
       }
 
       function getRootPath() {
-        const parts = window.location.pathname.split("/");
-        const repoIndex = parts.indexOf("rpas");
-        if (repoIndex !== -1) {
-          return (
-            window.location.origin +
-            "/" +
-            parts.slice(1, repoIndex + 1).join("/") +
-            "/"
-          );
-        }
-        return "/";
+        return "../"; // analyst/analyst.html is one level deep from root
       }
 
       async function signOut() {

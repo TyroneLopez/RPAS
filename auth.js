@@ -79,25 +79,24 @@ async function requireAuth(expectedRole) {
 
 function redirectToRole(role) {
   const root = getRootPath();
-  if (role === ROLES.ADMIN) window.location.href = root + "admin.html";
-  else if (role === ROLES.ANALYST) window.location.href = root + "analyst.html";
-  else window.location.href = root + "researcher.html";
+  if (role === ROLES.ADMIN) window.location.href = root + "admin/admin.html";
+  else if (role === ROLES.ANALYST)
+    window.location.href = root + "analyst/analyst.html";
+  else window.location.href = root + "researcher/index.html";
 }
 
 function getRootPath() {
-  const parts = window.location.pathname.split("/");
-  const repoIndex = parts.indexOf("rpas");
-  if (repoIndex !== -1) {
-    return (
-      window.location.origin +
-      "/" +
-      parts.slice(1, repoIndex + 1).join("/") +
-      "/"
-    );
-  }
-  return "/";
+  // All dashboards are one level deep (admin/, analyst/, researcher/)
+  // index.html is at root, so going "../" always gets back to root
+  const path = window.location.pathname;
+  if (
+    path.includes("/admin/") ||
+    path.includes("/analyst/") ||
+    path.includes("/researcher/")
+  )
+    return "../";
+  return "";
 }
-
 async function signOut() {
   await sb.auth.signOut();
   window.location.href = getRootPath() + "index.html";
