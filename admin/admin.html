@@ -822,6 +822,201 @@
         display: block;
       }
 
+      /* ---- NOTIFICATION POPUP (Phase 1.1) ---- */
+      .notif-wrapper {
+        position: relative;
+      }
+      .notif-count {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: var(--danger);
+        color: white;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 700;
+        min-width: 18px;
+        height: 18px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border: 2px solid white;
+        line-height: 1;
+      }
+      .notif-count.show {
+        display: flex;
+      }
+      .notif-panel {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 360px;
+        max-height: 480px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+        border: 1px solid var(--gray-200);
+        z-index: 1000;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .notif-panel.open {
+        display: flex;
+      }
+      .notif-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid var(--gray-100);
+        flex-shrink: 0;
+      }
+      .notif-panel-header h4 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0;
+      }
+      .notif-mark-all {
+        font-size: 12px;
+        color: var(--green);
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .notif-mark-all:hover {
+        background: var(--gray-100);
+      }
+      .notif-panel-body {
+        overflow-y: auto;
+        flex: 1;
+      }
+      .notif-item {
+        display: flex;
+        gap: 10px;
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--gray-50);
+        transition: background 0.15s;
+        text-align: left;
+        width: 100%;
+        background: none;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+      }
+      .notif-item:hover {
+        background: var(--gray-50);
+      }
+      .notif-item.unread {
+        background: #f0f9f0;
+      }
+      .notif-item.unread:hover {
+        background: #e6f5e6;
+      }
+      .notif-item-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--gold-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+      .notif-item-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .notif-item-msg {
+        font-size: 13px;
+        color: var(--gray-800);
+        line-height: 1.4;
+        margin-bottom: 3px;
+      }
+      .notif-item.unread .notif-item-msg {
+        font-weight: 600;
+      }
+      .notif-item-time {
+        font-size: 11px;
+        color: var(--gray-400);
+      }
+      .notif-unread-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--green);
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 4px;
+        display: none;
+      }
+      .notif-item.unread .notif-unread-dot {
+        display: block;
+      }
+      .notif-empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--gray-400);
+        font-size: 14px;
+      }
+      .notif-empty-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+
+      /* ---- PROFILE EDIT TRIGGER ---- */
+      .profile-trigger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 8px;
+        width: 100%;
+        text-align: left;
+        transition: background 0.15s;
+      }
+      .profile-trigger:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .profile-avatar-upload {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 16px;
+        cursor: pointer;
+      }
+      .profile-avatar-upload .user-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 28px;
+        border-radius: 50%;
+      }
+      .profile-avatar-upload .avatar-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+        color: white;
+        font-size: 20px;
+      }
+      .profile-avatar-upload:hover .avatar-overlay {
+        opacity: 1;
+      }
+
       /* ---- TOAST ---- */
       .toast {
         position: fixed;
@@ -1429,21 +1624,14 @@
 
       function redirectToRole(role) {
         const root = getRootPath();
-        if (role === ROLES.ADMIN)
-          window.location.href = root + "admin/index.html";
+        if (role === ROLES.ADMIN) window.location.href = root + "admin.html";
         else if (role === ROLES.ANALYST)
-          window.location.href = root + "analyst/index.html";
-        else window.location.href = root + "researcher/index.html";
+          window.location.href = root + "analyst.html";
+        else window.location.href = root + "researcher.html";
       }
 
       function getRootPath() {
-        const path = window.location.pathname;
-        if (
-          path.includes("/admin/") ||
-          path.includes("/analyst/") ||
-          path.includes("/researcher/")
-        )
-          return "../";
+        // Files are flat at root: admin.html, analyst.html, researcher.html
         return "";
       }
 
@@ -1529,6 +1717,13 @@
               <div class="user-role">Administrator</div>
             </div>
           </div>
+          <button
+            class="btn-signout"
+            style="margin-top: 6px"
+            onclick="openProfileModal()"
+          >
+            <span>✏️</span> Edit Profile
+          </button>
           <button class="btn-signout" onclick="signOut()">
             <span>🚪</span> Sign Out
           </button>
@@ -1549,6 +1744,31 @@
             <div class="topbar-title">
               <h2 id="page-title">Dashboard</h2>
               <p id="page-sub">Research Planning and Analytic Services</p>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <div class="notif-wrapper" id="notif-wrapper">
+              <button
+                class="notif-btn"
+                id="notif-btn"
+                onclick="toggleNotifPanel(event)"
+              >
+                🔔<span class="notif-count" id="notif-count"></span>
+              </button>
+              <div class="notif-panel" id="notif-panel">
+                <div class="notif-panel-header">
+                  <h4>Notifications</h4>
+                  <button class="notif-mark-all" onclick="markAllRead()">
+                    Mark all read
+                  </button>
+                </div>
+                <div class="notif-panel-body" id="notif-panel-body">
+                  <div class="notif-empty">
+                    <div class="notif-empty-icon">🔔</div>
+                    No notifications yet
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </header>
@@ -1883,6 +2103,7 @@
         const auth = await requireAuth("admin");
         if (!auth) return;
         adminProfile = auth.profile;
+        refreshNotifCount();
         document.getElementById("sidebar-name").textContent =
           adminProfile.full_name || "Admin";
         if (adminProfile.avatar_url)
@@ -1902,6 +2123,7 @@
           .on(
             "postgres_changes",
             { event: "*", schema: "public", table: "profiles" },
+            { event: "INSERT", schema: "public", table: "notifications" },
             () => loadUsers(),
           )
           .subscribe();
@@ -2439,6 +2661,324 @@
           if (e.target === o) o.classList.remove("open");
         }),
       );
+
+      // ============================================================
+      // PHASE 1.1 — NOTIFICATION BELL POPUP
+      // ============================================================
+      let notifData = [];
+
+      function toggleNotifPanel(e) {
+        e.stopPropagation();
+        const panel = document.getElementById("notif-panel");
+        panel.classList.toggle("open");
+        if (panel.classList.contains("open")) loadNotifPanel();
+      }
+
+      document.addEventListener("click", function (e) {
+        const wrapper = document.getElementById("notif-wrapper");
+        if (wrapper && !wrapper.contains(e.target)) {
+          document.getElementById("notif-panel").classList.remove("open");
+        }
+      });
+
+      async function loadNotifPanel() {
+        const body = document.getElementById("notif-panel-body");
+        const { data } = await sb
+          .from("notifications")
+          .select("*")
+          .eq("user_id", adminProfile.id)
+          .order("created_at", { ascending: false })
+          .limit(30);
+        notifData = data || [];
+        renderNotifPanel();
+      }
+
+      function renderNotifPanel() {
+        const body = document.getElementById("notif-panel-body");
+        if (!notifData.length) {
+          body.innerHTML =
+            '<div class="notif-empty"><div class="notif-empty-icon">&#128276;</div>No notifications yet</div>';
+          return;
+        }
+        const icons = {
+          status: "&#128203;",
+          message: "&#128172;",
+          assignment: "&#128100;",
+          payment: "&#128176;",
+          system: "&#9881;",
+        };
+        const items = notifData.map(function (n) {
+          const icon = icons[n.type] || "&#128276;";
+          const cls = n.is_read ? "notif-item" : "notif-item unread";
+          return (
+            '<button class="' +
+            cls +
+            '" data-nid="' +
+            (n.id || "") +
+            '" data-ntype="' +
+            (n.type || "") +
+            '" onclick="handleNotifClick(this.dataset.nid, this.dataset.ntype)">' +
+            '<div class="notif-item-icon">' +
+            icon +
+            "</div>" +
+            '<div class="notif-item-body">' +
+            '<div class="notif-item-msg">' +
+            (n.message || "") +
+            "</div>" +
+            '<div class="notif-item-time">' +
+            timeAgo(n.created_at) +
+            "</div>" +
+            "</div>" +
+            '<div class="notif-unread-dot"></div>' +
+            "</button>"
+          );
+        });
+        body.innerHTML = items.join("");
+        const unread = notifData.filter(function (n) {
+          return !n.is_read;
+        }).length;
+        const countEl = document.getElementById("notif-count");
+        if (unread > 0) {
+          countEl.textContent = unread > 99 ? "99+" : unread;
+          countEl.classList.add("show");
+        } else {
+          countEl.classList.remove("show");
+        }
+      }
+
+      async function handleNotifClick(id, type) {
+        await sb.from("notifications").update({ is_read: true }).eq("id", id);
+        const n = notifData.find((x) => x.id === id);
+        if (n) n.is_read = true;
+        renderNotifPanel();
+        document.getElementById("notif-panel").classList.remove("open");
+        // Navigate based on type
+        if (type === "message" || type === "assignment" || type === "status") {
+          showSection(
+            "requests",
+            document.querySelector('[onclick*="requests"]'),
+          );
+        } else if (type === "payment") {
+          showSection("users", document.querySelector('[onclick*="users"]'));
+        }
+      }
+
+      async function markAllRead() {
+        await sb
+          .from("notifications")
+          .update({ is_read: true })
+          .eq("user_id", adminProfile.id)
+          .eq("is_read", false);
+        notifData.forEach((n) => (n.is_read = true));
+        renderNotifPanel();
+      }
+
+      async function refreshNotifCount() {
+        const { data } = await sb
+          .from("notifications")
+          .select("id")
+          .eq("user_id", adminProfile.id)
+          .eq("is_read", false);
+        const count = (data || []).length;
+        const countEl = document.getElementById("notif-count");
+        if (count > 0) {
+          countEl.textContent = count > 99 ? "99+" : count;
+          countEl.classList.add("show");
+        } else {
+          countEl.classList.remove("show");
+        }
+      }
+
+      // ============================================================
+      // PHASE 1.2 — PROFILE EDITING
+      // ============================================================
+      let pendingAvatarFile = null;
+
+      function openProfileModal() {
+        document.getElementById("profile-name-input").value =
+          adminProfile.full_name || "";
+        document.getElementById("profile-contact-input").value =
+          adminProfile.contact_number || "";
+        document.getElementById("profile-email-input").value =
+          adminProfile.email || "";
+        const av = document.getElementById("profile-modal-avatar");
+        if (adminProfile.avatar_url) {
+          av.innerHTML =
+            '<img src="' +
+            adminProfile.avatar_url +
+            '" style="width:100%;height:100%;object-fit:cover;">';
+        } else {
+          av.textContent = (adminProfile.full_name || "A")[0].toUpperCase();
+        }
+        pendingAvatarFile = null;
+        openModal("modal-profile");
+      }
+
+      function previewAvatar(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        pendingAvatarFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById("profile-modal-avatar").innerHTML =
+            '<img src="' +
+            e.target.result +
+            '" style="width:100%;height:100%;object-fit:cover;">';
+        };
+        reader.readAsDataURL(file);
+      }
+
+      async function saveProfile() {
+        const name = document.getElementById("profile-name-input").value.trim();
+        const contact = document
+          .getElementById("profile-contact-input")
+          .value.trim();
+        if (!name) {
+          showToast("Please enter your full name", "error");
+          return;
+        }
+
+        let avatarUrl = adminProfile.avatar_url;
+
+        if (pendingAvatarFile) {
+          const ext = pendingAvatarFile.name.split(".").pop();
+          const path = "avatars/" + adminProfile.id + "." + ext;
+          const { error: upErr } = await sb.storage
+            .from("attachments")
+            .upload(path, pendingAvatarFile, { upsert: true });
+          if (!upErr) {
+            const { data: urlData } = sb.storage
+              .from("attachments")
+              .getPublicUrl(path);
+            avatarUrl = urlData.publicUrl;
+          }
+        }
+
+        const { error } = await sb
+          .from("profiles")
+          .update({
+            full_name: name,
+            contact_number: contact,
+            avatar_url: avatarUrl,
+          })
+          .eq("id", adminProfile.id);
+
+        if (error) {
+          showToast("Failed to save profile", "error");
+          return;
+        }
+
+        adminProfile.full_name = name;
+        adminProfile.contact_number = contact;
+        adminProfile.avatar_url = avatarUrl;
+
+        // Update sidebar
+        document.getElementById("sidebar-name").textContent = name;
+        if (avatarUrl) {
+          document.getElementById("sidebar-avatar").innerHTML =
+            '<img src="' + avatarUrl + '" alt="">';
+        } else {
+          document.getElementById("sidebar-avatar").textContent =
+            name[0].toUpperCase();
+        }
+
+        closeModal("modal-profile");
+        showToast("Profile updated successfully!");
+      }
     </script>
+
+    <!-- PROFILE EDIT MODAL (Phase 1.2) -->
+    <div
+      class="modal-overlay"
+      id="modal-profile"
+      onclick="if (event.target === this) closeModal('modal-profile');"
+    >
+      <div class="modal" style="max-width: 420px">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Profile</h3>
+          <button class="modal-close" onclick="closeModal('modal-profile')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div
+            class="profile-avatar-upload"
+            onclick="document.getElementById('avatar-file-input').click()"
+          >
+            <div
+              class="user-avatar"
+              id="profile-modal-avatar"
+              style="
+                background: var(--gold-light);
+                color: var(--green-dark);
+                width: 80px;
+                height: 80px;
+                font-size: 28px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+              "
+            >
+              A
+            </div>
+            <div class="avatar-overlay">📷</div>
+          </div>
+          <input
+            type="file"
+            id="avatar-file-input"
+            accept="image/*"
+            style="display: none"
+            onchange="previewAvatar(event)"
+          />
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="profile-name-input"
+              placeholder="Your full name"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Number</label>
+            <input
+              type="text"
+              class="form-control"
+              id="profile-contact-input"
+              placeholder="e.g. 09xx-xxx-xxxx"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input
+              type="text"
+              class="form-control"
+              id="profile-email-input"
+              disabled
+              style="background: var(--gray-50); color: var(--gray-400)"
+            />
+            <div
+              style="font-size: 11px; color: var(--gray-400); margin-top: 4px"
+            >
+              Email cannot be changed
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-secondary"
+            onclick="closeModal('modal-profile')"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="saveProfile()">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="avatar-pending-url" value="" />
   </body>
 </html>

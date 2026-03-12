@@ -1606,21 +1606,14 @@
 
       function redirectToRole(role) {
         const root = getRootPath();
-        if (role === ROLES.ADMIN)
-          window.location.href = root + "admin/index.html";
+        if (role === ROLES.ADMIN) window.location.href = root + "admin.html";
         else if (role === ROLES.ANALYST)
-          window.location.href = root + "analyst/index.html";
-        else window.location.href = root + "researcher/index.html";
+          window.location.href = root + "analyst.html";
+        else window.location.href = root + "researcher.html";
       }
 
       function getRootPath() {
-        const path = window.location.pathname;
-        if (
-          path.includes("/admin/") ||
-          path.includes("/analyst/") ||
-          path.includes("/researcher/")
-        )
-          return "../";
+        // Files are flat at root: admin.html, analyst.html, researcher.html
         return "";
       }
 
@@ -1972,836 +1965,903 @@
     </div>
 
     <script>
-            let profile = null;
-            let allRequests = [];
-            let selectedFiles = [];
+      let profile = null;
+      let allRequests = [];
+      let selectedFiles = [];
 
-            (async () => {
-              const auth = await requireAuth("researcher");
-              if (!auth) return;
-              profile = auth.profile;
-              document.getElementById("sidebar-name").textContent =
-                profile.full_name || "Researcher";
-              if (profile.avatar_url) {
-                document.getElementById("sidebar-avatar").innerHTML =
-                  `<img src="${profile.avatar_url}" alt="">`;
-              } else {
-                document.getElementById("sidebar-avatar").textContent =
-                  (profile.full_name || "R")[0].toUpperCase();
-              }
-              document.getElementById("page-sub").textContent =
-                `Welcome, ${profile.full_name?.split(" ")[0] || "Researcher"}!`;
-              await loadAll();
+      (async () => {
+        const auth = await requireAuth("researcher");
+        if (!auth) return;
+        profile = auth.profile;
+        refreshNotifCount();
+        document.getElementById("sidebar-name").textContent =
+          profile.full_name || "Researcher";
+        if (profile.avatar_url) {
+          document.getElementById("sidebar-avatar").innerHTML =
+            `<img src="${profile.avatar_url}" alt="">`;
+        } else {
+          document.getElementById("sidebar-avatar").textContent =
+            (profile.full_name || "R")[0].toUpperCase();
+        }
+        document.getElementById("page-sub").textContent =
+          `Welcome, ${profile.full_name?.split(" ")[0] || "Researcher"}!`;
+        await loadAll();
 
-              // Realtime
-              sb.channel("researcher-requests")
-                .on(
-                  "postgres_changes",
-                  {
-                    event: "*",
-                    schema: "public",
-                    table: "service_requests",
-                    filter: `researcher_id=eq.${profile.id}`,
-                  },
-                  () => loadAll(),
-                )
-                .on(
-                  "postgres_changes",
-                  {
-                    event: "*",
-                    schema: "public",
-                    table: "notifications",
-                    filter: `user_id=eq.${profile.id}`,
-                  },
-                  () => loadNotifications(),
-                )
-                .subscribe();
-            })();
+        // Realtime
+        sb.channel("researcher-requests")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "service_requests",
+              filter: `researcher_id=eq.${profile.id}`,
+            },
+            () => loadAll(),
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "notifications",
+              filter: `user_id=eq.${profile.id}`,
+            },
+            () => loadNotifications(),
+          )
+          .subscribe();
+      })();
 
-            async function loadAll() {
-              await Promise.all([loadRequests(), loadNotifications()]);
-            }
+      async function loadAll() {
+        await Promise.all([loadRequests(), loadNotifications()]);
+      }
 
-            async function loadRequests() {
-              const { data, error } = await sb
-                .from("service_requests")
-                .select(
-                  "*, analyst:analyst_id(id,full_name), updates:request_updates(id,status,notes,created_at), attachments(id,filename,url)",
-                )
-                .eq("researcher_id", profile.id)
-                .order("created_at", { ascending: false });
-              if (error) {
-                console.error("loadRequests error:", error.message);
-                return;
-              }
-              allRequests = data || [];
-              document.getElementById("nb-requests").textContent = allRequests.filter(
-                (r) => r.status !== "completed" && r.status !== "cancelled",
-              ).length;
-              renderStats();
-              renderRecentTable();
-              renderRequestsTable(allRequests);
-            }
+      async function loadRequests() {
+        const { data, error } = await sb
+          .from("service_requests")
+          .select(
+            "*, analyst:analyst_id(id,full_name), updates:request_updates(id,status,notes,created_at), attachments(id,filename,url)",
+          )
+          .eq("researcher_id", profile.id)
+          .order("created_at", { ascending: false });
+        if (error) {
+          console.error("loadRequests error:", error.message);
+          return;
+        }
+        allRequests = data || [];
+        document.getElementById("nb-requests").textContent = allRequests.filter(
+          (r) => r.status !== "completed" && r.status !== "cancelled",
+        ).length;
+        renderStats();
+        renderRecentTable();
+        renderRequestsTable(allRequests);
+      }
 
-            function renderStats() {
-              const total = allRequests.length;
-              const active = allRequests.filter(
-                (r) => !["completed", "cancelled"].includes(r.status),
-              ).length;
-              const completed = allRequests.filter(
-                (r) => r.status === "completed",
-              ).length;
-              const revision = allRequests.filter(
-                (r) => r.status === "for_revision",
-              ).length;
-              document.getElementById("stats-grid").innerHTML = `
-          <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${total}</div><div class="stat-label">Total Requests</div></div></div>
-          <div class="stat-card"><div class="stat-icon blue">⚙️</div><div class="stat-info"><div class="stat-value">${active}</div><div class="stat-label">Active</div></div></div>
-          <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div></div>
-          <div class="stat-card"><div class="stat-icon red">✏️</div><div class="stat-info"><div class="stat-value">${revision}</div><div class="stat-label">For Revision</div></div></div>
-        `;
-            }
+      function renderStats() {
+        const total = allRequests.length;
+        const active = allRequests.filter(
+          (r) => !["completed", "cancelled"].includes(r.status),
+        ).length;
+        const completed = allRequests.filter(
+          (r) => r.status === "completed",
+        ).length;
+        const revision = allRequests.filter(
+          (r) => r.status === "for_revision",
+        ).length;
+        document.getElementById("stats-grid").innerHTML = `
+    <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${total}</div><div class="stat-label">Total Requests</div></div></div>
+    <div class="stat-card"><div class="stat-icon blue">⚙️</div><div class="stat-info"><div class="stat-value">${active}</div><div class="stat-label">Active</div></div></div>
+    <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div></div>
+    <div class="stat-card"><div class="stat-icon red">✏️</div><div class="stat-info"><div class="stat-value">${revision}</div><div class="stat-label">For Revision</div></div></div>
+  `;
+      }
 
-            function renderRecentTable() {
-              const tbody = document.getElementById("recent-tbody");
-              const recent = allRequests.slice(0, 5);
-              if (!recent.length) {
-                tbody.innerHTML =
-                  '<tr><td colspan="4"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No requests yet</h3><p>Click "+ New Request" to get started</p></div></td></tr>';
-                return;
-              }
-              tbody.innerHTML = recent
+      function renderRecentTable() {
+        const tbody = document.getElementById("recent-tbody");
+        const recent = allRequests.slice(0, 5);
+        if (!recent.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="4"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No requests yet</h3><p>Click "+ New Request" to get started</p></div></td></tr>';
+          return;
+        }
+        tbody.innerHTML = recent
+          .map(
+            (r) => `
+    <tr>
+      <td><strong>${r.service_type}</strong></td>
+      <td>${formatDate(r.created_at)}</td>
+      <td><span class="badge badge-${r.status}">${STATUS_LABELS[r.status]}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="viewRequest('${r.id}')">View →</button></td>
+    </tr>
+  `,
+          )
+          .join("");
+      }
+
+      function filterRequests() {
+        const q = document.getElementById("req-search").value.toLowerCase();
+        const st = document.getElementById("req-filter-status").value;
+        const sv = document.getElementById("req-filter-service").value;
+        let filtered = allRequests;
+        if (q)
+          filtered = filtered.filter(
+            (r) =>
+              r.service_type.toLowerCase().includes(q) ||
+              (r.title || "").toLowerCase().includes(q),
+          );
+        if (st) filtered = filtered.filter((r) => r.status === st);
+        if (sv) filtered = filtered.filter((r) => r.service_type === sv);
+        renderRequestsTable(filtered);
+      }
+
+      function renderRequestsTable(list) {
+        const tbody = document.getElementById("requests-tbody");
+        if (!list.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No requests found</h3></div></td></tr>';
+          return;
+        }
+        tbody.innerHTML = list
+          .map(
+            (r, i) => `
+    <tr>
+      <td style="color:var(--gray-400);font-size:12px;">#${String(i + 1).padStart(3, "0")}</td>
+      <td><strong style="font-size:14px;">${r.service_type}</strong></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.title || "—"}</td>
+      <td>${formatDate(r.created_at)}</td>
+      <td><span class="badge badge-${r.status}">${STATUS_LABELS[r.status]}</span></td>
+      <td>${r.analyst?.full_name || '<span style="color:var(--gray-400)">Unassigned</span>'}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="viewRequest('${r.id}')">View</button></td>
+    </tr>
+  `,
+          )
+          .join("");
+      }
+
+      async function viewRequest(id) {
+        const req = allRequests.find((r) => r.id === id);
+        if (!req) return;
+        document.getElementById("view-title").textContent = req.service_type;
+        const steps = STATUS_STEPS;
+        const ci = steps.indexOf(req.status);
+        const stepHtml = steps
+          .map(
+            (s, i) => `
+    <div class="step ${i < ci ? "done" : i === ci ? "active" : ""}">
+      <div class="step-dot">${i < ci ? "✓" : i + 1}</div>
+      <div class="step-label">${STATUS_LABELS[s]}</div>
+    </div>
+  `,
+          )
+          .join("");
+
+        // Load messages
+        const { data: msgs } = await sb
+          .from("messages")
+          .select("*, sender:sender_id(full_name,avatar_url)")
+          .eq("request_id", id)
+          .order("created_at");
+        // Load attachments
+        const { data: attachments } = await sb
+          .from("attachments")
+          .select("*")
+          .eq("request_id", id);
+
+        const msgHtml =
+          (msgs || [])
+            .map((m) => {
+              const isMe = m.sender_id === profile.id;
+              return `<div class="chat-bubble ${isMe ? "me" : "them"}">
+      ${!isMe ? `<div style="font-size:11px;font-weight:600;margin-bottom:4px;opacity:.8">${m.sender?.full_name || "Analyst"}</div>` : ""}
+      ${m.message}<div class="time">${timeAgo(m.created_at)}</div>
+    </div>`;
+            })
+            .join("") ||
+          '<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:20px;">No messages yet</div>';
+
+        const attHtml =
+          (attachments || [])
+            .map(
+              (a) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;margin-bottom:6px;">
+      <span>📄</span>
+      <span style="flex:1;font-size:13px;">${a.filename}</span>
+      <a href="${a.url}" target="_blank" class="btn btn-ghost btn-sm">Download</a>
+    </div>
+  `,
+            )
+            .join("") ||
+          '<div style="color:var(--gray-400);font-size:13px;">No files attached</div>';
+
+        const updates = (req.updates || []).sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at),
+        );
+        const timelineHtml =
+          updates
+            .map(
+              (u) => `
+    <div class="timeline-item">
+      <div class="timeline-date">${formatDate(u.created_at)}</div>
+      <div class="timeline-content">Status changed to <strong>${STATUS_LABELS[u.status] || u.status}</strong>${u.notes ? ` — ${u.notes}` : ""}</div>
+    </div>
+  `,
+            )
+            .join("") ||
+          '<div style="color:var(--gray-400);font-size:13px;">No updates yet</div>';
+
+        // Load revisions
+        const { data: revisions } = await sb
+          .from("revisions")
+          .select("*")
+          .eq("request_id", id)
+          .order("revision_number", { ascending: false });
+
+        const revisionsHtml =
+          revisions && revisions.length
+            ? revisions
                 .map(
                   (r) => `
-          <tr>
-            <td><strong>${r.service_type}</strong></td>
-            <td>${formatDate(r.created_at)}</td>
-            <td><span class="badge badge-${r.status}">${STATUS_LABELS[r.status]}</span></td>
-            <td><button class="btn btn-ghost btn-sm" onclick="viewRequest('${r.id}')">View →</button></td>
-          </tr>
-        `,
+  <div style="border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--gray-50);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-weight:700;color:var(--green);">Revision #${r.revision_number}</span>
+      <span style="font-size:12px;color:var(--gray-400);">${formatDate(r.created_at)}</span>
+    </div>
+    ${r.title ? `<div style="margin-bottom:6px;"><span style="font-size:11px;color:var(--gray-400);text-transform:uppercase;">Title</span><div style="font-weight:600;font-size:14px;">${r.title}</div></div>` : ""}
+    ${r.abstract ? `<div style="margin-bottom:6px;"><span style="font-size:11px;color:var(--gray-400);text-transform:uppercase;">Abstract</span><div style="font-size:13px;color:var(--gray-700);line-height:1.6;">${r.abstract}</div></div>` : ""}
+    ${r.attachment_url ? `<div style="margin-bottom:8px;"><a href="${r.attachment_url}" target="_blank" class="btn btn-outline btn-sm">📎 ${r.attachment_name || "Download Attachment"}</a></div>` : ""}
+    ${r.analyst_comment ? `<div style="margin-bottom:6px;padding:10px;background:var(--warning-light);border-left:3px solid var(--warning);border-radius:6px;"><span style="font-size:11px;font-weight:700;color:var(--warning);">ANALYST COMMENT</span><div style="font-size:13px;margin-top:4px;">${r.analyst_comment}</div></div>` : ""}
+    ${r.researcher_response ? `<div style="padding:10px;background:var(--green-light);border-left:3px solid var(--green);border-radius:6px;"><span style="font-size:11px;font-weight:700;color:var(--green);">YOUR RESPONSE</span><div style="font-size:13px;margin-top:4px;">${r.researcher_response}</div></div>` : ""}
+  </div>
+`,
                 )
-                .join("");
-            }
+                .join("")
+            : "";
 
-            function filterRequests() {
-              const q = document.getElementById("req-search").value.toLowerCase();
-              const st = document.getElementById("req-filter-status").value;
-              const sv = document.getElementById("req-filter-service").value;
-              let filtered = allRequests;
-              if (q)
-                filtered = filtered.filter(
-                  (r) =>
-                    r.service_type.toLowerCase().includes(q) ||
-                    (r.title || "").toLowerCase().includes(q),
-                );
-              if (st) filtered = filtered.filter((r) => r.status === st);
-              if (sv) filtered = filtered.filter((r) => r.service_type === sv);
-              renderRequestsTable(filtered);
-            }
+        const showRevisionForm = req.status === "for_revision";
+        const nextRevNum =
+          revisions && revisions.length ? revisions[0].revision_number + 1 : 1;
 
-            function renderRequestsTable(list) {
-              const tbody = document.getElementById("requests-tbody");
-              if (!list.length) {
-                tbody.innerHTML =
-                  '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No requests found</h3></div></td></tr>';
-                return;
-              }
-              tbody.innerHTML = list
-                .map(
-                  (r, i) => `
-          <tr>
-            <td style="color:var(--gray-400);font-size:12px;">#${String(i + 1).padStart(3, "0")}</td>
-            <td><strong style="font-size:14px;">${r.service_type}</strong></td>
-            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.title || "—"}</td>
-            <td>${formatDate(r.created_at)}</td>
-            <td><span class="badge badge-${r.status}">${STATUS_LABELS[r.status]}</span></td>
-            <td>${r.analyst?.full_name || '<span style="color:var(--gray-400)">Unassigned</span>'}</td>
-            <td><button class="btn btn-ghost btn-sm" onclick="viewRequest('${r.id}')">View</button></td>
-          </tr>
-        `,
-                )
-                .join("");
-            }
-
-            async function viewRequest(id) {
-              const req = allRequests.find((r) => r.id === id);
-              if (!req) return;
-              document.getElementById("view-title").textContent = req.service_type;
-              const steps = STATUS_STEPS;
-              const ci = steps.indexOf(req.status);
-              const stepHtml = steps
-                .map(
-                  (s, i) => `
-          <div class="step ${i < ci ? "done" : i === ci ? "active" : ""}">
-            <div class="step-dot">${i < ci ? "✓" : i + 1}</div>
-            <div class="step-label">${STATUS_LABELS[s]}</div>
-          </div>
-        `,
-                )
-                .join("");
-
-              // Load messages
-              const { data: msgs } = await sb
-                .from("messages")
-                .select("*, sender:sender_id(full_name,avatar_url)")
-                .eq("request_id", id)
-                .order("created_at");
-              // Load attachments
-              const { data: attachments } = await sb
-                .from("attachments")
-                .select("*")
-                .eq("request_id", id);
-
-              const msgHtml =
-                (msgs || [])
-                  .map((m) => {
-                    const isMe = m.sender_id === profile.id;
-                    return `<div class="chat-bubble ${isMe ? "me" : "them"}">
-            ${!isMe ? `<div style="font-size:11px;font-weight:600;margin-bottom:4px;opacity:.8">${m.sender?.full_name || "Analyst"}</div>` : ""}
-            ${m.message}<div class="time">${timeAgo(m.created_at)}</div>
-          </div>`;
-                  })
-                  .join("") ||
-                '<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:20px;">No messages yet</div>';
-
-              const attHtml =
-                (attachments || [])
-                  .map(
-                    (a) => `
-          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;margin-bottom:6px;">
-            <span>📄</span>
-            <span style="flex:1;font-size:13px;">${a.filename}</span>
-            <a href="${a.url}" target="_blank" class="btn btn-ghost btn-sm">Download</a>
-          </div>
-        `,
-                  )
-                  .join("") ||
-                '<div style="color:var(--gray-400);font-size:13px;">No files attached</div>';
-
-              const updates = (req.updates || []).sort(
-                (a, b) => new Date(b.created_at) - new Date(a.created_at),
-              );
-              const timelineHtml =
-                updates
-                  .map(
-                    (u) => `
-          <div class="timeline-item">
-            <div class="timeline-date">${formatDate(u.created_at)}</div>
-            <div class="timeline-content">Status changed to <strong>${STATUS_LABELS[u.status] || u.status}</strong>${u.notes ? ` — ${u.notes}` : ""}</div>
-          </div>
-        `,
-                  )
-                  .join("") ||
-                '<div style="color:var(--gray-400);font-size:13px;">No updates yet</div>';
-
-              // Load revisions
-              const { data: revisions } = await sb
-                .from("revisions")
-                .select("*")
-                .eq("request_id", id)
-                .order("revision_number", { ascending: false });
-
-              const revisionsHtml =
-                revisions && revisions.length
-                  ? revisions
-                      .map(
-                        (r) => `
-        <div style="border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--gray-50);">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <span style="font-weight:700;color:var(--green);">Revision #${r.revision_number}</span>
-            <span style="font-size:12px;color:var(--gray-400);">${formatDate(r.created_at)}</span>
-          </div>
-          ${r.title ? `<div style="margin-bottom:6px;"><span style="font-size:11px;color:var(--gray-400);text-transform:uppercase;">Title</span><div style="font-weight:600;font-size:14px;">${r.title}</div></div>` : ""}
-          ${r.abstract ? `<div style="margin-bottom:6px;"><span style="font-size:11px;color:var(--gray-400);text-transform:uppercase;">Abstract</span><div style="font-size:13px;color:var(--gray-700);line-height:1.6;">${r.abstract}</div></div>` : ""}
-          ${r.attachment_url ? `<div style="margin-bottom:8px;"><a href="${r.attachment_url}" target="_blank" class="btn btn-outline btn-sm">📎 ${r.attachment_name || "Download Attachment"}</a></div>` : ""}
-          ${r.analyst_comment ? `<div style="margin-bottom:6px;padding:10px;background:var(--warning-light);border-left:3px solid var(--warning);border-radius:6px;"><span style="font-size:11px;font-weight:700;color:var(--warning);">ANALYST COMMENT</span><div style="font-size:13px;margin-top:4px;">${r.analyst_comment}</div></div>` : ""}
-          ${r.researcher_response ? `<div style="padding:10px;background:var(--green-light);border-left:3px solid var(--green);border-radius:6px;"><span style="font-size:11px;font-weight:700;color:var(--green);">YOUR RESPONSE</span><div style="font-size:13px;margin-top:4px;">${r.researcher_response}</div></div>` : ""}
+        document.getElementById("view-body").innerHTML = `
+    <div style="margin-bottom:24px;">
+      <div class="stepper">${stepHtml}</div>
+      ${req.status === "cancelled" ? `<div class="alert alert-danger" style="margin-top:12px;">🚫 This request has been cancelled.</div>` : ""}
+    </div>
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div><span class="text-muted">Service</span><div style="font-weight:600;margin-top:2px;">${req.service_type}</div></div>
+      <div><span class="text-muted">Status</span><div style="margin-top:2px;"><span class="badge badge-${req.status}">${STATUS_LABELS[req.status]}</span></div></div>
+      <div><span class="text-muted">Submitted</span><div style="font-weight:600;margin-top:2px;">${formatDate(req.created_at)}</div></div>
+      <div><span class="text-muted">Assigned Analyst</span><div style="font-weight:600;margin-top:2px;">${req.analyst?.full_name || "Not yet assigned"}</div></div>
+    </div>
+    ${req.title ? `<div style="margin-bottom:16px;"><span class="text-muted">Research Title</span><div style="font-weight:600;margin-top:2px;">${req.title}</div></div>` : ""}
+    ${req.abstract ? `<div style="margin-bottom:20px;"><span class="text-muted">Abstract</span><div style="margin-top:4px;font-size:14px;color:var(--gray-700);">${req.abstract}</div></div>` : ""}
+    <div class="divider"></div>
+    <div style="margin-bottom:20px;">
+      <h4 style="margin-bottom:12px;">📎 Attachments</h4>
+      ${attHtml}
+    </div>
+    <div class="divider"></div>
+    <div style="margin-bottom:20px;">
+      <h4 style="margin-bottom:12px;">📅 Status Timeline</h4>
+      <div class="timeline">${timelineHtml}</div>
+    </div>
+    <div class="divider"></div>
+    <h4 style="margin-bottom:8px;">💬 Messages</h4>
+    <div class="card" style="margin-bottom:0;border:1px solid var(--gray-200);">
+      <div class="chat-wrap">
+        <div class="chat-messages">${msgHtml}</div>
+        <div class="chat-input-row">
+          <input type="text" class="form-control" id="msg-input-${id}" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage('${id}')">
+          <button class="btn btn-primary btn-sm" onclick="sendMessage('${id}')">Send</button>
         </div>
-      `,
-                      )
-                      .join("")
-                  : "";
+      </div>
+    </div>
+  ${
+    revisionsHtml
+      ? `
+    <div class="divider"></div>
+    <h4 style="margin-bottom:12px;">🔄 Revision History (${revisions.length})</h4>
+    ${revisionsHtml}
+    `
+      : ""
+  }
+    ${
+      showRevisionForm
+        ? `
+    <div class="divider"></div>
+    <h4 style="margin-bottom:12px;">✏️ Submit Revision #${nextRevNum}</h4>
+    <div style="background:var(--warning-light);border-left:3px solid var(--warning);padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--warning);">
+      ⚠️ Your analyst has requested a revision. Please update your submission below.
+    </div>
+    <div class="form-group">
+      <label class="form-label">Updated Research Title</label>
+      <input type="text" class="form-control" id="rev-title-${id}" value="${req.title || ""}" placeholder="Updated title...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Updated Abstract</label>
+      <textarea class="form-control" id="rev-abstract-${id}" style="min-height:120px;" placeholder="Updated abstract...">${req.abstract || ""}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Response to Analyst</label>
+      <textarea class="form-control" id="rev-response-${id}" style="min-height:80px;" placeholder="Explain what changes you made..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Upload Revised File (optional)</label>
+      <div class="file-drop" onclick="document.getElementById('rev-file-${id}').click()" style="padding:16px;">
+        <div>📎 Click to upload revised file</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">PDF, DOCX, XLSX up to 20MB</div>
+      </div>
+      <input type="file" id="rev-file-${id}" style="display:none" accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.jpeg,.png" onchange="showRevFileName(this, '${id}')">
+      <div id="rev-file-name-${id}" style="margin-top:6px;font-size:13px;color:var(--gray-500);"></div>
+    </div>
+    <button class="btn btn-primary" onclick="submitRevision('${id}', ${nextRevNum})">📤 Submit Revision #${nextRevNum}</button>
+    `
+        : ""
+    }
+  `;
 
-              const showRevisionForm = req.status === "for_revision";
-              const nextRevNum =
-                revisions && revisions.length ? revisions[0].revision_number + 1 : 1;
+        // Scroll chat to bottom
+        const chatEl = document.querySelector(".chat-messages");
+        if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
 
-              document.getElementById("view-body").innerHTML = `
-          <div style="margin-bottom:24px;">
-            <div class="stepper">${stepHtml}</div>
-            ${req.status === "cancelled" ? `<div class="alert alert-danger" style="margin-top:12px;">🚫 This request has been cancelled.</div>` : ""}
-          </div>
-          <div class="grid-2" style="margin-bottom:20px;">
-            <div><span class="text-muted">Service</span><div style="font-weight:600;margin-top:2px;">${req.service_type}</div></div>
-            <div><span class="text-muted">Status</span><div style="margin-top:2px;"><span class="badge badge-${req.status}">${STATUS_LABELS[req.status]}</span></div></div>
-            <div><span class="text-muted">Submitted</span><div style="font-weight:600;margin-top:2px;">${formatDate(req.created_at)}</div></div>
-            <div><span class="text-muted">Assigned Analyst</span><div style="font-weight:600;margin-top:2px;">${req.analyst?.full_name || "Not yet assigned"}</div></div>
-          </div>
-          ${req.title ? `<div style="margin-bottom:16px;"><span class="text-muted">Research Title</span><div style="font-weight:600;margin-top:2px;">${req.title}</div></div>` : ""}
-          ${req.abstract ? `<div style="margin-bottom:20px;"><span class="text-muted">Abstract</span><div style="margin-top:4px;font-size:14px;color:var(--gray-700);">${req.abstract}</div></div>` : ""}
-          <div class="divider"></div>
-          <div style="margin-bottom:20px;">
-            <h4 style="margin-bottom:12px;">📎 Attachments</h4>
-            ${attHtml}
-          </div>
-          <div class="divider"></div>
-          <div style="margin-bottom:20px;">
-            <h4 style="margin-bottom:12px;">📅 Status Timeline</h4>
-            <div class="timeline">${timelineHtml}</div>
-          </div>
-          <div class="divider"></div>
-          <h4 style="margin-bottom:8px;">💬 Messages</h4>
-          <div class="card" style="margin-bottom:0;border:1px solid var(--gray-200);">
-            <div class="chat-wrap">
-              <div class="chat-messages">${msgHtml}</div>
-              <div class="chat-input-row">
-                <input type="text" class="form-control" id="msg-input-${id}" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage('${id}')">
-                <button class="btn btn-primary btn-sm" onclick="sendMessage('${id}')">Send</button>
-              </div>
-            </div>
-          </div>
-        ${
-          revisionsHtml
-            ? `
-          <div class="divider"></div>
-          <h4 style="margin-bottom:12px;">🔄 Revision History (${revisions.length})</h4>
-          ${revisionsHtml}
-          `
-            : ""
+        openModal("modal-view-request");
+      }
+
+      async function sendMessage(requestId) {
+        const input = document.getElementById(`msg-input-${requestId}`);
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = "";
+        await sb.from("messages").insert({
+          request_id: requestId,
+          sender_id: profile.id,
+          message: msg,
+        });
+        await viewRequest(requestId);
+      }
+
+      async function loadNotifications() {
+        const { data } = await sb
+          .from("notifications")
+          .select("*")
+          .eq("user_id", profile.id)
+          .order("created_at", { ascending: false });
+        const notifs = data || [];
+        const unread = notifs.filter((n) => !n.is_read).length;
+        const badge = document.getElementById("nb-notifs");
+        const dot = document.getElementById("notif-dot");
+        if (unread > 0) {
+          badge.textContent = unread;
+          badge.style.display = "";
+          dot.classList.add("show");
+        } else {
+          badge.style.display = "none";
+          dot.classList.remove("show");
         }
-          ${
-            showRevisionForm
-              ? `
-          <div class="divider"></div>
-          <h4 style="margin-bottom:12px;">✏️ Submit Revision #${nextRevNum}</h4>
-          <div style="background:var(--warning-light);border-left:3px solid var(--warning);padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--warning);">
-            ⚠️ Your analyst has requested a revision. Please update your submission below.
-          </div>
-          <div class="form-group">
-            <label class="form-label">Updated Research Title</label>
-            <input type="text" class="form-control" id="rev-title-${id}" value="${req.title || ""}" placeholder="Updated title...">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Updated Abstract</label>
-            <textarea class="form-control" id="rev-abstract-${id}" style="min-height:120px;" placeholder="Updated abstract...">${req.abstract || ""}</textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Response to Analyst</label>
-            <textarea class="form-control" id="rev-response-${id}" style="min-height:80px;" placeholder="Explain what changes you made..."></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Upload Revised File (optional)</label>
-            <div class="file-drop" onclick="document.getElementById('rev-file-${id}').click()" style="padding:16px;">
-              <div>📎 Click to upload revised file</div>
-              <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">PDF, DOCX, XLSX up to 20MB</div>
-            </div>
-            <input type="file" id="rev-file-${id}" style="display:none" accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.jpeg,.png" onchange="showRevFileName(this, '${id}')">
-            <div id="rev-file-name-${id}" style="margin-top:6px;font-size:13px;color:var(--gray-500);"></div>
-          </div>
-          <button class="btn btn-primary" onclick="submitRevision('${id}', ${nextRevNum})">📤 Submit Revision #${nextRevNum}</button>
-          `
-              : ""
+
+        const list = document.getElementById("notif-list");
+        if (!notifs.length) {
+          list.innerHTML =
+            '<div class="empty-state"><div class="empty-state-icon">🔔</div><h3>No notifications</h3></div>';
+          return;
+        }
+        list.innerHTML = notifs
+          .map(
+            (n) => `
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 20px;border-bottom:1px solid var(--gray-100);background:${n.is_read ? "" : "var(--gold-light)"};">
+      <div style="font-size:22px;flex-shrink:0;">${n.is_read ? "🔔" : "🔔"}</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:${n.is_read ? "400" : "600"};color:var(--gray-800);">${n.message}</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${timeAgo(n.created_at)}</div>
+      </div>
+      ${!n.is_read ? `<button class="btn btn-ghost btn-sm" onclick="markRead('${n.id}')">✓</button>` : ""}
+    </div>
+  `,
+          )
+          .join("");
+      }
+
+      async function markRead(id) {
+        await sb.from("notifications").update({ is_read: true }).eq("id", id);
+        await loadNotifications();
+      }
+
+      async function markAllRead() {
+        await sb
+          .from("notifications")
+          .update({ is_read: true })
+          .eq("user_id", profile.id);
+        await loadNotifications();
+      }
+
+      function openNewRequestModal() {
+        document.getElementById("new-service").value = "";
+        document.getElementById("new-title").value = "";
+        document.getElementById("new-notes").value = "";
+        document.getElementById("file-list").innerHTML = "";
+        selectedFiles = [];
+        openModal("modal-new-request");
+      }
+
+      function handleFileSelect(input) {
+        selectedFiles = Array.from(input.files);
+        document.getElementById("file-list").innerHTML = selectedFiles
+          .map(
+            (f) =>
+              `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--gray-50);border-radius:6px;margin-bottom:4px;font-size:13px;">📄 ${f.name} <span style="color:var(--gray-400)">(${(f.size / 1024).toFixed(1)}KB)</span></div>`,
+          )
+          .join("");
+      }
+
+      // Drag and drop
+      document.addEventListener("DOMContentLoaded", () => {
+        const zone = document.getElementById("file-drop-zone");
+        if (zone) {
+          zone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            zone.classList.add("dragover");
+          });
+          zone.addEventListener("dragleave", () =>
+            zone.classList.remove("dragover"),
+          );
+          zone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            zone.classList.remove("dragover");
+            const dt = e.dataTransfer;
+            document.getElementById("file-input").files = dt.files;
+            handleFileSelect(document.getElementById("file-input"));
+          });
+        }
+      });
+
+      async function submitRequest() {
+        const service = document.getElementById("new-service").value;
+        const title = document.getElementById("new-title").value.trim();
+        const notes = document.getElementById("new-notes").value.trim();
+        if (!service) {
+          showToast("Please select a service type", "error");
+          return;
+        }
+        if (!title) {
+          showToast("Please enter a research title", "error");
+          return;
+        }
+
+        const btn = document.querySelector("#modal-new-request .btn-primary");
+        btn.disabled = true;
+        btn.textContent = "Submitting...";
+
+        const { data: req, error } = await sb
+          .from("service_requests")
+          .insert({
+            researcher_id: profile.id,
+            service_type: service,
+            title,
+            abstract: notes,
+            status: "submitted",
+          })
+          .select()
+          .single();
+
+        if (error) {
+          showToast("Error submitting request", "error");
+          btn.disabled = false;
+          btn.textContent = "Submit Request";
+          return;
+        }
+
+        // Upload files
+        for (const file of selectedFiles) {
+          const path = `${profile.id}/${req.id}/${file.name}`;
+          const { data: uploaded, error: uploadError } = await sb.storage
+            .from("attachments")
+            .upload(path, file, { upsert: true });
+          if (uploadError) {
+            console.error("Upload error:", uploadError.message);
+            showToast(`File upload failed: ${uploadError.message}`, "error");
+            continue;
           }
-        `;
+          const {
+            data: { publicUrl },
+          } = sb.storage.from("attachments").getPublicUrl(path);
+          await sb.from("attachments").insert({
+            request_id: req.id,
+            filename: file.name,
+            url: publicUrl,
+            uploaded_by: profile.id,
+          });
+          await sb
+            .from("service_requests")
+            .update({
+              attachment_url: publicUrl,
+              attachment_name: file.name,
+            })
+            .eq("id", req.id);
+        }
 
-              // Scroll chat to bottom
-              const chatEl = document.querySelector(".chat-messages");
-              if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
+        // Log status
+        await sb.from("request_updates").insert({
+          request_id: req.id,
+          status: "submitted",
+          notes: "Request submitted by researcher.",
+        });
+        // Notify admin
+        await sb.from("notifications").insert({
+          user_id: profile.id,
+          message: `Your request for "${service}" has been submitted successfully.`,
+          type: "request_submitted",
+        });
 
-              openModal("modal-view-request");
-            }
+        closeModal("modal-new-request");
+        showToast("Request submitted successfully!", "success");
+        btn.disabled = false;
+        btn.textContent = "Submit Request";
+        await loadRequests();
+      }
 
-            async function sendMessage(requestId) {
-              const input = document.getElementById(`msg-input-${requestId}`);
-              const msg = input.value.trim();
-              if (!msg) return;
-              input.value = "";
-              await sb.from("messages").insert({
-                request_id: requestId,
-                sender_id: profile.id,
-                message: msg,
-              });
-              await viewRequest(requestId);
-            }
+      function showRevFileName(input, reqId) {
+        const f = input.files[0];
+        if (f)
+          document.getElementById(`rev-file-name-${reqId}`).textContent =
+            `📄 ${f.name}`;
+      }
 
-            async function loadNotifications() {
-              const { data } = await sb
-                .from("notifications")
-                .select("*")
-                .eq("user_id", profile.id)
-                .order("created_at", { ascending: false });
-              const notifs = data || [];
-              const unread = notifs.filter((n) => !n.is_read).length;
-              const badge = document.getElementById("nb-notifs");
-              const dot = document.getElementById("notif-dot");
-              if (unread > 0) {
-                badge.textContent = unread;
-                badge.style.display = "";
-                dot.classList.add("show");
-              } else {
-                badge.style.display = "none";
-                dot.classList.remove("show");
-              }
+      async function submitRevision(requestId, revNumber) {
+        const title = document
+          .getElementById(`rev-title-${requestId}`)
+          ?.value.trim();
+        const abstract = document
+          .getElementById(`rev-abstract-${requestId}`)
+          ?.value.trim();
+        const response = document
+          .getElementById(`rev-response-${requestId}`)
+          ?.value.trim();
+        const fileInput = document.getElementById(`rev-file-${requestId}`);
+        const file = fileInput?.files[0];
 
-              const list = document.getElementById("notif-list");
-              if (!notifs.length) {
-                list.innerHTML =
-                  '<div class="empty-state"><div class="empty-state-icon">🔔</div><h3>No notifications</h3></div>';
-                return;
-              }
-              list.innerHTML = notifs
-                .map(
-                  (n) => `
-          <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 20px;border-bottom:1px solid var(--gray-100);background:${n.is_read ? "" : "var(--gold-light)"};">
-            <div style="font-size:22px;flex-shrink:0;">${n.is_read ? "🔔" : "🔔"}</div>
-            <div style="flex:1;">
-              <div style="font-size:14px;font-weight:${n.is_read ? "400" : "600"};color:var(--gray-800);">${n.message}</div>
-              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${timeAgo(n.created_at)}</div>
-            </div>
-            ${!n.is_read ? `<button class="btn btn-ghost btn-sm" onclick="markRead('${n.id}')">✓</button>` : ""}
-          </div>
-        `,
-                )
-                .join("");
-            }
+        if (!title) {
+          showToast("Please enter an updated title", "error");
+          return;
+        }
 
-            async function markRead(id) {
-              await sb.from("notifications").update({ is_read: true }).eq("id", id);
-              await loadNotifications();
-            }
+        const btn = document.querySelector(
+          `#modal-view-request button[onclick*="submitRevision"]`,
+        );
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "Submitting...";
+        }
 
-            async function markAllRead() {
-              await sb
-                .from("notifications")
-                .update({ is_read: true })
-                .eq("user_id", profile.id);
-              await loadNotifications();
-            }
+        let attachmentUrl = null;
+        let attachmentName = null;
 
-            function openNewRequestModal() {
-              document.getElementById("new-service").value = "";
-              document.getElementById("new-title").value = "";
-              document.getElementById("new-notes").value = "";
-              document.getElementById("file-list").innerHTML = "";
-              selectedFiles = [];
-              openModal("modal-new-request");
-            }
-
-            function handleFileSelect(input) {
-              selectedFiles = Array.from(input.files);
-              document.getElementById("file-list").innerHTML = selectedFiles
-                .map(
-                  (f) =>
-                    `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--gray-50);border-radius:6px;margin-bottom:4px;font-size:13px;">📄 ${f.name} <span style="color:var(--gray-400)">(${(f.size / 1024).toFixed(1)}KB)</span></div>`,
-                )
-                .join("");
-            }
-
-            // Drag and drop
-            document.addEventListener("DOMContentLoaded", () => {
-              const zone = document.getElementById("file-drop-zone");
-              if (zone) {
-                zone.addEventListener("dragover", (e) => {
-                  e.preventDefault();
-                  zone.classList.add("dragover");
-                });
-                zone.addEventListener("dragleave", () =>
-                  zone.classList.remove("dragover"),
-                );
-                zone.addEventListener("drop", (e) => {
-                  e.preventDefault();
-                  zone.classList.remove("dragover");
-                  const dt = e.dataTransfer;
-                  document.getElementById("file-input").files = dt.files;
-                  handleFileSelect(document.getElementById("file-input"));
-                });
-              }
+        if (file) {
+          const path = `${profile.id}/${requestId}/revision-${revNumber}-${file.name}`;
+          const { data: uploaded, error: uploadError } = await sb.storage
+            .from("attachments")
+            .upload(path, file, { upsert: true });
+          if (uploadError) {
+            console.error("Revision upload error:", uploadError.message);
+            showToast(`File upload failed: ${uploadError.message}`, "error");
+          } else {
+            const {
+              data: { publicUrl },
+            } = sb.storage.from("attachments").getPublicUrl(path);
+            attachmentUrl = publicUrl;
+            attachmentName = file.name;
+            await sb.from("attachments").insert({
+              request_id: requestId,
+              filename: `[Revision #${revNumber}] ${file.name}`,
+              url: publicUrl,
+              uploaded_by: profile.id,
             });
+          }
+        }
 
-            async function submitRequest() {
-              const service = document.getElementById("new-service").value;
-              const title = document.getElementById("new-title").value.trim();
-              const notes = document.getElementById("new-notes").value.trim();
-              if (!service) {
-                showToast("Please select a service type", "error");
-                return;
-              }
-              if (!title) {
-                showToast("Please enter a research title", "error");
-                return;
-              }
+        // Save revision record
+        await sb.from("revisions").insert({
+          request_id: requestId,
+          revision_number: revNumber,
+          title,
+          abstract,
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName,
+          researcher_response: response || null,
+        });
 
-              const btn = document.querySelector("#modal-new-request .btn-primary");
-              btn.disabled = true;
-              btn.textContent = "Submitting...";
+        // Update service_requests with latest data + resubmitted status
+        const updates = {
+          title,
+          abstract,
+          revision_count: revNumber,
+          status: "resubmitted",
+        };
+        if (attachmentUrl) {
+          updates.attachment_url = attachmentUrl;
+          updates.attachment_name = attachmentName;
+        }
+        const { error: updateError } = await sb
+          .from("service_requests")
+          .update(updates)
+          .eq("id", requestId);
+        if (updateError) {
+          console.error("Update error:", updateError.message);
+          showToast(
+            "Failed to update request status: " + updateError.message,
+            "error",
+          );
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = `📤 Submit Revision #${revNumber}`;
+          }
+          return;
+        }
 
-              const { data: req, error } = await sb
-                .from("service_requests")
-                .insert({
-                  researcher_id: profile.id,
-                  service_type: service,
-                  title,
-                  abstract: notes,
-                  status: "submitted",
-                })
-                .select()
-                .single();
+        // Log status change
+        await sb.from("request_updates").insert({
+          request_id: requestId,
+          status: "resubmitted",
+          notes: `Researcher submitted Revision #${revNumber}.`,
+        });
 
-              if (error) {
-                showToast("Error submitting request", "error");
-                btn.disabled = false;
-                btn.textContent = "Submit Request";
-                return;
-              }
+        // Notify analyst
+        const req = allRequests.find((r) => r.id === requestId);
+        if (req?.analyst_id) {
+          await sb.from("notifications").insert({
+            user_id: req.analyst_id,
+            message: `Researcher submitted Revision #${revNumber} for "${req.service_type}". Please review.`,
+            type: "revision_submitted",
+          });
+        }
 
-              // Upload files
-              for (const file of selectedFiles) {
-                const path = `${profile.id}/${req.id}/${file.name}`;
-                const { data: uploaded, error: uploadError } = await sb.storage
-                  .from("attachments")
-                  .upload(path, file, { upsert: true });
-                if (uploadError) {
-                  console.error("Upload error:", uploadError.message);
-                  showToast(`File upload failed: ${uploadError.message}`, "error");
-                  continue;
-                }
-                const {
-                  data: { publicUrl },
-                } = sb.storage.from("attachments").getPublicUrl(path);
-                await sb.from("attachments").insert({
-                  request_id: req.id,
-                  filename: file.name,
-                  url: publicUrl,
-                  uploaded_by: profile.id,
-                });
-                await sb
-                  .from("service_requests")
-                  .update({
-                    attachment_url: publicUrl,
-                    attachment_name: file.name,
-                  })
-                  .eq("id", req.id);
-              }
+        showToast(`Revision #${revNumber} submitted!`, "success");
+        closeModal("modal-view-request");
+        await loadRequests();
+      }
 
-              // Log status
-              await sb.from("request_updates").insert({
-                request_id: req.id,
-                status: "submitted",
-                notes: "Request submitted by researcher.",
-              });
-              // Notify admin
-              await sb.from("notifications").insert({
-                user_id: profile.id,
-                message: `Your request for "${service}" has been submitted successfully.`,
-                type: "request_submitted",
-              });
+      function showSection(id) {
+        ["dashboard", "my-requests", "notifications"].forEach((s) => {
+          document.getElementById(`section-${s}`).style.display =
+            s === id ? "" : "none";
+        });
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((el) => el.classList.remove("active"));
+        const titles = {
+          dashboard: ["Dashboard", `Welcome back!`],
+          "my-requests": ["My Requests", "Track all your service requests"],
+          notifications: ["Notifications", "Stay updated on your requests"],
+        };
+        document.getElementById("page-title").textContent = titles[id][0];
+        document.getElementById("page-sub").textContent = titles[id][1];
+        event?.currentTarget?.classList?.add("active");
+        document.getElementById("sidebar").classList.remove("open");
+      }
 
-              closeModal("modal-new-request");
-              showToast("Request submitted successfully!", "success");
-              btn.disabled = false;
-              btn.textContent = "Submit Request";
-              await loadRequests();
-            }
+      function openModal(id) {
+        document.getElementById(id).classList.add("open");
+      }
+      function closeModal(id) {
+        document.getElementById(id).classList.remove("open");
+      }
+      document.querySelectorAll(".modal-overlay").forEach((o) =>
+        o.addEventListener("click", (e) => {
+          if (e.target === o) o.classList.remove("open");
+        }),
+      );
 
-            function showRevFileName(input, reqId) {
-              const f = input.files[0];
-              if (f)
-                document.getElementById(`rev-file-name-${reqId}`).textContent =
-                  `📄 ${f.name}`;
-            }
+      // ============================================================
+      // PHASE 1.1 — NOTIFICATION BELL POPUP
+      // ============================================================
+      let notifData = [];
 
-            async function submitRevision(requestId, revNumber) {
-              const title = document
-                .getElementById(`rev-title-${requestId}`)
-                ?.value.trim();
-              const abstract = document
-                .getElementById(`rev-abstract-${requestId}`)
-                ?.value.trim();
-              const response = document
-                .getElementById(`rev-response-${requestId}`)
-                ?.value.trim();
-              const fileInput = document.getElementById(`rev-file-${requestId}`);
-              const file = fileInput?.files[0];
+      function toggleNotifPanel(e) {
+        e.stopPropagation();
+        const panel = document.getElementById("notif-panel");
+        panel.classList.toggle("open");
+        if (panel.classList.contains("open")) loadNotifPanel();
+      }
 
-              if (!title) {
-                showToast("Please enter an updated title", "error");
-                return;
-              }
+      document.addEventListener("click", function (e) {
+        const wrapper = document.getElementById("notif-wrapper");
+        if (wrapper && !wrapper.contains(e.target)) {
+          const panel = document.getElementById("notif-panel");
+          if (panel) panel.classList.remove("open");
+        }
+      });
 
-              const btn = document.querySelector(
-                `#modal-view-request button[onclick*="submitRevision"]`,
-              );
-              if (btn) {
-                btn.disabled = true;
-                btn.textContent = "Submitting...";
-              }
+      async function loadNotifPanel() {
+        const { data } = await sb
+          .from("notifications")
+          .select("*")
+          .eq("user_id", profile.id)
+          .order("created_at", { ascending: false })
+          .limit(30);
+        notifData = data || [];
+        renderNotifPanel();
+      }
 
-              let attachmentUrl = null;
-              let attachmentName = null;
+      function renderNotifPanel() {
+        const body = document.getElementById("notif-panel-body");
+        if (!notifData.length) {
+          body.innerHTML =
+            '<div class="notif-empty"><div class="notif-empty-icon">&#128276;</div>No notifications yet</div>';
+          return;
+        }
+        const icons = {
+          status: "&#128203;",
+          message: "&#128172;",
+          assignment: "&#128100;",
+          payment: "&#128176;",
+          system: "&#9881;",
+        };
+        const items = notifData.map(function (n) {
+          const icon = icons[n.type] || "&#128276;";
+          const cls = n.is_read ? "notif-item" : "notif-item unread";
+          return (
+            '<button class="' +
+            cls +
+            '" data-nid="' +
+            (n.id || "") +
+            '" data-ntype="' +
+            (n.type || "") +
+            '" onclick="handleNotifClick(this.dataset.nid, this.dataset.ntype)">' +
+            '<div class="notif-item-icon">' +
+            icon +
+            "</div>" +
+            '<div class="notif-item-body">' +
+            '<div class="notif-item-msg">' +
+            (n.message || "") +
+            "</div>" +
+            '<div class="notif-item-time">' +
+            timeAgo(n.created_at) +
+            "</div>" +
+            "</div>" +
+            '<div class="notif-unread-dot"></div>' +
+            "</button>"
+          );
+        });
+        body.innerHTML = items.join("");
+        const unread = notifData.filter(function (n) {
+          return !n.is_read;
+        }).length;
+        const countEl = document.getElementById("notif-count");
+        if (unread > 0) {
+          countEl.textContent = unread > 99 ? "99+" : unread;
+          countEl.classList.add("show");
+        } else {
+          countEl.classList.remove("show");
+        }
+      }
 
-              if (file) {
-                const path = `${profile.id}/${requestId}/revision-${revNumber}-${file.name}`;
-                const { data: uploaded, error: uploadError } = await sb.storage
-                  .from("attachments")
-                  .upload(path, file, { upsert: true });
-                if (uploadError) {
-                  console.error("Revision upload error:", uploadError.message);
-                  showToast(`File upload failed: ${uploadError.message}`, "error");
-                } else {
-                  const {
-                    data: { publicUrl },
-                  } = sb.storage.from("attachments").getPublicUrl(path);
-                  attachmentUrl = publicUrl;
-                  attachmentName = file.name;
-                  await sb.from("attachments").insert({
-                    request_id: requestId,
-                    filename: `[Revision #${revNumber}] ${file.name}`,
-                    url: publicUrl,
-                    uploaded_by: profile.id,
-                  });
-                }
-              }
+      async function handleNotifClick(id, type) {
+        await sb.from("notifications").update({ is_read: true }).eq("id", id);
+        const n = notifData.find(function (x) {
+          return x.id === id;
+        });
+        if (n) n.is_read = true;
+        renderNotifPanel();
+        document.getElementById("notif-panel").classList.remove("open");
+        if (type === "message") showSection("messages", null);
+        else if (type === "status" || type === "assignment")
+          showSection("requests", null);
+      }
 
-              // Save revision record
-              await sb.from("revisions").insert({
-                request_id: requestId,
-                revision_number: revNumber,
-                title,
-                abstract,
-                attachment_url: attachmentUrl,
-                attachment_name: attachmentName,
-                researcher_response: response || null,
-              });
+      async function markAllRead() {
+        await sb
+          .from("notifications")
+          .update({ is_read: true })
+          .eq("user_id", profile.id)
+          .eq("is_read", false);
+        notifData.forEach(function (n) {
+          n.is_read = true;
+        });
+        renderNotifPanel();
+      }
 
-              // Update service_requests with latest data + resubmitted status
-              const updates = {
-                title,
-                abstract,
-                revision_count: revNumber,
-                status: "resubmitted",
-              };
-              if (attachmentUrl) {
-                updates.attachment_url = attachmentUrl;
-                updates.attachment_name = attachmentName;
-              }
-              const { error: updateError } = await sb
-                .from("service_requests")
-                .update(updates)
-                .eq("id", requestId);
-              if (updateError) {
-                console.error("Update error:", updateError.message);
-                showToast(
-                  "Failed to update request status: " + updateError.message,
-                  "error",
-                );
-                if (btn) {
-                  btn.disabled = false;
-                  btn.textContent = `📤 Submit Revision #${revNumber}`;
-                }
-                return;
-              }
+      async function refreshNotifCount() {
+        const { data } = await sb
+          .from("notifications")
+          .select("id")
+          .eq("user_id", profile.id)
+          .eq("is_read", false);
+        const count = (data || []).length;
+        const countEl = document.getElementById("notif-count");
+        if (count > 0) {
+          countEl.textContent = count > 99 ? "99+" : count;
+          countEl.classList.add("show");
+        } else {
+          countEl.classList.remove("show");
+        }
+      }
 
-              // Log status change
-              await sb.from("request_updates").insert({
-                request_id: requestId,
-                status: "resubmitted",
-                notes: `Researcher submitted Revision #${revNumber}.`,
-              });
+      // ============================================================
+      // PHASE 1.2 — PROFILE EDITING
+      // ============================================================
+      let pendingAvatarFile = null;
 
-              // Notify analyst
-              const req = allRequests.find((r) => r.id === requestId);
-              if (req?.analyst_id) {
-                await sb.from("notifications").insert({
-                  user_id: req.analyst_id,
-                  message: `Researcher submitted Revision #${revNumber} for "${req.service_type}". Please review.`,
-                  type: "revision_submitted",
-                });
-              }
+      function openProfileModal() {
+        document.getElementById("profile-name-input").value =
+          profile.full_name || "";
+        document.getElementById("profile-contact-input").value =
+          profile.contact_number || "";
+        document.getElementById("profile-email-input").value =
+          profile.email || "";
+        const av = document.getElementById("profile-modal-avatar");
+        if (profile.avatar_url) {
+          av.innerHTML =
+            '<img src="' +
+            profile.avatar_url +
+            '" style="width:100%;height:100%;object-fit:cover;">';
+        } else {
+          av.textContent = (profile.full_name || "?")[0].toUpperCase();
+        }
+        pendingAvatarFile = null;
+        openModal("modal-profile");
+      }
 
-              showToast(`Revision #${revNumber} submitted!`, "success");
-              closeModal("modal-view-request");
-              await loadRequests();
-            }
+      function previewAvatar(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        pendingAvatarFile = file;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById("profile-modal-avatar").innerHTML =
+            '<img src="' +
+            e.target.result +
+            '" style="width:100%;height:100%;object-fit:cover;">';
+        };
+        reader.readAsDataURL(file);
+      }
 
-            function showSection(id) {
-              ["dashboard", "my-requests", "notifications"].forEach((s) => {
-                document.getElementById(`section-${s}`).style.display =
-                  s === id ? "" : "none";
-              });
-              document
-                .querySelectorAll(".nav-item")
-                .forEach((el) => el.classList.remove("active"));
-              const titles = {
-                dashboard: ["Dashboard", `Welcome back!`],
-                "my-requests": ["My Requests", "Track all your service requests"],
-                notifications: ["Notifications", "Stay updated on your requests"],
-              };
-              document.getElementById("page-title").textContent = titles[id][0];
-              document.getElementById("page-sub").textContent = titles[id][1];
-              event?.currentTarget?.classList?.add("active");
-              document.getElementById("sidebar").classList.remove("open");
-            }
-
-            function openModal(id) {
-              document.getElementById(id).classList.add("open");
-            }
-            function closeModal(id) {
-              document.getElementById(id).classList.remove("open");
-            }
-            document.querySelectorAll(".modal-overlay").forEach((o) =>
-              o.addEventListener("click", (e) => {
-                if (e.target === o) o.classList.remove("open");
-              }),
-            );
-
-            // ============================================================
-            // PHASE 1.1 — NOTIFICATION BELL POPUP
-            // ============================================================
-            let notifData = [];
-
-            function toggleNotifPanel(e) {
-              e.stopPropagation();
-              const panel = document.getElementById('notif-panel');
-              panel.classList.toggle('open');
-              if (panel.classList.contains('open')) loadNotifPanel();
-            }
-
-            document.addEventListener('click', function(e) {
-              const wrapper = document.getElementById('notif-wrapper');
-              if (wrapper && !wrapper.contains(e.target)) {
-                const panel = document.getElementById('notif-panel');
-                if (panel) panel.classList.remove('open');
-              }
-            });
-
-            async function loadNotifPanel() {
-              const { data } = await sb.from('notifications')
-                .select('*').eq('user_id', researcherProfile.id)
-                .order('created_at', { ascending: false }).limit(30);
-              notifData = data || [];
-              renderNotifPanel();
-            }
-
-            function renderNotifPanel() {
-              const body = document.getElementById('notif-panel-body');
-              if (!notifData.length) {
-                body.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">&#128276;</div>No notifications yet</div>';
-                return;
-              }
-              const icons = { status: '&#128203;', message: '&#128172;', assignment: '&#128100;', payment: '&#128176;', system: '&#9881;' };
-              body.innerHTML = notifData.map(function(n) {
-                const icon = icons[n.type] || '&#128276;';
-                return '<button class="notif-item ' + (n.is_read ? '' : 'unread') + '" onclick="handleNotifClick('' + n.id + '', '' + (n.type||'') + '')">' +
-                  '<div class="notif-item-icon">' + icon + '</div>' +
-                  '<div class="notif-item-body">' +
-                    '<div class="notif-item-msg">' + n.message + '</div>' +
-                    '<div class="notif-item-time">' + timeAgo(n.created_at) + '</div>' +
-                  '</div>' +
-                  '<div class="notif-unread-dot"></div>' +
-                '</button>';
-              }).join('');
-              const unread = notifData.filter(function(n) { return !n.is_read; }).length;
-              const countEl = document.getElementById('notif-count');
-              if (unread > 0) {
-                countEl.textContent = unread > 99 ? '99+' : unread;
-                countEl.classList.add('show');
-              } else {
-                countEl.classList.remove('show');
-              }
-            }
-
-            async function handleNotifClick(id, type) {
-              await sb.from('notifications').update({ is_read: true }).eq('id', id);
-              const n = notifData.find(function(x) { return x.id === id; });
-              if (n) n.is_read = true;
-              renderNotifPanel();
-              document.getElementById('notif-panel').classList.remove('open');
-              if (type === 'message') showSection('messages', null);
-              else if (type === 'status' || type === 'assignment') showSection('requests', null);
-            }
-
-            async function markAllRead() {
-              await sb.from('notifications').update({ is_read: true })
-                .eq('user_id', researcherProfile.id).eq('is_read', false);
-              notifData.forEach(function(n) { n.is_read = true; });
-              renderNotifPanel();
-            }
-
-            async function refreshNotifCount() {
-              const { data } = await sb.from('notifications')
-                .select('id').eq('user_id', researcherProfile.id).eq('is_read', false);
-              const count = (data || []).length;
-              const countEl = document.getElementById('notif-count');
-              if (count > 0) {
-                countEl.textContent = count > 99 ? '99+' : count;
-                countEl.classList.add('show');
-              } else {
-                countEl.classList.remove('show');
-              }
-            }
-
-            // ============================================================
-            // PHASE 1.2 — PROFILE EDITING
-            // ============================================================
-            let pendingAvatarFile = null;
-
-            function openProfileModal() {
-              document.getElementById('profile-name-input').value = researcherProfile.full_name || '';
-              document.getElementById('profile-contact-input').value = researcherProfile.contact_number || '';
-              document.getElementById('profile-email-input').value = researcherProfile.email || '';
-              const av = document.getElementById('profile-modal-avatar');
-              if (researcherProfile.avatar_url) {
-                av.innerHTML = '<img src="' + researcherProfile.avatar_url + '" style="width:100%;height:100%;object-fit:cover;">';
-              } else {
-                av.textContent = (researcherProfile.full_name || '?')[0].toUpperCase();
-              }
-              pendingAvatarFile = null;
-              openModal('modal-profile');
-            }
-
-            function previewAvatar(event) {
-              const file = event.target.files[0];
-              if (!file) return;
-              pendingAvatarFile = file;
-              const reader = new FileReader();
-              reader.onload = function(e) {
-                document.getElementById('profile-modal-avatar').innerHTML =
-                  '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
-              };
-              reader.readAsDataURL(file);
-            }
-
-            async function saveProfile() {
-              const name = document.getElementById('profile-name-input').value.trim();
-              const contact = document.getElementById('profile-contact-input').value.trim();
-              if (!name) { showToast('Please enter your full name', 'error'); return; }
-              let avatarUrl = researcherProfile.avatar_url;
-              if (pendingAvatarFile) {
-                const ext = pendingAvatarFile.name.split('.').pop();
-                const path = 'avatars/' + researcherProfile.id + '.' + ext;
-                const { error: upErr } = await sb.storage.from('attachments').upload(path, pendingAvatarFile, { upsert: true });
-                if (!upErr) {
-                  const { data: urlData } = sb.storage.from('attachments').getPublicUrl(path);
-                  avatarUrl = urlData.publicUrl;
-                }
-              }
-              const { error } = await sb.from('profiles').update({
-                full_name: name, contact_number: contact, avatar_url: avatarUrl
-              }).eq('id', researcherProfile.id);
-              if (error) { showToast('Failed to save profile', 'error'); return; }
-              researcherProfile.full_name = name;
-              researcherProfile.contact_number = contact;
-              researcherProfile.avatar_url = avatarUrl;
-              document.getElementById('sidebar-name').textContent = name;
-              if (avatarUrl) {
-                document.getElementById('sidebar-avatar').innerHTML = '<img src="' + avatarUrl + '" alt="">';
-              } else {
-                document.getElementById('sidebar-avatar').textContent = name[0].toUpperCase();
-              }
-              closeModal('modal-profile');
-              showToast('Profile updated!');
-            }
+      async function saveProfile() {
+        const name = document.getElementById("profile-name-input").value.trim();
+        const contact = document
+          .getElementById("profile-contact-input")
+          .value.trim();
+        if (!name) {
+          showToast("Please enter your full name", "error");
+          return;
+        }
+        let avatarUrl = profile.avatar_url;
+        if (pendingAvatarFile) {
+          const ext = pendingAvatarFile.name.split(".").pop();
+          const path = "avatars/" + profile.id + "." + ext;
+          const { error: upErr } = await sb.storage
+            .from("attachments")
+            .upload(path, pendingAvatarFile, { upsert: true });
+          if (!upErr) {
+            const { data: urlData } = sb.storage
+              .from("attachments")
+              .getPublicUrl(path);
+            avatarUrl = urlData.publicUrl;
+          }
+        }
+        const { error } = await sb
+          .from("profiles")
+          .update({
+            full_name: name,
+            contact_number: contact,
+            avatar_url: avatarUrl,
+          })
+          .eq("id", profile.id);
+        if (error) {
+          showToast("Failed to save profile", "error");
+          return;
+        }
+        profile.full_name = name;
+        profile.contact_number = contact;
+        profile.avatar_url = avatarUrl;
+        document.getElementById("sidebar-name").textContent = name;
+        if (avatarUrl) {
+          document.getElementById("sidebar-avatar").innerHTML =
+            '<img src="' + avatarUrl + '" alt="">';
+        } else {
+          document.getElementById("sidebar-avatar").textContent =
+            name[0].toUpperCase();
+        }
+        closeModal("modal-profile");
+        showToast("Profile updated!");
+      }
     </script>
 
     <!-- PROFILE EDIT MODAL (Phase 1.2) -->

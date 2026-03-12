@@ -1,5 +1,5 @@
 -- =============================================
--- RPAS — Phase 1 Database Updates
+-- RPAS — Phase 1 Database Updates (Safe Version)
 -- Run this in Supabase SQL Editor
 -- =============================================
 
@@ -10,42 +10,16 @@ alter table public.profiles
   add column if not exists contact_number text;
 
 -- ============================================================
--- PHASE 1.3 — Email Notifications via Supabase Edge Functions
--- The notifications table already exists.
--- To enable actual EMAIL delivery, set up Supabase Edge Functions:
---
--- Option A (Recommended — Free):
---   Use Supabase Database Webhooks + Resend.com free tier (3000 emails/month)
---   1. Create account at resend.com, get API key
---   2. Supabase Dashboard → Edge Functions → New Function "send-email"
---   3. Set webhook trigger on notifications table INSERT
---
--- Option B (Supabase built-in):
---   Supabase Dashboard → Authentication → Email Templates
---   Customize the "Confirm signup" and "Magic Link" templates
--- ============================================================
-
--- ============================================================
--- PHASE 1.4 — Email Verification
--- Enable in Supabase Dashboard:
---   Authentication → Settings → Enable email confirmations = ON
---   Authentication → Email Templates → Confirm signup → customize message
---
--- The auth.js requireAuth() function now checks email_confirmed_at
--- and redirects unverified users back to login with ?msg=verify
--- ============================================================
-
--- ============================================================
 -- PHASE 1.5 — Security Hardening
 -- ============================================================
 
--- Drop old potentially recursive policies and replace with safe ones
+-- Drop old potentially recursive policies first
 drop policy if exists "Admins can view all profiles" on public.profiles;
 drop policy if exists "Admins can update any profile" on public.profiles;
 drop policy if exists "Admins see all requests" on public.service_requests;
 drop policy if exists "Admins can update any request" on public.service_requests;
 
--- Safe non-recursive role helper (idempotent)
+-- Safe non-recursive helper functions
 create or replace function public.get_my_role()
 returns text as $$
   select role from public.profiles where id = auth.uid();
@@ -59,7 +33,7 @@ returns boolean as $$
   );
 $$ language sql security definer stable;
 
--- Profiles: safe admin policies using helper function
+-- Recreate safe policies
 create policy "Admins can view all profiles"
   on public.profiles for select
   using (auth.uid() = id or public.is_approved_admin());
@@ -68,7 +42,6 @@ create policy "Admins can update any profile"
   on public.profiles for update
   using (auth.uid() = id or public.is_approved_admin());
 
--- Service requests: safe admin policies
 create policy "Admins see all requests"
   on public.service_requests for select
   using (
@@ -84,13 +57,35 @@ create policy "Admins can update any request"
     public.is_approved_admin()
   );
 
--- Enable realtime on notifications, profiles, request_updates, attachments
-alter publication supabase_realtime add table public.profiles;
-alter publication supabase_realtime add table public.request_updates;
-alter publication supabase_realtime add table public.attachments;
+-- ============================================================
+-- REALTIME — Only add tables not already in publication
+-- ============================================================
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'profiles'
+  ) then
+    alter publication supabase_realtime add table public.profiles;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'request_updates'
+  ) then
+    alter publication supabase_realtime add table public.request_updates;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'attachments'
+  ) then
+    alter publication supabase_realtime add table public.attachments;
+  end if;
+end $$;
 
 -- ============================================================
--- PHASE 1.4 — Auto-trigger for new signups (ensure it exists)
+-- AUTO-TRIGGER for new signups (ensure it exists)
 -- ============================================================
 create or replace function public.handle_new_user()
 returns trigger as $$

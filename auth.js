@@ -79,20 +79,13 @@ async function requireAuth(expectedRole) {
 
 function redirectToRole(role) {
   const root = getRootPath();
-  if (role === ROLES.ADMIN) window.location.href = root + "admin/index.html";
-  else if (role === ROLES.ANALYST)
-    window.location.href = root + "analyst/index.html";
-  else window.location.href = root + "researcher/index.html";
+  if (role === ROLES.ADMIN) window.location.href = root + "admin.html";
+  else if (role === ROLES.ANALYST) window.location.href = root + "analyst.html";
+  else window.location.href = root + "researcher.html";
 }
 
 function getRootPath() {
-  const path = window.location.pathname;
-  if (
-    path.includes("/admin/") ||
-    path.includes("/analyst/") ||
-    path.includes("/researcher/")
-  )
-    return "../";
+  // Files are flat at root: admin.html, analyst.html, researcher.html
   return "";
 }
 
