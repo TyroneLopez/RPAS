@@ -11,15 +11,16 @@ A web-based service tracking system for students and researchers to monitor the 
 ```
 rpas/
 ├── index.html                  ← Login page
-├── admin/admin.html            ← Admin dashboard
-├── analyst/analyst.html        ← Data Analyst dashboard
-├── researcher/index.html       ← Researcher/Student dashboard
+├── admin.html                  ← Admin dashboard
+├── analyst.html                ← Data Analyst dashboard
+├── researcher.html             ← Researcher/Student dashboard
+├── auth.js                     ← Shared auth helpers
 ├── assets/
 │   ├── css/style.css           ← Global styles (ACI brand colors)
 │   └── js/
-│       ├── supabase.js         ← Supabase client config ⚠️ EDIT THIS
-│       └── auth.js             ← Shared auth helpers
-├── supabase-setup.sql          ← Run this in Supabase SQL Editor
+│       └── supabase.js         ← Supabase client config ⚠️ EDIT THIS
+├── supabase-setup.sql          ← Run this first in Supabase SQL Editor
+├── phase1-updates.sql          ← Run this after supabase-setup.sql
 └── README.md
 ```
 
@@ -136,6 +137,20 @@ where email = 'your-admin-email@gmail.com';
 
 ---
 
+## ✅ Phase 1 Status
+
+| #   | Feature                                     | Status                                                                         |
+| --- | ------------------------------------------- | ------------------------------------------------------------------------------ |
+| 1.1 | Notification Bell Popup (Facebook-style)    | ✅ Done                                                                        |
+| 1.2 | User Profile Editing (name, photo, contact) | ✅ Done — run `phase1-updates.sql` for `contact_number` column                 |
+| 1.3 | Email Notifications (in-app)                | ✅ Done — SMTP via Resend.com optional for actual email delivery               |
+| 1.4 | Email Verification on Registration          | ✅ Done — Google OAuth auto-verifies; admin cannot approve unverified accounts |
+| 1.5 | Security / RLS Hardening                    | ✅ Done — run `phase1-updates.sql`                                             |
+
+> **Note:** Since the app uses **Google OAuth only**, email verification is handled automatically by Google. No separate email verification step is needed.
+
+---
+
 ## 🐛 Troubleshooting
 
 **Google sign-in not working?**
@@ -145,6 +160,7 @@ where email = 'your-admin-email@gmail.com';
 **Users stuck on "pending"?**
 
 - Admin must approve each new user via Admin Panel → Pending Users
+- User must have signed in at least once with Google before they appear in the list
 
 **Realtime not updating?**
 

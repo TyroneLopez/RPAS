@@ -1683,10 +1683,6 @@
         </div>
       </div>
     </div>
-    <script
-      data-cfasync="false"
-      src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"
-    ></script>
     <script>
       (async () => {
         const params = new URLSearchParams(window.location.search);
@@ -1696,7 +1692,7 @@
             '<div class="alert alert-warning">📧 Please verify your email first. Check your inbox for a confirmation link.</div>';
         } else if (params.get("msg") === "pending") {
           msgAlert.innerHTML =
-            '<div class="alert alert-warning">⏳ Your account is pending admin approval. Please wait.</div>';
+            '<div class="alert alert-warning">⏳ <strong>Account pending approval.</strong> Please wait while the admin reviews your registration. You will be notified once approved.</div>';
         }
         const session = await getSession();
         if (session) {
@@ -1745,6 +1741,7 @@
               .eq("id", user.id)
               .single();
             if (!existing) {
+              // New user — create profile and show pending message
               await sb.from("profiles").insert({
                 id: user.id,
                 email: user.email,
@@ -1752,24 +1749,16 @@
                 avatar_url: user.user_metadata.avatar_url || null,
                 role: "researcher",
                 status: "pending",
-                email_confirmed: !!user.email_confirmed_at,
+                email_confirmed: true, // Google OAuth always verifies email
               });
               showAndRedirect(
-                '<div class="alert alert-warning">⏳ <strong>Account registered!</strong> Your account is now pending admin approval. You will be notified once it has been reviewed. For inquiries, contact the RPAS Office.</div>',
+                '<div class="alert alert-warning">⏳ <strong>Account registered!</strong> Your account is now pending admin approval. Please wait while the admin reviews your registration. For inquiries, contact the RPAS Office.</div>',
               );
               return;
             }
-            // Sync email_confirmed if newly verified
-            if (!existing.email_confirmed && user.email_confirmed_at) {
-              await sb
-                .from("profiles")
-                .update({ email_confirmed: true })
-                .eq("id", user.id);
-              existing.email_confirmed = true;
-            }
             if (existing.status === "pending") {
               showAndRedirect(
-                '<div class="alert alert-warning">⏳ <strong>Account pending.</strong> Your account is still awaiting admin approval. Please wait — you will be notified once approved. For inquiries, contact the RPAS Office.</div>',
+                '<div class="alert alert-warning">⏳ <strong>Account pending approval.</strong> Your account is still awaiting admin review. You will be notified once approved. For inquiries, contact the RPAS Office.</div>',
               );
               return;
             }

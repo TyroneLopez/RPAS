@@ -959,15 +959,44 @@
       .notif-item.unread .notif-unread-dot {
         display: block;
       }
+      .notif-delete-btn {
+        background: none;
+        border: none;
+        color: var(--gray-400);
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        padding: 2px 4px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        opacity: 0;
+        transition:
+          opacity 0.15s,
+          color 0.15s;
+        align-self: flex-start;
+        margin-top: 2px;
+      }
+      .notif-item:hover .notif-delete-btn {
+        opacity: 1;
+      }
+      .notif-delete-btn:hover {
+        color: var(--danger);
+        background: #fee2e2;
+      }
       .notif-empty {
-        padding: 40px 20px;
+        padding: 48px 24px;
         text-align: center;
         color: var(--gray-400);
-        font-size: 14px;
+        font-size: 13px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
       }
       .notif-empty-icon {
-        font-size: 32px;
-        margin-bottom: 8px;
+        font-size: 40px;
+        margin-bottom: 4px;
+        opacity: 0.6;
       }
       .profile-avatar-upload {
         position: relative;
@@ -1155,17 +1184,6 @@
         cursor: pointer;
         color: var(--gray-700);
         padding: 4px;
-      }
-
-      .sidebar-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.4);
-        z-index: 99;
-      }
-      .sidebar-overlay.open {
-        display: block;
       }
 
       @media (max-width: 768px) {
@@ -1536,7 +1554,7 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="assets/js/supabase.js"></script>
+    <script src="../assets/js/supabase.js"></script>
     <script>
       // =============================================
       // SHARED AUTH LOGIC
@@ -1624,7 +1642,17 @@
       }
 
       function getRootPath() {
-        return ""; // all files are at root level
+        const parts = window.location.pathname.split("/");
+        const repoIndex = parts.indexOf("rpas");
+        if (repoIndex !== -1) {
+          return (
+            window.location.origin +
+            "/" +
+            parts.slice(1, repoIndex + 1).join("/") +
+            "/"
+          );
+        }
+        return "/";
       }
 
       async function signOut() {
@@ -1667,11 +1695,6 @@
   <body>
     <div class="app-layout">
       <!-- SIDEBAR -->
-      <div
-        class="sidebar-overlay"
-        id="sidebar-overlay"
-        onclick="toggleSidebar()"
-      ></div>
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
           <div class="sidebar-logo">
@@ -1723,7 +1746,14 @@
       <div class="main-content">
         <header class="topbar">
           <div style="display: flex; align-items: center; gap: 12px">
-            <button class="hamburger" onclick="toggleSidebar()">☰</button>
+            <button
+              class="hamburger"
+              onclick="
+                document.getElementById('sidebar').classList.toggle('open')
+              "
+            >
+              ☰
+            </button>
             <div class="topbar-title">
               <h2 id="page-title">Dashboard</h2>
               <p id="page-sub">Analyst workspace</p>
@@ -1748,7 +1778,7 @@
                 <div class="notif-panel-body" id="notif-panel-body">
                   <div class="notif-empty">
                     <div class="notif-empty-icon">🔔</div>
-                    No notifications yet
+                    <div>No notifications yet</div>
                   </div>
                 </div>
               </div>
@@ -2336,11 +2366,6 @@
         await loadNotifications();
       }
 
-      function toggleSidebar() {
-        document.getElementById("sidebar").classList.toggle("open");
-        document.getElementById("sidebar-overlay").classList.toggle("open");
-      }
-
       function showSection(id, btn) {
         ["dashboard", "my-tasks", "notifications"].forEach(
           (s) =>
@@ -2358,7 +2383,6 @@
         };
         document.getElementById("page-title").textContent = titles[id] || id;
         document.getElementById("sidebar").classList.remove("open");
-        document.getElementById("sidebar-overlay").classList.remove("open");
       }
 
       function openModal(id) {
@@ -2422,13 +2446,14 @@
           const icon = icons[n.type] || "&#128276;";
           const cls = n.is_read ? "notif-item" : "notif-item unread";
           return (
-            '<button class="' +
+            '<div class="' +
             cls +
-            '" data-nid="' +
-            (n.id || "") +
-            '" data-ntype="' +
+            '" style="display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gray-50);">' +
+            '<button style="display:flex;gap:10px;flex:1;background:none;border:none;cursor:pointer;text-align:left;padding:0;" onclick="handleNotifClick(\'' +
+            n.id +
+            "', '" +
             (n.type || "") +
-            '" onclick="handleNotifClick(this.dataset.nid, this.dataset.ntype)">' +
+            "')\">" +
             '<div class="notif-item-icon">' +
             icon +
             "</div>" +
@@ -2440,8 +2465,11 @@
             timeAgo(n.created_at) +
             "</div>" +
             "</div>" +
-            '<div class="notif-unread-dot"></div>' +
-            "</button>"
+            "</button>" +
+            '<button class="notif-delete-btn" title="Delete notification" onclick="deleteNotif(\'' +
+            n.id +
+            "')\">×</button>" +
+            "</div>"
           );
         });
         body.innerHTML = items.join("");
@@ -2479,6 +2507,12 @@
         notifData.forEach(function (n) {
           n.is_read = true;
         });
+        renderNotifPanel();
+      }
+
+      async function deleteNotif(id) {
+        await sb.from("notifications").delete().eq("id", id);
+        notifData = notifData.filter((n) => n.id !== id);
         renderNotifPanel();
       }
 
