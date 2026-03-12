@@ -85,8 +85,17 @@ function redirectToRole(role) {
 }
 
 function getRootPath() {
-  // Files are flat at root: admin.html, analyst.html, researcher.html
-  return "";
+  const parts = window.location.pathname.split("/");
+  const repoIndex = parts.indexOf("rpas");
+  if (repoIndex !== -1) {
+    return (
+      window.location.origin +
+      "/" +
+      parts.slice(1, repoIndex + 1).join("/") +
+      "/"
+    );
+  }
+  return "/";
 }
 
 async function signOut() {
