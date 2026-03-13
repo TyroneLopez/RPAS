@@ -1,4 +1,4 @@
-# RPAS — Future Updates Roadmap
+# RPAS — System Roadmap & Feature Log
 
 ### Aldersgate College Inc. — Research Planning and Analytic Services
 
@@ -6,228 +6,269 @@ _Last updated: March 2026_
 
 ---
 
-## 🗺️ Overview
+## ✅ COMPLETED FEATURES (Current Build)
 
-| Phase       | Name                | Focus                                                   | Status         |
-| ----------- | ------------------- | ------------------------------------------------------- | -------------- |
-| **Phase 1** | Core Enhancements   | Notifications, profiles, email, security                | 🟡 In Progress |
-| **Phase 2** | Researcher Upgrades | Group research, appointments, analyst profiles, payment | ⬜ Pending     |
-| **Phase 3** | Analyst Upgrades    | Specialization, workload grabbing, declination          | ⬜ Pending     |
-| **Phase 4** | Admin Power Tools   | Super admin, fees management, export reports            | ⬜ Pending     |
-| **Phase 5** | Payment System      | Full payment dashboard, honoraria tracking              | ⬜ Pending     |
-| **Phase 6** | Communication Hub   | Notification popups, direct chat, AI chatbot            | ⬜ Pending     |
+### Phase 1.1 — Notification Bell ✅
 
----
+- Facebook-style dropdown panel on all 3 dashboards
+- Unread count badge, mark all as read, realtime updates
+- **× delete button** on each notification — deletes from Supabase immediately
+- `deleteNotif(id)` function present in `admin.html`, `analyst.html`, `researcher.html`
+- Do NOT remove: `renderNotifPanel`, `handleNotifClick`, `deleteNotif`, `markAllRead`, `refreshNotifCount`
 
-## 📦 Phase 1 — Core Enhancements
+### Phase 1.2 — User Profile Editing ✅
 
-_Status: 🟡 Mostly done — 1 item skipped for now_
+- Edit name, contact number, profile photo on all 3 dashboards
+- Photo stored in Supabase Storage (`attachments` bucket, `avatars/` folder)
+- SQL required: `phase1-updates.sql` (adds `contact_number` column)
+- Do NOT remove: `openProfileModal`, `saveProfile`, `previewAvatar`
 
-### 1.1 Notification Bell Popup ✅ DONE
+### Phase 1.2b — Researcher Extended Profile ✅
 
-- Facebook-style dropdown panel on bell click
-- Unread count badge, mark all read, dismiss (×) per notification
-- Deep-links to relevant section on click
-- Affects all 3 roles
+- Sex, Level, Department, Program/Course fields on researcher profile
+- Cascading dropdowns locked to ACI data (College / Basic Education → dept → program)
+- Blocks request submission if Level, Department, or Program are empty
+- Yellow sidebar warning if profile incomplete
+- Admin sees these fields in the Manage Request modal
+- SQL required: `researcher-profile-fields.sql` (adds `sex`, `level`, `department`, `program`)
+- Do NOT remove: `DEPT_MAP`, `PROG_MAP`, `updateProfileDeptOptions`, `updateProfileProgOptions`
+- **NOTE:** Adviser is intentionally NOT here — it will be a proper role in Phase 2.1
 
-### 1.2 User Profile Editing ✅ DONE
+### Phase 1.3 — Email Notifications ✅
 
-- Edit display name, contact number, profile photo
-- Photo uploaded to Supabase Storage (avatars/)
-- Sidebar updates immediately on save
-- Affects all 3 roles
+- Resend.com + Supabase Edge Function (`send-email`)
+- Triggers on account events, status changes, assignments, messages
+- Setup guide: `EMAIL-SETUP.md`
+- Do NOT remove: `sendEmail()` in `auth.js`, `sendEmailNotification()` in `admin.html`
 
-### 1.3 Email Notifications ✅ DONE (pending SMTP testing)
+### Phase 1.4 — Email Verification ⏭️ SKIPPED
 
-- Resend.com + Supabase Edge Function set up
-- Triggers: account approved/rejected, status change, new assignment, new message, new user registration
-- `auth.js` contains all notification helper functions
-- Edge Function: `supabase/functions/send-email/index.ts`
-- ⚠️ Needs real-world testing once Edge Function is deployed
+- Google OAuth handles verification automatically
+- Re-enable if non-Google login is added in the future
 
-### 1.4 Email Verification on Registration ⏭️ SKIPPED (for now)
+### Phase 1.5 — Security / RLS Hardening ✅
 
-- Skipped due to email delivery issues during testing
-- Supabase "Confirm email" is currently OFF
-- Can be re-enabled later when SMTP is fully verified
-- **To re-enable:** Supabase Dashboard → Auth → Providers → Email → toggle ON "Confirm email"
+- RLS policies on all tables, `get_my_role()` and `is_approved_admin()` helper functions
+- SQL required: `phase1-updates.sql`
 
-### 1.5 Security Review & Hardening ✅ DONE
+### Bug Fixes Applied ✅
 
-- RLS policies hardened with `is_approved_admin()` helper
-- `get_my_role()` security definer function in place
-- `phase1-updates.sql` ready to run in Supabase SQL Editor
-
----
-
-## 🐛 Known Bugs Fixed (Session Log)
-
-_All fixes applied — push the final files from chat_
-
-| Bug                                                        | Fix                                                                                    |
-| ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `SyntaxError: Unexpected string` — dashboard stuck loading | `don't` apostrophe inside single-quoted JS string → `don&#39;t`                        |
-| `toggleNotifPanel is not defined`                          | Caused by syntax error crashing script before functions loaded                         |
-| `switchTab is not defined`                                 | Same root cause as above                                                               |
-| `sb is not defined` on GitHub Pages                        | `../assets/js/supabase.js` → `assets/js/supabase.js`                                   |
-| Dashboard stuck on "Loading..." after logout+login         | Malformed `.channel()` subscription crashing `loadAll()`                               |
-| Redirect loop / blinking on login                          | `onAuthStateChange` + `getSession()` both redirecting — fixed with `authHandled` guard |
-| `auth.js` not loading on GitHub Pages                      | Missing script tag + duplicate inline functions conflicting                            |
-| Notification `×` dismiss button missing                    | Re-added `dismissNotif()` function and button to all 3 dashboards                      |
+- Fixed `../assets/js/supabase.js` path → `assets/js/supabase.js` in all HTML files
+- Added missing `<script src="auth.js"></script>` to `admin.html`, `researcher.html`, `index.html`
+- Fixed redirect loop on login with `authHandled` guard flag in `index.html`
+- Fixed broken channel subscription in `admin.html` (split `.on()` calls)
+- Fixed apostrophe `don't` syntax error that crashed all dashboards
 
 ---
 
-## 📦 Phase 2 — Researcher Upgrades ⬜ PENDING
+## 🗺️ Phases Overview
 
-### 2.1 Group Research & Collaboration
-
-- Group leader invites co-researchers by email
-- Members track only, leader controls submission
-- Research Adviser sub-role (optional approval gate)
-- **New DB:** `research_groups`, `group_members`
-
-### 2.2 Research Consultation Appointment Booking
-
-- Extra form when Research Consultation is selected
-- Preferred date/time, mode (online/face-to-face), agenda
-- Feedback gate before next booking allowed
-- **New DB:** `appointments`, `feedback_forms`
-
-### 2.3 Preferred Analyst Selection with Profile Viewing
-
-- Researcher picks preferred analyst from directory
-- Analyst accepts/declines → admin final approval
-- Compatibility badges (✓ Compatible / ⚠ Outside Specialization)
-
-### 2.4 Payment Submission (OR Upload)
-
-- Two checkpoints: before processing + before completion
-- Upload OR photo, amount, OR number
-- Payment status: Unpaid → Submitted → Verified / Rejected
-- **New DB:** `payments`
+| Phase       | Name                           | Status      |
+| ----------- | ------------------------------ | ----------- |
+| **Phase 1** | Core Enhancements              | ✅ Complete |
+| **Phase 2** | Researcher Upgrades            | 🔜 Planned  |
+| **Phase 3** | Analyst Upgrades               | 🔜 Planned  |
+| **Phase 4** | Admin Power Tools              | 🔜 Planned  |
+| **Phase 5** | Payment System                 | 🔜 Planned  |
+| **Phase 6** | Communication Hub + AI Chatbot | 🔜 Planned  |
 
 ---
 
-## 📦 Phase 3 — Analyst Upgrades ⬜ PENDING
+## 📦 Phase 2 — Researcher Upgrades
 
-### 3.1 Analyst Specialization Types
+### 2.1 Adviser Role & Dashboard 🔜
 
-- Qualitative / Quantitative / Mixed
-- Shown on profile cards and assignment dropdowns
-- **New DB field:** `profiles.specialization`
+- Adviser is a **separate role** with their own dashboard — NOT a text field in researcher profile
+- Researcher selects an adviser from a list when submitting a request
+- Adviser receives a notification and **accepts or rejects** the link
+- Adviser can track all linked submissions, view status timelines, leave comments
+- Same pattern as analyst assignment but researcher-initiated
+- **New DB:** adviser role in `profiles`, adviser relationship on `service_requests`
+- **Affects:** Researcher (submission form), new Adviser dashboard, Admin
 
-### 3.2 Request Declination by Analyst
+### 2.2 Group Research & Collaboration 🔜
 
-- Decline with written reason → admin notified → request reassigned
+- Group leader invites co-researchers by email on submission
+- Members can track progress, view messages, upload files (read-only)
+- Only group leader can edit submission and message analyst
+- **New DB tables:** `research_groups`, `group_members`
 
-### 3.3 Workload Transfer Between Analysts
+### 2.3 Research Consultation Appointment Booking 🔜
 
-- Flag for transfer → volunteer → admin approves
-- **New DB:** `transfer_requests`
+- Extra appointment form when Research Consultation is selected
+- Preferred date/time, mode (Online/Face-to-Face), agenda
+- Admin confirms or proposes alternative schedule
+- Feedback gate after completion before next booking
+- **New DB tables:** `appointments`, `feedback_forms`
 
-### 3.4 Open Request Pool
+### 2.4 Preferred Data Analyst Selection 🔜
 
-- Unassigned requests visible to matching analysts
-- Express Interest → admin approves assignment
+- Researcher views analyst public profile (specialization, workload, bio)
+- Researcher selects preferred analyst → analyst accepts/declines → admin approves
+- Falls back to open pool if declined or no action taken
+- Requires Phase 3.1 (specialization) to be done first
+
+### 2.5 Payment Submission (OR Upload) 🔜
+
+- Two payment checkpoints: before processing and before completion
+- Researcher uploads OR photo, amount, OR number
+- Payment status: Unpaid → Submitted → Verified → Rejected
+- **New DB table:** `payments`
 
 ---
 
-## 📦 Phase 4 — Admin Power Tools ⬜ PENDING
+## 📦 Phase 3 — Analyst Upgrades
 
-### 4.1 Super Admin Protection
+### 3.1 Analyst Specialization Types 🔜
 
-- `is_super_admin` boolean flag — set once in Supabase
-- RLS-enforced: cannot be deleted, downgraded, or deactivated by other admins
-- **SQL to run:**
+- Three types: Qualitative, Quantitative, Mixed
+- Set by admin during onboarding
+- Shown on public profile and in admin assignment dropdown
+- Compatible analysts highlighted when researcher browses
+- **New DB field:** `specialization` on `profiles`
+- **Must be done before Phase 2.4**
+
+### 3.2 Request Declination by Analyst 🔜
+
+- Analyst can decline a newly assigned request with a written reason
+- Admin notified, request returns to unassigned
+- Researcher notified of reassignment (reason not shown)
+- Declination logged in request timeline
+
+### 3.3 Workload Transfer Between Analysts 🔜
+
+- Analyst flags request for transfer with reason
+- Compatible analysts see it in "Available to Take" section
+- Volunteer analyst → Admin approves → context and files transferred
+- **New DB table:** `transfer_requests`
+
+### 3.4 Open Request Pool 🔜
+
+- Unassigned requests visible to compatible analysts
+- Analyst clicks "Express Interest" → Admin reviews and assigns
+
+---
+
+## 📦 Phase 4 — Admin Power Tools
+
+### 4.1 Super Admin Protection 🔜
+
+- One `is_super_admin` flag in `profiles` — set manually in Supabase
+- Cannot be deleted, demoted, or deactivated by other admins — enforced at RLS level
+- Only Super Admin can promote/demote others, change fees, view audit logs
 
 ```sql
 alter table public.profiles add column if not exists is_super_admin boolean default false;
 update public.profiles set is_super_admin = true where email = 'tyrone03.lopez@aldersgate.edu.ph';
 ```
 
-### 4.2 Flexible Service Fees Management
+### 4.2 Flexible Service Fees Management 🔜
 
-- Super Admin sets fees per service type from dashboard
-- Fee history audit log
-- **New DB:** `service_fees`, `fee_history`
+- Super Admin sets fees per service type from the dashboard
+- Previous rates preserved in `fee_history` for audit
+- **New DB tables:** `service_fees`, `fee_history`
 
-### 4.3 Export Reports
+### 4.3 Export Reports 🔜
 
 - Excel (.xlsx) and PDF exports
-- Report types: Status, Payment/Honoraria, User Activity, Analyst Workload, Consultation Feedback
+- Types: Research Status, Payment & Honoraria, User Activity, Analyst Workload, Consultation Feedback
 - Filterable by date range, service type, status, analyst
 
 ---
 
-## 📦 Phase 5 — Payment System (Full) ⬜ PENDING
+## 📦 Phase 5 — Payment System (Full)
 
-### 5.1 Payment Dashboard (Admin)
+### 5.1 Payment Dashboard (Admin) 🔜
 
-- Dedicated Payments tab, OR photo lightbox, verify/reject with reason
+- Dedicated Payments tab — view by status, verify/reject with OR lightbox
+- Running totals per analyst for honoraria computation
 
-### 5.2 Payment Status Tracking (Researcher)
+### 5.2 Payment Status Tracking (Researcher) 🔜
 
-- Inline payment badge on request card, resubmit if rejected
-
----
-
-## 📦 Phase 6 — Communication Hub ⬜ PENDING
-
-### 6.1 Full Notification System Upgrade
-
-- Notification grouping, browser push notifications, notification preferences
-
-### 6.2 Floating Chat Bubble
-
-- Multi-tab: Analyst Chat / RPAS Admin / AI Assistant
-- Unread badge, full history in Supabase messages table
-
-### 6.3 AI Chatbot Integration
-
-- Claude API (Anthropic) — FAQ, service guidance, status checks via natural language
-- Escalates to human admin if unanswered
+- Inline payment badge on request detail card
+- Notifications on every payment status change
 
 ---
 
-## 🗓️ Recommended Next Steps
+## 📦 Phase 6 — Communication Hub
+
+### 6.1 Full Notification System Upgrade 🔜
+
+- Notification grouping by request, browser push notifications, user preferences
+
+### 6.2 Floating Chat Bubble 🔜
+
+- Persistent bottom-right bubble on all pages
+- Tabs: Analyst Chat, RPAS/Admin, AI Assistant
+- Unread badge on bubble
+
+### 6.3 AI Chatbot Integration 🔜
+
+- Embedded in chat bubble
+- Answers FAQs, guides service selection, checks request status via natural language
+- **Planned: Claude API (Anthropic)**
+- Escalates to human admin if it cannot answer
+- `SYSTEM_MANUAL.md` will be fed to the chatbot as its knowledge base
+
+---
+
+## 🗓️ Recommended Implementation Order
 
 ```
-Phase 1 remaining:
-  → Run phase1-updates.sql in Supabase ⚠️ (contact_number column + RLS)
-  → Test email notifications end-to-end
-  → Re-enable email verification when ready
-
-Then:
-  → Phase 3.1 (analyst specialization) — needed before Phase 2.3
-  → Phase 3.2 (request declination)
-  → Phase 2.1 (group research)
-  → Phase 2.2 (consultation booking)
-  → Phase 4 (admin power tools)
-  → Phase 2.3 + 2.4 (analyst selection + payment)
-  → Phase 3.3 + 3.4 (transfer + open pool)
-  → Phase 5 (full payment system)
-  → Phase 6 (communication hub)
+Phase 1 ✅ Complete
+  → Phase 3.1 (Analyst Specialization) — needed before Phase 2.4
+    → Phase 3.2 (Analyst Declination)
+      → Phase 2.1 (Adviser Role + Dashboard)
+        → Phase 2.2 (Group Research)
+          → Phase 2.3 (Consultation Booking)
+            → Phase 4 (Admin Power Tools)
+              → Phase 2.4 + 2.5 (Analyst Selection + Payment)
+                → Phase 3.3 + 3.4 (Transfer + Open Pool)
+                  → Phase 5 (Full Payment System)
+                    → Phase 6 (Communication Hub + AI Chatbot)
 ```
 
 ---
 
-## 🗃️ New Database Tables & Fields Needed
+## 🗃️ Database — All Tables & Fields
 
-| Table / Field             | Phase     | Purpose                                          |
-| ------------------------- | --------- | ------------------------------------------------ |
-| `profiles.is_super_admin` | 4.1       | Super Admin protection flag                      |
-| `profiles.specialization` | 3.1       | Analyst type: qualitative / quantitative / mixed |
-| `research_groups`         | 2.1       | Group research submissions                       |
-| `group_members`           | 2.1       | Members and roles per group                      |
-| `appointments`            | 2.2       | Consultation schedules                           |
-| `feedback_forms`          | 2.2       | Post-consultation feedback                       |
-| `payments`                | 2.4 / 5   | OR uploads, verification status                  |
-| `service_fees`            | 4.2       | Current fee per service type                     |
-| `fee_history`             | 4.2       | Fee change audit log                             |
-| `analyst_profiles`        | 2.3 / 3.1 | Bio, portfolio per analyst                       |
-| `transfer_requests`       | 3.3       | Workload transfer requests                       |
+### Existing Tables
+
+| Table              | Key Fields                                                                                                            |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `profiles`         | `id`, `email`, `full_name`, `role`, `status`, `avatar_url`, `contact_number`, `sex`, `level`, `department`, `program` |
+| `service_requests` | `id`, `researcher_id`, `analyst_id`, `service_type`, `title`, `abstract`, `status`, `attachment_url`                  |
+| `request_updates`  | `id`, `request_id`, `status`, `notes`, `created_at`                                                                   |
+| `notifications`    | `id`, `user_id`, `message`, `type`, `is_read`, `created_at`                                                           |
+| `messages`         | `id`, `request_id`, `sender_id`, `content`, `created_at`                                                              |
+| `attachments`      | `id`, `request_id`, `filename`, `url`, `uploaded_by`                                                                  |
+
+### Planned Tables (future phases)
+
+| Table / Field             | Phase | Purpose                                      |
+| ------------------------- | ----- | -------------------------------------------- |
+| `profiles.is_super_admin` | 4.1   | Super Admin protection flag                  |
+| `profiles.specialization` | 3.1   | Analyst type: qualitative/quantitative/mixed |
+| `research_groups`         | 2.2   | Group research submissions                   |
+| `group_members`           | 2.2   | Members and roles per group                  |
+| `appointments`            | 2.3   | Consultation schedules                       |
+| `feedback_forms`          | 2.3   | Post-consultation satisfaction               |
+| `payments`                | 2.5/5 | OR uploads, amounts, verification            |
+| `service_fees`            | 4.2   | Current fee per service type                 |
+| `fee_history`             | 4.2   | Audit log of fee changes                     |
+| `transfer_requests`       | 3.3   | Workload transfer requests                   |
 
 ---
 
-_This roadmap is a living document updated as features are built._
-_Maintained by: Tyrone Marcial Lopez — RPAS, Aldersgate College Inc._
+## 💡 Development Rules (Follow Every Session)
+
+- **Always syntax-check JS** before deploying — `node --check` on extracted scripts
+- **Never use `../` in asset paths** — all HTML at root, always `assets/js/supabase.js`
+- **Always include all 3 script tags** in every HTML file (supabase CDN, supabase.js, auth.js)
+- **Adviser is a role, not a text field** — do not add it back to researcher profile
+- **Hard refresh (Ctrl+Shift+R)** after every deploy to clear browser cache
+- **Test on GitHub Pages** after every push — not just locally
+
+---
+
+_Maintained by: Tyrone Marcial Lopez, LPT, MST — RPAS, Aldersgate College Inc._
