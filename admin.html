@@ -2175,7 +2175,7 @@
         const { data } = await sb
           .from("service_requests")
           .select(
-            "*, researcher:researcher_id(full_name,email,department,program,level,sex), analyst:analyst_id(full_name), attachments(id,filename,url)",
+            "*, researcher:researcher_id(full_name,email,sex,level,department,program), analyst:analyst_id(full_name), attachments(id,filename,url)",
           )
           .order("created_at", { ascending: false });
         allRequests = data || [];

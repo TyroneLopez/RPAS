@@ -1735,7 +1735,7 @@
               line-height: 1.4;
             "
           >
-            ⚠️ Complete your profile first.
+            ⚠️ Complete your profile before submitting a request.
             <span
               style="text-decoration: underline; cursor: pointer"
               onclick="openProfileModal()"
@@ -2029,14 +2029,12 @@
         refreshNotifCount();
         document.getElementById("sidebar-name").textContent =
           profile.full_name || "Researcher";
-        // Show profile completeness hint
-        const incomplete =
-          !profile.level ||
-          !profile.department ||
-          !profile.program ||
-          !profile.adviser;
-        const hintEl = document.getElementById("profile-incomplete-hint");
-        if (hintEl) hintEl.style.display = incomplete ? "block" : "none";
+        var hintEl = document.getElementById("profile-incomplete-hint");
+        if (hintEl)
+          hintEl.style.display =
+            !profile.level || !profile.department || !profile.program
+              ? "block"
+              : "none";
         if (profile.avatar_url) {
           document.getElementById("sidebar-avatar").innerHTML =
             `<img src="${profile.avatar_url}" alt="">`;
@@ -2475,18 +2473,14 @@
       });
 
       async function submitRequest() {
-        // Check profile completeness first
-        if (
-          !profile.level ||
-          !profile.department ||
-          !profile.program ||
-          !profile.adviser
-        ) {
+        if (!profile.level || !profile.department || !profile.program) {
           showToast(
-            "Please complete your profile (Level, Department, Program, Adviser) before submitting.",
+            "Please complete your profile (Level, Department, Program) before submitting.",
             "error",
           );
-          setTimeout(() => openProfileModal(), 1200);
+          setTimeout(function () {
+            openProfileModal();
+          }, 1200);
           return;
         }
         const service = document.getElementById("new-service").value;
@@ -2864,12 +2858,11 @@
       // ============================================================
       let pendingAvatarFile = null;
 
-      // Dropdown data
-      const DEPT_MAP = {
+      var DEPT_MAP = {
         College: ["CASE", "CBMA", "SOC"],
         "Basic Education": ["Junior High School", "Senior High School"],
       };
-      const PROG_MAP = {
+      var PROG_MAP = {
         CASE: ["BEEd", "BSEd - English"],
         CBMA: ["BSA", "BSBA", "BSHM", "BSTM"],
         SOC: ["BSCrim"],
@@ -2878,25 +2871,25 @@
       };
 
       function updateProfileDeptOptions() {
-        const level = document.getElementById("profile-level-input").value;
-        const deptSel = document.getElementById("profile-dept-input");
-        const progSel = document.getElementById("profile-prog-input");
-        deptSel.innerHTML = '<option value="">— Select Department —</option>';
-        progSel.innerHTML = '<option value="">— Select Program —</option>';
+        var level = document.getElementById("profile-level-input").value;
+        var deptSel = document.getElementById("profile-dept-input");
+        var progSel = document.getElementById("profile-prog-input");
+        deptSel.innerHTML = "<option value=''>— Select Department —</option>";
+        progSel.innerHTML = "<option value=''>— Select Program —</option>";
         if (level && DEPT_MAP[level]) {
-          DEPT_MAP[level].forEach((d) => {
-            deptSel.innerHTML += '<option value="' + d + '">' + d + "</option>";
+          DEPT_MAP[level].forEach(function (d) {
+            deptSel.innerHTML += "<option value='" + d + "'>" + d + "</option>";
           });
         }
       }
 
       function updateProfileProgOptions() {
-        const dept = document.getElementById("profile-dept-input").value;
-        const progSel = document.getElementById("profile-prog-input");
-        progSel.innerHTML = '<option value="">— Select Program —</option>';
+        var dept = document.getElementById("profile-dept-input").value;
+        var progSel = document.getElementById("profile-prog-input");
+        progSel.innerHTML = "<option value=''>— Select Program —</option>";
         if (dept && PROG_MAP[dept]) {
-          PROG_MAP[dept].forEach((p) => {
-            progSel.innerHTML += '<option value="' + p + '">' + p + "</option>";
+          PROG_MAP[dept].forEach(function (p) {
+            progSel.innerHTML += "<option value='" + p + "'>" + p + "</option>";
           });
         }
       }
@@ -2909,10 +2902,7 @@
         document.getElementById("profile-email-input").value =
           profile.email || "";
         document.getElementById("profile-sex-input").value = profile.sex || "";
-        document.getElementById("profile-adviser-input").value =
-          profile.adviser || "";
-        // Level → populate dept → populate prog in sequence
-        const levelSel = document.getElementById("profile-level-input");
+        var levelSel = document.getElementById("profile-level-input");
         levelSel.value = profile.level || "";
         updateProfileDeptOptions();
         if (profile.level) {
@@ -2924,12 +2914,12 @@
               profile.program || "";
           }
         }
-        const av = document.getElementById("profile-modal-avatar");
+        var av = document.getElementById("profile-modal-avatar");
         if (profile.avatar_url) {
           av.innerHTML =
-            '<img src="' +
+            "<img src='" +
             profile.avatar_url +
-            '" style="width:100%;height:100%;object-fit:cover;">';
+            "' style='width:100%;height:100%;object-fit:cover;'>";
         } else {
           av.textContent = (profile.full_name || "?")[0].toUpperCase();
         }
@@ -2952,17 +2942,14 @@
       }
 
       async function saveProfile() {
-        const name = document.getElementById("profile-name-input").value.trim();
-        const contact = document
+        var name = document.getElementById("profile-name-input").value.trim();
+        var contact = document
           .getElementById("profile-contact-input")
           .value.trim();
-        const sex = document.getElementById("profile-sex-input").value;
-        const level = document.getElementById("profile-level-input").value;
-        const department = document.getElementById("profile-dept-input").value;
-        const program = document.getElementById("profile-prog-input").value;
-        const adviser = document
-          .getElementById("profile-adviser-input")
-          .value.trim();
+        var sex = document.getElementById("profile-sex-input").value;
+        var level = document.getElementById("profile-level-input").value;
+        var department = document.getElementById("profile-dept-input").value;
+        var program = document.getElementById("profile-prog-input").value;
         if (!name) {
           showToast("Please enter your full name", "error");
           return;
@@ -2977,10 +2964,6 @@
         }
         if (!program) {
           showToast("Please select your program", "error");
-          return;
-        }
-        if (!adviser) {
-          showToast("Please enter your adviser name", "error");
           return;
         }
         let avatarUrl = profile.avatar_url;
@@ -3003,11 +2986,10 @@
             full_name: name,
             contact_number: contact,
             avatar_url: avatarUrl,
-            sex,
-            level,
-            department,
-            program,
-            adviser,
+            sex: sex,
+            level: level,
+            department: department,
+            program: program,
           })
           .eq("id", profile.id);
         if (error) {
@@ -3021,7 +3003,6 @@
         profile.level = level;
         profile.department = department;
         profile.program = program;
-        profile.adviser = adviser;
         document.getElementById("sidebar-name").textContent = name;
         if (avatarUrl) {
           document.getElementById("sidebar-avatar").innerHTML =
@@ -3133,15 +3114,6 @@
             <select class="form-control" id="profile-prog-input">
               <option value="">— Select Program —</option>
             </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Adviser</label>
-            <input
-              type="text"
-              class="form-control"
-              id="profile-adviser-input"
-              placeholder="e.g. Juan dela Cruz, PhD"
-            />
           </div>
           <div class="form-group">
             <label class="form-label">Email</label>
