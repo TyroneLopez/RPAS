@@ -2031,7 +2031,10 @@
           profile.full_name || "Researcher";
         // Show profile completeness hint
         const incomplete =
-          !profile.level || !profile.department || !profile.program;
+          !profile.level ||
+          !profile.department ||
+          !profile.program ||
+          !profile.adviser;
         const hintEl = document.getElementById("profile-incomplete-hint");
         if (hintEl) hintEl.style.display = incomplete ? "block" : "none";
         if (profile.avatar_url) {
@@ -2473,9 +2476,14 @@
 
       async function submitRequest() {
         // Check profile completeness first
-        if (!profile.level || !profile.department || !profile.program) {
+        if (
+          !profile.level ||
+          !profile.department ||
+          !profile.program ||
+          !profile.adviser
+        ) {
           showToast(
-            "Please complete your profile (Level, Department, Program) before submitting.",
+            "Please complete your profile (Level, Department, Program, Adviser) before submitting.",
             "error",
           );
           setTimeout(() => openProfileModal(), 1200);
@@ -2901,6 +2909,8 @@
         document.getElementById("profile-email-input").value =
           profile.email || "";
         document.getElementById("profile-sex-input").value = profile.sex || "";
+        document.getElementById("profile-adviser-input").value =
+          profile.adviser || "";
         // Level → populate dept → populate prog in sequence
         const levelSel = document.getElementById("profile-level-input");
         levelSel.value = profile.level || "";
@@ -2950,6 +2960,9 @@
         const level = document.getElementById("profile-level-input").value;
         const department = document.getElementById("profile-dept-input").value;
         const program = document.getElementById("profile-prog-input").value;
+        const adviser = document
+          .getElementById("profile-adviser-input")
+          .value.trim();
         if (!name) {
           showToast("Please enter your full name", "error");
           return;
@@ -2964,6 +2977,10 @@
         }
         if (!program) {
           showToast("Please select your program", "error");
+          return;
+        }
+        if (!adviser) {
+          showToast("Please enter your adviser name", "error");
           return;
         }
         let avatarUrl = profile.avatar_url;
@@ -2990,6 +3007,7 @@
             level,
             department,
             program,
+            adviser,
           })
           .eq("id", profile.id);
         if (error) {
@@ -3003,6 +3021,7 @@
         profile.level = level;
         profile.department = department;
         profile.program = program;
+        profile.adviser = adviser;
         document.getElementById("sidebar-name").textContent = name;
         if (avatarUrl) {
           document.getElementById("sidebar-avatar").innerHTML =
@@ -3114,6 +3133,15 @@
             <select class="form-control" id="profile-prog-input">
               <option value="">— Select Program —</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Adviser</label>
+            <input
+              type="text"
+              class="form-control"
+              id="profile-adviser-input"
+              placeholder="e.g. Juan dela Cruz, PhD"
+            />
           </div>
           <div class="form-group">
             <label class="form-label">Email</label>
