@@ -37,7 +37,7 @@ rpas/
 > <script src="auth.js"></script>
 > ```
 >
-> Never use `../assets/` — all HTML is at root.
+> Never use `..assets/` — all HTML is at root.
 
 ---
 

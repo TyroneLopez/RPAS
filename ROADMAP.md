@@ -44,7 +44,7 @@ _Last updated: March 2026_
 
 ### Bug Fixes Applied ✅
 
-- Fixed `../assets/js/supabase.js` → `assets/js/supabase.js` on all files
+- Fixed `..assets/js/supabase.js` → `assets/js/supabase.js` on all files
 - Added missing `auth.js` script tag to `admin.html`, `researcher.html`, `index.html`
 - Fixed redirect loop on login (`authHandled` guard in `index.html`)
 - Fixed broken realtime channel subscription in `admin.html`
