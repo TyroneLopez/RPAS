@@ -2,7 +2,7 @@
 
 ### Aldersgate College Inc. — Research Planning and Analytic Services
 
-A web-based service tracking system for students and researchers to monitor the progress of their research service requests.
+A web-based service tracking system for students and researchers to submit and monitor the progress of their research service requests.
 
 ---
 
@@ -10,101 +10,93 @@ A web-based service tracking system for students and researchers to monitor the 
 
 ```
 rpas/
-├── index.html                  ← Login page
-├── admin.html                  ← Admin dashboard
-├── analyst.html                ← Data Analyst dashboard
-├── researcher.html             ← Researcher/Student dashboard
-├── auth.js                     ← Shared auth helpers
+├── index.html                      ← Login page
+├── admin.html                      ← Admin dashboard
+├── analyst.html                    ← Data Analyst dashboard
+├── researcher.html                 ← Researcher/Student dashboard
+├── messages.html                   ← Full messaging inbox (all roles)
+├── auth.js                         ← Shared auth helpers (ROOT only)
 ├── assets/
-│   ├── css/style.css           ← Global styles (ACI brand colors)
+│   ├── css/style.css               ← Global styles (ACI brand colors)
 │   └── js/
-│       └── supabase.js         ← Supabase client config ⚠️ EDIT THIS
-├── supabase-setup.sql          ← Run this first in Supabase SQL Editor
-├── phase1-updates.sql          ← Run this after supabase-setup.sql
+│       └── supabase.js             ← Supabase client config ⚠️ EDIT THIS
+├── supabase-setup.sql              ← Run FIRST
+├── phase1-updates.sql              ← Run SECOND
+├── researcher-profile-fields.sql   ← Run THIRD
+├── rpas-migration.sql              ← Run FOURTH (full schema, all phases)
+├── SYSTEM_MANUAL.md                ← AI chatbot knowledge base
+├── ROADMAP.md                      ← Feature log and future plans
 └── README.md
 ```
+
+> ⚠️ **CRITICAL — Script tags:** Every HTML file must have these three in order:
+>
+> ```html
+> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+> <script src="assets/js/supabase.js"></script>
+> <script src="auth.js"></script>
+> ```
+>
+> Never use `../assets/` — all HTML is at root.
 
 ---
 
 ## 🚀 Setup Instructions
 
-### STEP 1 — Create Supabase Project
+### STEP 1 — Supabase
 
-1. Go to [supabase.com](https://supabase.com) → New Project
-2. Note your **Project URL** and **Anon Key** (Settings > API)
+1. Create project at [supabase.com](https://supabase.com)
+2. Edit `assets/js/supabase.js` with your Project URL and Anon Key
+3. Run SQL files in order (SQL Editor):
+   - `supabase-setup.sql`
+   - `phase1-updates.sql`
+   - `researcher-profile-fields.sql`
+   - `rpas-migration.sql`
+4. Storage → New Bucket → name: `attachments` → Public ✅
 
-### STEP 2 — Configure Supabase credentials
+### STEP 2 — Google OAuth
 
-Edit `assets/js/supabase.js`:
+1. Supabase → Authentication → Providers → Google → Enable
+2. [console.cloud.google.com](https://console.cloud.google.com) → OAuth 2.0 Client ID
+   - Redirect URI: `https://YOUR_PROJECT_ID.supabase.co/auth/v1/callback`
+3. Supabase → Auth → URL Configuration:
+   - Site URL: `https://tyronelopez.github.io/rpas/`
+   - Redirect URLs: `https://tyronelopez.github.io/rpas/`
 
-```js
-const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
-```
+### STEP 3 — Realtime
 
-### STEP 3 — Run Database Setup
+Supabase → Database → Replication → enable: `service_requests`, `notifications`, `messages`
 
-1. Go to Supabase Dashboard → SQL Editor
-2. Copy the entire contents of `supabase-setup.sql`
-3. Paste and click **Run**
+### STEP 4 — Deploy to GitHub Pages
 
-### STEP 4 — Set up Storage Bucket
+Push all files to `https://github.com/TyroneLopez/rpas` → Settings → Pages → root
 
-1. Supabase Dashboard → Storage → New Bucket
-2. Name: `attachments`
-3. Toggle: **Public bucket** ✅
-4. Click Create
-
-### STEP 5 — Enable Google OAuth
-
-1. Supabase Dashboard → Authentication → Providers → Google
-2. Enable Google provider
-3. Create OAuth credentials at [console.cloud.google.com](https://console.cloud.google.com):
-   - Create a new project
-   - APIs & Services → Credentials → Create OAuth 2.0 Client ID
-   - Application type: **Web application**
-   - Authorized redirect URIs: `https://YOUR_PROJECT_ID.supabase.co/auth/v1/callback`
-4. Copy Client ID and Client Secret back to Supabase
-5. In Supabase Auth → URL Configuration:
-   - Site URL: `https://YOUR_GITHUB_USERNAME.github.io/rpas/`
-   - Redirect URLs: `https://YOUR_GITHUB_USERNAME.github.io/rpas/`
-
-### STEP 6 — Enable Realtime
-
-1. Supabase Dashboard → Database → Replication
-2. Enable realtime for: `service_requests`, `notifications`, `messages`
-
-### STEP 7 — Deploy to GitHub Pages
-
-1. Create a new GitHub repository (e.g., `rpas`)
-2. Push all files to the repo
-3. GitHub → Settings → Pages → Source: **main branch, root folder**
-4. Your site will be live at: `https://YOUR_USERNAME.github.io/rpas/`
-
-### STEP 8 — Create First Admin Account
-
-1. Open your deployed site and sign in with your admin Google account
-2. Go to Supabase Dashboard → SQL Editor and run:
+### STEP 5 — First Admin
 
 ```sql
 update public.profiles
-set role = 'admin', status = 'approved'
-where email = 'your-admin-email@gmail.com';
+set role = 'admin', status = 'approved', is_super_admin = true
+where email = 'tyrone03.lopez@aldersgate.edu.ph';
 ```
 
-3. Sign out and sign back in — you'll now have admin access
+### STEP 6 — n8n Chatbot (Alder) — after VPS is ready
+
+See n8n setup section below.
 
 ---
 
 ## 👥 User Roles
 
-| Role             | Access                                                                         |
-| ---------------- | ------------------------------------------------------------------------------ |
-| **Researcher**   | Submit requests, track progress, download results, message analyst             |
-| **Data Analyst** | View assigned requests, update status, upload results, message researcher      |
-| **Admin**        | Full access — manage all requests, assign analysts, manage users, view reports |
+| Role                      | Access                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| **Researcher**            | Submit requests, track progress, edit profile, message analyst, chat with Alder |
+| **Data Analyst**          | View assigned requests, update status, upload results, message researcher       |
+| **Admin**                 | Full access — manage requests, assign analysts, manage users                    |
+| **Adviser** _(Phase 2.1)_ | Track linked submissions, leave comments, accept/reject researcher link         |
 
-## 📋 Services Tracked
+---
+
+## 📋 Services
 
 - Quantitative Data Analysis
 - Qualitative Data Analysis
@@ -113,10 +105,100 @@ where email = 'your-admin-email@gmail.com';
 - Manuscript Review
 - Research Consultation
 
+---
+
 ## 📊 Status Flow
 
 `Submitted` → `Under Review` → `In Progress` → `For Revision` → `Completed`
-(Admin/Analyst can also mark as `Cancelled`)
+
+Can be `Cancelled` at any point by admin.
+
+---
+
+## ✅ Implemented Features
+
+### 🔔 Notification Bell (All Dashboards)
+
+- Facebook-style dropdown panel — unread badge, mark all read, realtime
+- × button deletes notification from Supabase immediately
+- **Functions:** `renderNotifPanel`, `handleNotifClick`, `deleteNotif`, `markAllRead`, `refreshNotifCount`
+
+### 💬 Message Icon + Messaging System (All Dashboards)
+
+- Message icon in navbar next to bell — shows unread count badge
+- Click opens mini popup with latest conversations and preview
+- Click any conversation → floating chat bubble for that request
+- "View all" → `messages.html` (full inbox)
+- **messages.html tabs:** My Requests | RPAS Office | Ask Alder
+- **Functions:** `loadMessagePreview`, `openMiniChat`, `sendMessage`
+
+### 🦁 Alder the Lion — AI Chatbot
+
+- Floating animated bubble fixed bottom-right on ALL pages
+- CSS animated lion face (idle bounce, talking state)
+- Personality: casual but knowledgeable — ACI campus guide
+- Answers FAQs, checks request status, escalates to admin
+- **Backend:** n8n on Hostinger VPS KVM2
+- **AI:** Gemini (primary) → OpenAI (fallback)
+- **Knowledge base:** `SYSTEM_MANUAL.md` + Alder persona system prompt
+- **Embeddings:** Supabase pgvector (planned — for semantic search)
+
+### 👤 User Profile Editing (All Dashboards)
+
+- Edit name, contact number, profile photo (Supabase Storage)
+- **Functions:** `openProfileModal`, `saveProfile`, `previewAvatar`
+
+### 🧑‍🎓 Researcher Extended Profile
+
+- Sex, Level, Department, Program — cascading dropdowns locked to ACI data
+- Blocks submission if incomplete — yellow sidebar warning
+- **SQL:** `researcher-profile-fields.sql`
+- **Functions:** `updateProfileDeptOptions`, `updateProfileProgOptions`
+- **NOTE:** Adviser is a separate role — NOT a profile field
+
+### 📧 Email Notifications
+
+- Resend.com + Supabase Edge Function (`send-email`)
+- **Setup:** `EMAIL-SETUP.md`
+
+### 🔒 Security / RLS
+
+- All tables RLS-enabled
+- Helper functions: `get_my_role()`, `is_approved_admin()`, `is_super_admin()`
+
+---
+
+## 🤖 n8n Chatbot Setup (Hostinger VPS KVM2)
+
+### Install n8n on VPS
+
+```bash
+# SSH into your VPS, then:
+npm install -g n8n
+# Or with Docker:
+docker run -d --name n8n -p 5678:5678 n8nio/n8n
+```
+
+### n8n Workflow Structure
+
+1. **Webhook trigger** — receives POST from RPAS chat bubble
+2. **Intent router** — classifies: FAQ / status_check / notify_admin
+3. **FAQ route** → Gemini API (with SYSTEM_MANUAL as context)
+4. **Status check route** → Query Supabase → Gemini API (with data)
+5. **Notify admin route** → Insert Supabase notification + Resend email
+6. **Fallback** — if Gemini fails → OpenAI API
+
+### Environment variables needed in n8n
+
+```
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+SUPABASE_URL=https://wkgacywvsndwiezqdcxj.supabase.co
+SUPABASE_SERVICE_KEY=
+RESEND_API_KEY=
+RPAS_ADMIN_EMAIL=rpas@aldersgate.edu.ph
+N8N_WEBHOOK_URL=https://your-vps-ip:5678/webhook/rpas-chat
+```
 
 ---
 
@@ -128,44 +210,12 @@ where email = 'your-admin-email@gmail.com';
 
 ---
 
-## ⚠️ Important Notes
-
-- This is a **static site** — all logic runs client-side via Supabase JS SDK
-- No server required — Supabase handles auth, database, storage, and realtime
-- File uploads go to Supabase Storage (max 20MB per file)
-- Realtime updates are enabled — status changes appear instantly
-
----
-
-## ✅ Phase 1 Status
-
-| #   | Feature                                     | Status                                                                         |
-| --- | ------------------------------------------- | ------------------------------------------------------------------------------ |
-| 1.1 | Notification Bell Popup (Facebook-style)    | ✅ Done                                                                        |
-| 1.2 | User Profile Editing (name, photo, contact) | ✅ Done — run `phase1-updates.sql` for `contact_number` column                 |
-| 1.3 | Email Notifications (in-app)                | ✅ Done — SMTP via Resend.com optional for actual email delivery               |
-| 1.4 | Email Verification on Registration          | ✅ Done — Google OAuth auto-verifies; admin cannot approve unverified accounts |
-| 1.5 | Security / RLS Hardening                    | ✅ Done — run `phase1-updates.sql`                                             |
-
-> **Note:** Since the app uses **Google OAuth only**, email verification is handled automatically by Google. No separate email verification step is needed.
-
----
-
 ## 🐛 Troubleshooting
 
-**Google sign-in not working?**
-
-- Check that your GitHub Pages URL is in Supabase Auth → URL Configuration
-
-**Users stuck on "pending"?**
-
-- Admin must approve each new user via Admin Panel → Pending Users
-- User must have signed in at least once with Google before they appear in the list
-
-**Realtime not updating?**
-
-- Check Supabase Dashboard → Database → Replication → tables are enabled
-
-**Files not uploading?**
-
-- Ensure `attachments` bucket exists and is set to **public**
+| Problem                 | Cause                            | Fix                                        |
+| ----------------------- | -------------------------------- | ------------------------------------------ |
+| Dashboard stuck loading | `sb is not defined` — wrong path | `src="assets/js/supabase.js"` (no `../`)   |
+| Auth not working        | `auth.js` missing                | Add `<script src="auth.js"></script>`      |
+| Alder not responding    | n8n webhook down                 | Check VPS, restart n8n service             |
+| Messages not loading    | Realtime not enabled             | Supabase → Replication → enable `messages` |
+| Notification × missing  | `deleteNotif` function absent    | Check dashboard JS for the function        |
