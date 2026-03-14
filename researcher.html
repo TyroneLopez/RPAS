@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Requests — RPAS</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lora:wght@600;700&display=swap"
@@ -1547,656 +1548,10 @@
       .btn-signout {
         font-family: "Inter", sans-serif !important;
       }
-      /* ---- MESSAGING ICON (Phase 6.2) ---- */
-      .msg-wrapper {
-        position: relative;
-        margin-right: 4px;
-      }
-      .msg-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        position: relative;
-        transition: background 0.15s;
-      }
-      .msg-btn:hover {
-        background: var(--gray-200);
-      }
-      .msg-count {
-        position: absolute;
-        top: -4px;
-        right: -4px;
-        background: var(--danger);
-        color: white;
-        border-radius: 10px;
-        font-size: 10px;
-        font-weight: 700;
-        min-width: 18px;
-        height: 18px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 0 4px;
-        border: 2px solid white;
-        line-height: 1;
-      }
-      .msg-count.show {
-        display: flex;
-      }
-      .msg-panel {
-        position: absolute;
-        top: calc(100% + 10px);
-        right: 0;
-        width: 320px;
-        max-height: 420px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-        border: 1px solid var(--gray-200);
-        z-index: 1000;
-        display: none;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      .msg-panel.open {
-        display: flex;
-      }
-      .msg-panel-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 16px 10px;
-        border-bottom: 1px solid var(--gray-100);
-        flex-shrink: 0;
-      }
-      .msg-panel-header h4 {
-        margin: 0;
-        font-size: 15px;
-        font-weight: 700;
-      }
-      .msg-view-all {
-        font-size: 12px;
-        color: var(--green);
-        text-decoration: none;
-        font-weight: 600;
-        cursor: pointer;
-        background: none;
-        border: none;
-        padding: 0;
-      }
-      .msg-panel-body {
-        overflow-y: auto;
-        flex: 1;
-      }
-      .msg-preview-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--gray-50);
-        cursor: pointer;
-        transition: background 0.1s;
-        text-align: left;
-        width: 100%;
-        background: none;
-        border-left: none;
-        border-right: none;
-        border-top: none;
-      }
-      .msg-preview-item:hover {
-        background: var(--gray-50);
-      }
-      .msg-preview-item.unread {
-        background: rgba(26, 107, 48, 0.04);
-      }
-      .msg-preview-avatar {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background: var(--gold-light);
-        color: var(--green-dark);
-        font-weight: 700;
-        font-size: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        overflow: hidden;
-      }
-      .msg-preview-info {
-        flex: 1;
-        min-width: 0;
-      }
-      .msg-preview-name {
-        font-weight: 600;
-        font-size: 13px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .msg-preview-text {
-        font-size: 12px;
-        color: var(--gray-500);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-top: 2px;
-      }
-      .msg-preview-time {
-        font-size: 11px;
-        color: var(--gray-400);
-        flex-shrink: 0;
-      }
-      .msg-empty {
-        text-align: center;
-        padding: 32px 16px;
-        color: var(--gray-400);
-        font-size: 13px;
-      }
-      /* ---- FLOATING CHAT BUBBLE (per request) ---- */
-      .chat-bubble-container {
-        position: fixed;
-        bottom: 90px;
-        right: 20px;
-        width: 320px;
-        max-height: 440px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        border: 1px solid var(--gray-200);
-        display: none;
-        flex-direction: column;
-        z-index: 2000;
-      }
-      .chat-bubble-container.open {
-        display: flex;
-      }
-      .chat-bubble-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--gray-100);
-        background: var(--green-dark);
-        border-radius: 16px 16px 0 0;
-        color: white;
-      }
-      .chat-bubble-header h5 {
-        margin: 0;
-        font-size: 13px;
-        font-weight: 600;
-        flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .chat-bubble-header small {
-        font-size: 11px;
-        opacity: 0.75;
-      }
-      .chat-bubble-close {
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        font-size: 16px;
-        padding: 0;
-        opacity: 0.8;
-      }
-      .chat-bubble-close:hover {
-        opacity: 1;
-      }
-      .chat-bubble-msgs {
-        flex: 1;
-        overflow-y: auto;
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        min-height: 200px;
-      }
-      .chat-msg {
-        max-width: 85%;
-        padding: 8px 12px;
-        border-radius: 12px;
-        font-size: 13px;
-        line-height: 1.4;
-        word-break: break-word;
-      }
-      .chat-msg.mine {
-        background: var(--green-dark);
-        color: white;
-        align-self: flex-end;
-        border-bottom-right-radius: 4px;
-      }
-      .chat-msg.theirs {
-        background: var(--gray-100);
-        color: var(--gray-800);
-        align-self: flex-start;
-        border-bottom-left-radius: 4px;
-      }
-      .chat-msg-time {
-        font-size: 10px;
-        opacity: 0.6;
-        margin-top: 4px;
-      }
-      .chat-bubble-input {
-        display: flex;
-        gap: 8px;
-        padding: 10px 12px;
-        border-top: 1px solid var(--gray-100);
-      }
-      .chat-bubble-input input {
-        flex: 1;
-        border: 1px solid var(--gray-200);
-        border-radius: 20px;
-        padding: 8px 14px;
-        font-size: 13px;
-        outline: none;
-      }
-      .chat-bubble-input input:focus {
-        border-color: var(--green);
-      }
-      .chat-bubble-send {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: var(--green-dark);
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .chat-bubble-expand {
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        font-size: 14px;
-        opacity: 0.8;
-        padding: 0 4px;
-        text-decoration: none;
-      }
-      .chat-bubble-expand:hover {
-        opacity: 1;
-      }
-
-      /* ---- ALDER THE LION — AI CHATBOT BUBBLE (Phase 6.3) ---- */
-      .alder-bubble {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 3000;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 12px;
-      }
-      .alder-chat-window {
-        width: 320px;
-        max-height: 460px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        border: 1px solid var(--gray-200);
-        display: none;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      .alder-chat-window.open {
-        display: flex;
-      }
-      .alder-chat-header {
-        background: linear-gradient(135deg, #1a6b30, #2d9e50);
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: white;
-      }
-      .alder-chat-header-info {
-        flex: 1;
-      }
-      .alder-chat-header-info strong {
-        display: block;
-        font-size: 14px;
-      }
-      .alder-chat-header-info span {
-        font-size: 11px;
-        opacity: 0.85;
-      }
-      .alder-close-btn {
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        font-size: 18px;
-        opacity: 0.8;
-        padding: 0;
-      }
-      .alder-close-btn:hover {
-        opacity: 1;
-      }
-      .alder-msgs {
-        flex: 1;
-        overflow-y: auto;
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        min-height: 200px;
-      }
-      .alder-msg {
-        max-width: 88%;
-        padding: 9px 13px;
-        border-radius: 14px;
-        font-size: 13px;
-        line-height: 1.5;
-        word-break: break-word;
-      }
-      .alder-msg.bot {
-        background: var(--gray-100);
-        color: var(--gray-800);
-        align-self: flex-start;
-        border-bottom-left-radius: 4px;
-        display: flex;
-        gap: 8px;
-        align-items: flex-start;
-        max-width: 96%;
-        background: none;
-        padding: 0;
-      }
-      .alder-msg.bot .alder-msg-text {
-        background: var(--gray-100);
-        padding: 9px 13px;
-        border-radius: 14px;
-        border-bottom-left-radius: 4px;
-      }
-      .alder-msg.user {
-        background: var(--green-dark);
-        color: white;
-        align-self: flex-end;
-        border-bottom-right-radius: 4px;
-      }
-      .alder-typing {
-        display: flex;
-        gap: 4px;
-        align-items: center;
-        padding: 10px 14px;
-        background: var(--gray-100);
-        border-radius: 14px;
-        border-bottom-left-radius: 4px;
-        align-self: flex-start;
-        width: fit-content;
-      }
-      .alder-typing span {
-        width: 7px;
-        height: 7px;
-        background: var(--gray-400);
-        border-radius: 50%;
-        animation: alderBounce 1.2s infinite;
-      }
-      .alder-typing span:nth-child(2) {
-        animation-delay: 0.2s;
-      }
-      .alder-typing span:nth-child(3) {
-        animation-delay: 0.4s;
-      }
-      @keyframes alderBounce {
-        0%,
-        60%,
-        100% {
-          transform: translateY(0);
-        }
-        30% {
-          transform: translateY(-6px);
-        }
-      }
-      .alder-input-row {
-        display: flex;
-        gap: 8px;
-        padding: 10px 12px;
-        border-top: 1px solid var(--gray-100);
-      }
-      .alder-input-row input {
-        flex: 1;
-        border: 1px solid var(--gray-200);
-        border-radius: 20px;
-        padding: 8px 14px;
-        font-size: 13px;
-        outline: none;
-      }
-      .alder-input-row input:focus {
-        border-color: var(--green);
-      }
-      .alder-send {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: var(--green-dark);
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-      /* Alder lion face button */
-      .alder-face-btn {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        border: 3px solid #f5c200;
-        background: #1a6b30;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-        animation: alderIdle 3s ease-in-out infinite;
-        position: relative;
-        overflow: hidden;
-        flex-shrink: 0;
-      }
-      .alder-face-btn:hover {
-        transform: scale(1.08);
-        animation: none;
-      }
-      .alder-face-btn.talking {
-        animation: alderTalk 0.3s ease-in-out infinite;
-      }
-      @keyframes alderIdle {
-        0%,
-        100% {
-          transform: translateY(0) rotate(0deg);
-        }
-        25% {
-          transform: translateY(-3px) rotate(-2deg);
-        }
-        75% {
-          transform: translateY(-2px) rotate(2deg);
-        }
-      }
-      @keyframes alderTalk {
-        0%,
-        100% {
-          transform: scaleY(1);
-        }
-        50% {
-          transform: scaleY(0.96);
-        }
-      }
-      /* SVG Lion face inside button */
-      .alder-face-svg {
-        width: 38px;
-        height: 38px;
-      }
-      .alder-unread-dot {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 14px;
-        height: 14px;
-        background: var(--danger);
-        border-radius: 50%;
-        border: 2px solid white;
-        display: none;
-      }
-      .alder-unread-dot.show {
-        display: block;
-      }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/supabase.js"></script>
     <script src="auth.js"></script>
-    <script>
-      // =============================================
-      // SHARED AUTH LOGIC
-      // =============================================
-
-      const ROLES = {
-        ADMIN: "admin",
-        ANALYST: "analyst",
-        RESEARCHER: "researcher",
-      };
-      const STATUS_LABELS = {
-        submitted: "Submitted",
-        under_review: "Under Review",
-        in_progress: "In Progress",
-        for_revision: "For Revision",
-        resubmitted: "Resubmitted",
-        completed: "Completed",
-        cancelled: "Cancelled",
-      };
-      const STATUS_COLORS = {
-        submitted: "#6B7280",
-        under_review: "#F59E0B",
-        in_progress: "#3B82F6",
-        for_revision: "#EF4444",
-        completed: "#1A6B30",
-        cancelled: "#9CA3AF",
-      };
-      const SERVICES = [
-        "Quantitative Data Analysis",
-        "Qualitative Data Analysis",
-        "Questionnaire Validation",
-        "Reliability Test",
-        "Manuscript Review",
-        "Research Consultation",
-      ];
-      const STATUS_STEPS = [
-        "submitted",
-        "under_review",
-        "in_progress",
-        "for_revision",
-        "completed",
-      ];
-
-      async function getSession() {
-        const {
-          data: { session },
-        } = await sb.auth.getSession();
-        return session;
-      }
-
-      async function getProfile(userId) {
-        const { data } = await sb
-          .from("profiles")
-          .select("*")
-          .eq("id", userId)
-          .single();
-        return data;
-      }
-
-      async function requireAuth(expectedRole) {
-        const session = await getSession();
-        if (!session) {
-          window.location.href = getRootPath() + "index.html";
-          return null;
-        }
-        const profile = await getProfile(session.user.id);
-        if (!profile || profile.status !== "approved") {
-          await sb.auth.signOut();
-          window.location.href = getRootPath() + "index.html?msg=pending";
-          return null;
-        }
-        if (expectedRole && profile.role !== expectedRole) {
-          redirectToRole(profile.role);
-          return null;
-        }
-        return { session, profile };
-      }
-
-      function redirectToRole(role) {
-        const root = getRootPath();
-        if (role === ROLES.ADMIN) window.location.href = root + "admin.html";
-        else if (role === ROLES.ANALYST)
-          window.location.href = root + "analyst.html";
-        else window.location.href = root + "researcher.html";
-      }
-
-      function getRootPath() {
-        const parts = window.location.pathname.split("/");
-        const repoIndex = parts.indexOf("rpas");
-        if (repoIndex !== -1) {
-          return (
-            window.location.origin +
-            "/" +
-            parts.slice(1, repoIndex + 1).join("/") +
-            "/"
-          );
-        }
-        return "/";
-      }
-
-      async function signOut() {
-        await sb.auth.signOut();
-        window.location.href = getRootPath() + "index.html";
-      }
-
-      function timeAgo(dateStr) {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return "just now";
-        if (mins < 60) return `${mins}m ago`;
-        const hrs = Math.floor(mins / 60);
-        if (hrs < 24) return `${hrs}h ago`;
-        return `${Math.floor(hrs / 24)}d ago`;
-      }
-
-      function formatDate(dateStr) {
-        if (!dateStr) return "—";
-        return new Date(dateStr).toLocaleDateString("en-PH", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        });
-      }
-
-      function showToast(msg, type = "success") {
-        const t = document.createElement("div");
-        t.className = `toast toast-${type}`;
-        t.textContent = msg;
-        document.body.appendChild(t);
-        setTimeout(() => t.classList.add("show"), 10);
-        setTimeout(() => {
-          t.classList.remove("show");
-          setTimeout(() => t.remove(), 300);
-        }, 3000);
-      }
-    </script>
   </head>
   <body>
     <div class="app-layout">
@@ -2267,23 +1622,59 @@
       </aside>
 
       <!-- MAIN -->
+      <div
+        class="sidebar-overlay"
+        id="sidebar-overlay"
+        onclick="closeSidebar()"
+      ></div>
       <div class="main-content">
         <header class="topbar">
           <div style="display: flex; align-items: center; gap: 12px">
-            <button
-              class="hamburger"
-              onclick="
-                document.getElementById('sidebar').classList.toggle('open')
-              "
-            >
-              ☰
-            </button>
+            <button class="hamburger" onclick="toggleSidebar()">☰</button>
             <div class="topbar-title">
               <h2 id="page-title">Dashboard</h2>
               <p id="page-sub">Welcome back!</p>
             </div>
           </div>
           <div class="topbar-actions">
+            <div class="msg-wrapper" id="msg-wrapper">
+              <button
+                class="msg-btn"
+                id="msg-btn"
+                onclick="toggleMsgPanel(event)"
+                title="Messages"
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  ></path>
+                </svg>
+                <span class="msg-count" id="msg-count"></span>
+              </button>
+              <div class="msg-panel" id="msg-panel">
+                <div class="msg-panel-header">
+                  <h4>Messages</h4>
+                  <button
+                    class="msg-view-all"
+                    onclick="window.location.href = 'messages.html'"
+                  >
+                    View all
+                  </button>
+                </div>
+                <div class="msg-panel-body" id="msg-panel-body">
+                  <div class="msg-empty">No conversations yet</div>
+                </div>
+              </div>
+            </div>
             <div class="notif-wrapper" id="notif-wrapper">
               <button
                 class="notif-btn"
@@ -3743,84 +3134,74 @@
         }
       });
 
-      // ============================================================
-      // PHASE 6.3 — ALDER THE LION AI CHATBOT
-      // ============================================================
-      var alderOpen = false;
-      var alderHistory = [];
-      var alderTyping = false;
-      // ⚠️ Replace with your n8n webhook URL after VPS setup
-      var ALDER_WEBHOOK = "https://YOUR_VPS_IP:5678/webhook/rpas-chat";
+      // ===== ALDER THE LION AI CHATBOT (Phase 6.3) =====
+      var alderChatOpen = false;
+      var alderGreetingDismissed = false;
+      var ALDER_WEBHOOK =
+        "https://rooky-mumblingly-magda.ngrok-free.dev/webhook/chat";
 
-      var alderGreeting =
-        "Hi! I'm Alder, your RPAS assistant 🦁 I can answer questions about our services, help you track your request, or connect you with the admin. What can I help you with today?";
+      function alderDismissGreeting() {
+        var g = document.getElementById("alder-greeting");
+        if (!g) return;
+        g.style.opacity = "0";
+        g.style.transform = "scale(0.8)";
+        g.style.transition = "all 0.25s";
+        setTimeout(function () {
+          g.style.display = "none";
+        }, 250);
+        alderGreetingDismissed = true;
+      }
+      setTimeout(function () {
+        if (!alderGreetingDismissed) alderDismissGreeting();
+      }, 8000);
 
-      function toggleAlder() {
-        alderOpen = !alderOpen;
+      function alderToggleChat() {
+        alderChatOpen = !alderChatOpen;
         var win = document.getElementById("alder-chat-window");
+        var fullBtn = document.getElementById("alder-full-btn");
+        var headBtn = document.getElementById("alder-head-btn");
         if (!win) return;
-        win.classList.toggle("open", alderOpen);
-        if (alderOpen && alderHistory.length === 0) {
-          addAlderMessage("bot", alderGreeting);
+        if (alderChatOpen) {
+          win.classList.add("open");
+          if (fullBtn) fullBtn.style.display = "none";
+          if (headBtn) headBtn.style.display = "block";
+          alderDismissGreeting();
+          var inp = document.getElementById("alder-text-input");
+          if (inp) inp.focus();
+        } else {
+          win.classList.remove("open");
+          if (fullBtn) fullBtn.style.display = "block";
+          if (headBtn) headBtn.style.display = "none";
         }
-        var dot = document.getElementById("alder-unread-dot");
-        if (dot) dot.classList.remove("show");
       }
 
-      function addAlderMessage(role, text) {
-        alderHistory.push({ role: role, text: text });
-        renderAlderMessages();
-      }
-
-      function renderAlderMessages() {
-        var container = document.getElementById("alder-msgs");
-        if (!container) return;
-        var userId = profile
-          ? profile.id
-          : adminProfile
-            ? adminProfile.id
-            : null;
-        container.innerHTML = alderHistory
-          .map(function (m) {
-            if (m.role === "bot") {
-              return (
-                '<div class="alder-msg bot"><div class="alder-msg-text">' +
-                m.text +
-                "</div></div>"
-              );
-            }
-            return '<div class="alder-msg user">' + m.text + "</div>";
-          })
-          .join("");
-        if (alderTyping) {
-          container.innerHTML +=
-            '<div class="alder-typing" id="alder-typing-indicator"><span></span><span></span><span></span></div>';
-        }
-        container.scrollTop = container.scrollHeight;
-      }
-
-      async function sendAlderMessage() {
-        var input = document.getElementById("alder-input");
-        if (!input || alderTyping) return;
+      async function alderSendMessage() {
+        var input = document.getElementById("alder-text-input");
+        if (!input) return;
         var text = input.value.trim();
         if (!text) return;
         input.value = "";
-        addAlderMessage("user", text);
-        alderTyping = true;
-        var face = document.getElementById("alder-face-btn");
-        if (face) face.classList.add("talking");
-        renderAlderMessages();
+        alderAppendMsg("user", text);
+        alderShowTyping();
         try {
-          var userId = profile
-            ? profile.id
-            : adminProfile
-              ? adminProfile.id
-              : null;
-          var userRole = profile
-            ? profile.role
-            : adminProfile
-              ? "admin"
-              : "unknown";
+          var userId =
+            typeof profile !== "undefined" && profile
+              ? profile.id
+              : typeof adminProfile !== "undefined" && adminProfile
+                ? adminProfile.id
+                : null;
+          var userRole =
+            typeof profile !== "undefined" && profile
+              ? profile.role
+              : typeof adminProfile !== "undefined" && adminProfile
+                ? "admin"
+                : "unknown";
+          var userName =
+            typeof profile !== "undefined" && profile
+              ? profile.full_name || "User"
+              : typeof adminProfile !== "undefined" && adminProfile
+                ? adminProfile.full_name || "Admin"
+                : "User";
           var resp = await fetch(ALDER_WEBHOOK, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -3828,35 +3209,72 @@
               message: text,
               userId: userId,
               userRole: userRole,
-              userName: profile
-                ? profile.full_name
-                : adminProfile
-                  ? adminProfile.full_name
-                  : "User",
-              history: alderHistory.slice(-6),
+              userName: userName,
+              sessionId: alderGetSession(),
+              context: "rpas_aldersgate",
             }),
           });
           var data = await resp.json();
+          alderHideTyping();
           var reply =
+            data.output ||
             data.reply ||
-            data.message ||
             data.text ||
-            "Sorry, I didn't get a response. Please try again.";
-          alderTyping = false;
-          if (face) face.classList.remove("talking");
-          addAlderMessage("bot", reply);
+            data.message ||
+            "I couldn't get a response. Please contact RPAS directly.";
+          alderAppendMsg("bot", reply);
         } catch (err) {
-          alderTyping = false;
-          if (face) face.classList.remove("talking");
-          addAlderMessage(
+          alderHideTyping();
+          alderAppendMsg(
             "bot",
-            "I'm having trouble connecting right now. Please try again in a moment, or message the RPAS office directly.",
+            "Oops! Having trouble connecting. Please try again or message the RPAS office directly.",
           );
         }
       }
 
-      function alderKeyPress(e) {
-        if (e.key === "Enter") sendAlderMessage();
+      function alderAppendMsg(role, text) {
+        var c = document.getElementById("alder-messages");
+        if (!c) return;
+        var t = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        var d = document.createElement("div");
+        d.className = "alder-msg " + role;
+        d.innerHTML =
+          '<div class="alder-msg-bubble">' +
+          text +
+          '</div><span class="alder-msg-time">' +
+          t +
+          "</span>";
+        c.appendChild(d);
+        c.scrollTop = c.scrollHeight;
+      }
+
+      function alderShowTyping() {
+        var c = document.getElementById("alder-messages");
+        if (!c) return;
+        var el = document.createElement("div");
+        el.className = "alder-msg bot";
+        el.id = "alder-typing";
+        el.innerHTML =
+          '<div class="alder-typing-wrap"><div class="alder-typing-dot"></div><div class="alder-typing-dot"></div><div class="alder-typing-dot"></div></div>';
+        c.appendChild(el);
+        c.scrollTop = c.scrollHeight;
+      }
+
+      function alderHideTyping() {
+        var el = document.getElementById("alder-typing");
+        if (el) el.remove();
+      }
+
+      function alderGetSession() {
+        var s = sessionStorage.getItem("alder_rpas");
+        if (!s) {
+          s = "r" + Math.random().toString(36).substr(2, 9);
+          sessionStorage.setItem("alder_rpas", s);
+        }
+        return s;
       }
     </script>
 
@@ -3989,5 +3407,108 @@
       </div>
     </div>
     <input type="hidden" id="avatar-pending-url" value="" />
+    <!-- FLOATING CHAT BUBBLE per request (Phase 6.2) -->
+    <div class="chat-bubble-container" id="chat-bubble-container">
+      <div class="chat-bubble-header">
+        <h5 id="chat-bubble-title">Conversation</h5>
+        <div style="display: flex; align-items: center; gap: 6px">
+          <small id="chat-bubble-sub"></small>
+          <a
+            class="chat-bubble-expand"
+            id="chat-bubble-expand"
+            href="messages.html"
+            title="Open full view"
+            >&#8599;</a
+          >
+          <button class="chat-bubble-close" onclick="closeChatBubble()">
+            &#x2715;
+          </button>
+        </div>
+      </div>
+      <div class="chat-bubble-msgs" id="chat-bubble-msgs"></div>
+      <div class="chat-bubble-input">
+        <input
+          type="text"
+          id="chat-input"
+          placeholder="Type a message..."
+          onkeydown="if (event.key === 'Enter') sendChatMessage();"
+        />
+        <button class="chat-bubble-send" onclick="sendChatMessage()">
+          &#10148;
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== ALDER THE LION (Phase 6.3) ===== -->
+    <div id="alder-launcher">
+      <div id="alder-greeting">
+        <button class="close-greeting" onclick="alderDismissGreeting()">
+          ×
+        </button>
+        <p>
+          Roar! 🦁 Hi! I'm <span class="greeting-name">Alder</span>, your RPAS
+          assistant!<br />Ask me anything about our services!
+        </p>
+      </div>
+      <button
+        id="alder-full-btn"
+        onclick="alderToggleChat()"
+        title="Chat with Alder"
+      >
+        <img src="/assets/Alder/alder-transparent.gif" alt="Alder the Lion" />
+      </button>
+      <button
+        id="alder-head-btn"
+        onclick="alderToggleChat()"
+        title="Close chat"
+      >
+        <img src="/assets/Alder/alder-moving-head.gif" alt="Alder" />
+      </button>
+    </div>
+    <div id="alder-chat-window">
+      <div class="alder-chat-header">
+        <div class="alder-chat-avatar">
+          <img src="/assets/Alder/alder-head.png" alt="Alder" />
+        </div>
+        <div class="alder-chat-header-info">
+          <h4>Alder — RPAS Assistant</h4>
+          <span>🟢 Online · Powered by AI</span>
+        </div>
+        <button class="alder-chat-close" onclick="alderToggleChat()">✕</button>
+      </div>
+      <div class="alder-messages" id="alder-messages">
+        <div class="alder-msg bot">
+          <div class="alder-msg-bubble">
+            Roar! 🦁 Hi! I'm <strong>Alder</strong>, your RPAS assistant at
+            Aldersgate College Inc. How can I help you today?
+          </div>
+          <span class="alder-msg-time">Just now</span>
+        </div>
+        <div class="alder-msg bot">
+          <div class="alder-msg-bubble">
+            Ask me about
+            <strong
+              >services, request status, submission, or anything about
+              RPAS!</strong
+            >
+            📋
+          </div>
+          <span class="alder-msg-time">Just now</span>
+        </div>
+      </div>
+      <div class="alder-input-area">
+        <input
+          type="text"
+          id="alder-text-input"
+          placeholder="Ask Alder anything..."
+          onkeydown="if (event.key === 'Enter') alderSendMessage();"
+        />
+        <button id="alder-send-btn" onclick="alderSendMessage()">
+          <svg viewBox="0 0 24 24">
+            <path d="M2 21L23 12 2 3v7l15 2-15 2z" />
+          </svg>
+        </button>
+      </div>
+    </div>
   </body>
 </html>

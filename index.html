@@ -1449,6 +1449,359 @@
       .btn-signout {
         font-family: "Inter", sans-serif !important;
       }
+
+      /* ===== ALDER THE LION (Phase 6.3) ===== */
+      #alder-launcher {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+      #alder-full-btn {
+        width: 110px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        display: block;
+        filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4));
+        animation: alder-float 3s ease-in-out infinite;
+        transition: transform 0.2s;
+      }
+      #alder-full-btn:hover {
+        transform: scale(1.06);
+      }
+      #alder-full-btn img {
+        width: 100%;
+        display: block;
+      }
+      #alder-head-btn {
+        width: auto;
+        height: 55px;
+        border-radius: 50%;
+        border: 3px solid var(--gold);
+        background: var(--dark-green);
+        cursor: pointer;
+        padding: 0;
+        overflow: visible;
+        display: none;
+        box-shadow:
+          0 6px 24px rgba(13, 59, 46, 0.5),
+          0 0 0 0 rgba(201, 162, 39, 0.4);
+        animation: alder-pulse 2.5s ease-in-out infinite;
+      }
+      #alder-head-btn img {
+        width: auto;
+        height: 70px;
+        object-fit: cover;
+        object-position: center 5%;
+        transform: scale(1.8) translateY(-15%);
+      }
+      @keyframes alder-float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+      @keyframes alder-pulse {
+        0% {
+          box-shadow:
+            0 6px 24px rgba(13, 59, 46, 0.5),
+            0 0 0 0 rgba(201, 162, 39, 0.4);
+        }
+        50% {
+          box-shadow:
+            0 6px 24px rgba(13, 59, 46, 0.5),
+            0 0 0 12px rgba(201, 162, 39, 0);
+        }
+        100% {
+          box-shadow:
+            0 6px 24px rgba(13, 59, 46, 0.5),
+            0 0 0 0 rgba(201, 162, 39, 0);
+        }
+      }
+      #alder-greeting {
+        position: absolute;
+        bottom: 190px;
+        right: 0;
+        background: var(--white);
+        border: 2px solid var(--gold);
+        border-radius: 16px 16px 4px 16px;
+        padding: 12px 16px;
+        width: 220px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        animation: alderPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        transform-origin: bottom right;
+      }
+      #alder-greeting::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        right: 22px;
+        border: 5px solid transparent;
+        border-top-color: var(--gold);
+      }
+      #alder-greeting p {
+        font-size: 13px;
+        color: var(--dark-green);
+        font-weight: 600;
+        line-height: 1.5;
+      }
+      #alder-greeting .greeting-name {
+        color: var(--gold);
+        font-weight: 800;
+      }
+      #alder-greeting .close-greeting {
+        position: absolute;
+        top: 6px;
+        right: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        color: #555;
+        background: none;
+        border: none;
+        font-weight: 700;
+      }
+      @keyframes alderPopIn {
+        from {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      #alder-chat-window {
+        position: fixed;
+        bottom: 110px;
+        right: 28px;
+        z-index: 9998;
+        width: 360px;
+        max-height: 520px;
+        background: var(--white);
+        border-radius: 20px;
+        box-shadow: 0 16px 60px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid rgba(201, 162, 39, 0.3);
+        transform: scale(0.8) translateY(20px);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.35s cubic-bezier(0.34, 1.3, 0.64, 1);
+        transform-origin: bottom right;
+      }
+      #alder-chat-window.open {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+        pointer-events: all;
+      }
+      .alder-chat-header {
+        background: var(--dark-green);
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 2px solid var(--gold);
+      }
+      .alder-chat-avatar {
+        width: 42px;
+        height: 42px;
+        border: none;
+        background: transparent;
+        overflow: visible;
+      }
+      .alder-chat-avatar img {
+        width: 75px;
+        height: auto;
+        object-fit: contain;
+        transform: translate(-23px, -18px);
+      }
+      .alder-chat-header-info h4 {
+        color: var(--white);
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .alder-chat-header-info span {
+        font-size: 11px;
+        color: var(--gold-light);
+      }
+      .alder-chat-close {
+        margin-left: auto;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .alder-chat-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .alder-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 300px;
+        max-height: 340px;
+      }
+      .alder-messages::-webkit-scrollbar {
+        width: 4px;
+      }
+      .alder-messages::-webkit-scrollbar-thumb {
+        background: rgba(201, 162, 39, 0.3);
+        border-radius: 2px;
+      }
+      .alder-msg {
+        display: flex;
+        flex-direction: column;
+        max-width: 85%;
+        animation: alderMsgIn 0.3s ease;
+      }
+      @keyframes alderMsgIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .alder-msg.bot {
+        align-self: flex-start;
+      }
+      .alder-msg.user {
+        align-self: flex-end;
+      }
+      .alder-msg-bubble {
+        padding: 10px 15px;
+        border-radius: 18px;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .alder-msg.bot .alder-msg-bubble {
+        background: var(--cream);
+        color: var(--text-dark);
+        border-bottom-left-radius: 4px;
+        border: 1px solid rgba(201, 162, 39, 0.2);
+      }
+      .alder-msg.user .alder-msg-bubble {
+        background: var(--dark-green);
+        color: var(--white);
+        border-bottom-right-radius: 4px;
+      }
+      .alder-msg-time {
+        font-size: 10px;
+        color: var(--text-muted);
+        margin-top: 4px;
+        padding: 0 4px;
+      }
+      .alder-msg.user .alder-msg-time {
+        align-self: flex-end;
+      }
+      .alder-typing-wrap {
+        display: flex;
+        gap: 5px;
+        padding: 12px 16px;
+        background: var(--cream);
+        border-radius: 18px;
+        border-bottom-left-radius: 4px;
+        width: fit-content;
+        border: 1px solid rgba(201, 162, 39, 0.2);
+      }
+      .alder-typing-dot {
+        width: 7px;
+        height: 7px;
+        background: var(--gold);
+        border-radius: 50%;
+        animation: alderDotBounce 1.2s ease-in-out infinite;
+      }
+      .alder-typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .alder-typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes alderDotBounce {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.4;
+        }
+        30% {
+          transform: translateY(-6px);
+          opacity: 1;
+        }
+      }
+      .alder-input-area {
+        padding: 14px 16px;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+        display: flex;
+        gap: 10px;
+      }
+      #alder-text-input {
+        flex: 1;
+        border: 1.5px solid rgba(201, 162, 39, 0.3);
+        border-radius: 24px;
+        padding: 10px 18px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+        background: var(--cream);
+      }
+      #alder-text-input:focus {
+        border-color: var(--gold);
+      }
+      #alder-send-btn {
+        width: 42px;
+        height: 42px;
+        background: var(--dark-green);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          background 0.2s,
+          transform 0.2s;
+        flex-shrink: 0;
+      }
+      #alder-send-btn:hover {
+        background: var(--mid-green);
+        transform: scale(1.05);
+      }
+      #alder-send-btn svg {
+        width: 18px;
+        height: 18px;
+        fill: var(--gold-light);
+      }
+      @media (max-width: 600px) {
+        #alder-chat-window {
+          width: calc(100vw - 40px);
+          right: 20px;
+        }
+        #alder-full-btn {
+          width: 90px;
+        }
+      }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/supabase.js"></script>
@@ -2260,6 +2613,220 @@
           console.warn("Email send failed (non-blocking):", e);
         }
       }
+
+      // ===== ALDER THE LION AI CHATBOT (Phase 6.3) =====
+      var alderChatOpen = false;
+      var alderGreetingDismissed = false;
+      var ALDER_WEBHOOK =
+        "https://rooky-mumblingly-magda.ngrok-free.dev/webhook/chat";
+
+      function alderDismissGreeting() {
+        var g = document.getElementById("alder-greeting");
+        if (!g) return;
+        g.style.opacity = "0";
+        g.style.transform = "scale(0.8)";
+        g.style.transition = "all 0.25s";
+        setTimeout(function () {
+          g.style.display = "none";
+        }, 250);
+        alderGreetingDismissed = true;
+      }
+      setTimeout(function () {
+        if (!alderGreetingDismissed) alderDismissGreeting();
+      }, 8000);
+
+      function alderToggleChat() {
+        alderChatOpen = !alderChatOpen;
+        var win = document.getElementById("alder-chat-window");
+        var fullBtn = document.getElementById("alder-full-btn");
+        var headBtn = document.getElementById("alder-head-btn");
+        if (!win) return;
+        if (alderChatOpen) {
+          win.classList.add("open");
+          if (fullBtn) fullBtn.style.display = "none";
+          if (headBtn) headBtn.style.display = "block";
+          alderDismissGreeting();
+          var inp = document.getElementById("alder-text-input");
+          if (inp) inp.focus();
+        } else {
+          win.classList.remove("open");
+          if (fullBtn) fullBtn.style.display = "block";
+          if (headBtn) headBtn.style.display = "none";
+        }
+      }
+
+      async function alderSendMessage() {
+        var input = document.getElementById("alder-text-input");
+        if (!input) return;
+        var text = input.value.trim();
+        if (!text) return;
+        input.value = "";
+        alderAppendMsg("user", text);
+        alderShowTyping();
+        try {
+          var userId =
+            typeof profile !== "undefined" && profile
+              ? profile.id
+              : typeof adminProfile !== "undefined" && adminProfile
+                ? adminProfile.id
+                : null;
+          var userRole =
+            typeof profile !== "undefined" && profile
+              ? profile.role
+              : typeof adminProfile !== "undefined" && adminProfile
+                ? "admin"
+                : "unknown";
+          var userName =
+            typeof profile !== "undefined" && profile
+              ? profile.full_name || "User"
+              : typeof adminProfile !== "undefined" && adminProfile
+                ? adminProfile.full_name || "Admin"
+                : "Visitor";
+          var resp = await fetch(ALDER_WEBHOOK, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: text,
+              userId: userId || "visitor",
+              userRole: userRole,
+              userName: userName,
+              sessionId: alderGetSession(),
+              context: "rpas_aldersgate",
+            }),
+          });
+          var data = await resp.json();
+          alderHideTyping();
+          var reply =
+            data.output ||
+            data.reply ||
+            data.text ||
+            data.message ||
+            "I couldn't get a response. Please contact RPAS directly.";
+          alderAppendMsg("bot", reply);
+        } catch (err) {
+          alderHideTyping();
+          alderAppendMsg(
+            "bot",
+            "Oops! Having trouble connecting. Please try again or visit the RPAS office.",
+          );
+        }
+      }
+
+      function alderAppendMsg(role, text) {
+        var c = document.getElementById("alder-messages");
+        if (!c) return;
+        var t = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        var d = document.createElement("div");
+        d.className = "alder-msg " + role;
+        d.innerHTML =
+          '<div class="alder-msg-bubble">' +
+          text +
+          '</div><span class="alder-msg-time">' +
+          t +
+          "</span>";
+        c.appendChild(d);
+        c.scrollTop = c.scrollHeight;
+      }
+
+      function alderShowTyping() {
+        var c = document.getElementById("alder-messages");
+        if (!c) return;
+        var el = document.createElement("div");
+        el.className = "alder-msg bot";
+        el.id = "alder-typing";
+        el.innerHTML =
+          '<div class="alder-typing-wrap"><div class="alder-typing-dot"></div><div class="alder-typing-dot"></div><div class="alder-typing-dot"></div></div>';
+        c.appendChild(el);
+        c.scrollTop = c.scrollHeight;
+      }
+
+      function alderHideTyping() {
+        var el = document.getElementById("alder-typing");
+        if (el) el.remove();
+      }
+
+      function alderGetSession() {
+        var s = sessionStorage.getItem("alder_rpas");
+        if (!s) {
+          s = "r" + Math.random().toString(36).substr(2, 9);
+          sessionStorage.setItem("alder_rpas", s);
+        }
+        return s;
+      }
     </script>
+    <!-- ===== ALDER THE LION (Phase 6.3) ===== -->
+    <div id="alder-launcher">
+      <div id="alder-greeting">
+        <button class="close-greeting" onclick="alderDismissGreeting()">
+          ×
+        </button>
+        <p>
+          Roar! 🦁 Hi! I'm <span class="greeting-name">Alder</span>, your RPAS
+          assistant!<br />Ask me anything about our services!
+        </p>
+      </div>
+      <button
+        id="alder-full-btn"
+        onclick="alderToggleChat()"
+        title="Chat with Alder"
+      >
+        <img src="assets/alder-transparent.gif" alt="Alder the Lion" />
+      </button>
+      <button
+        id="alder-head-btn"
+        onclick="alderToggleChat()"
+        title="Close chat"
+      >
+        <img src="assets/alder-moving-head.gif" alt="Alder" />
+      </button>
+    </div>
+    <div id="alder-chat-window">
+      <div class="alder-chat-header">
+        <div class="alder-chat-avatar">
+          <img src="assets/alder-head.png" alt="Alder" />
+        </div>
+        <div class="alder-chat-header-info">
+          <h4>Alder — RPAS Assistant</h4>
+          <span>🟢 Online · Powered by AI</span>
+        </div>
+        <button class="alder-chat-close" onclick="alderToggleChat()">✕</button>
+      </div>
+      <div class="alder-messages" id="alder-messages">
+        <div class="alder-msg bot">
+          <div class="alder-msg-bubble">
+            Roar! 🦁 Hi! I'm <strong>Alder</strong>, your RPAS assistant at
+            Aldersgate College Inc. How can I help you today?
+          </div>
+          <span class="alder-msg-time">Just now</span>
+        </div>
+        <div class="alder-msg bot">
+          <div class="alder-msg-bubble">
+            Ask me about
+            <strong
+              >services, request status, submission, or anything about
+              RPAS!</strong
+            >
+            📋
+          </div>
+          <span class="alder-msg-time">Just now</span>
+        </div>
+      </div>
+      <div class="alder-input-area">
+        <input
+          type="text"
+          id="alder-text-input"
+          placeholder="Ask Alder anything..."
+          onkeydown="if (event.key === 'Enter') alderSendMessage();"
+        />
+        <button id="alder-send-btn" onclick="alderSendMessage()">
+          <svg viewBox="0 0 24 24">
+            <path d="M2 21L23 12 2 3v7l15 2-15 2z" />
+          </svg>
+        </button>
+      </div>
+    </div>
   </body>
 </html>

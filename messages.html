@@ -1,12 +1,12 @@
-<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Messages — RPAS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="assets/css/style.css" />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;display=swap"
       rel="stylesheet"
     />
     <style>
@@ -79,6 +79,7 @@
         font-size: 18px;
         font-weight: 700;
         color: var(--green-dark);
+        font-family: "DM Sans", sans-serif;
       }
       .topbar-user {
         margin-left: auto;
@@ -393,11 +394,6 @@
         background: white;
       }
       .alder-tab-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--green-dark);
-        border: 2px solid var(--gold);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -478,11 +474,21 @@
     <!-- TOPBAR -->
     <div class="topbar">
       <button class="topbar-back" onclick="history.back()" title="Back">
-        &#8592;
+        ←
       </button>
       <h2>Messages</h2>
       <div class="topbar-user">
-        <div class="topbar-avatar" id="topbar-avatar">?</div>
+        <div class="topbar-avatar" id="topbar-avatar">
+          <img
+            src="https://wkgacywvsndwiezqdcxj.supabase.co/storage/v1/object/public/attachments/avatars/259e98b8-1208-4307-a0f0-f92fec3aaaa2.jpg"
+            style="
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              border-radius: 50%;
+            "
+          />
+        </div>
       </div>
     </div>
 
@@ -492,67 +498,108 @@
       <div class="msg-sidebar">
         <div class="msg-tabs">
           <button
-            class="msg-tab active"
+            class="msg-tab"
             id="tab-requests"
             onclick="switchTab('requests')"
           >
-            My Requests
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              style="margin-right: 4px; vertical-align: middle"
+            >
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+              ></path></svg
+            >My Requests
           </button>
           <button class="msg-tab" id="tab-office" onclick="switchTab('office')">
-            RPAS Office
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              style="margin-right: 4px; vertical-align: middle"
+            >
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline></svg
+            >RPAS Office
           </button>
-          <button class="msg-tab" id="tab-alder" onclick="switchTab('alder')">
-            &#129409; Alder
+          <button
+            class="msg-tab active"
+            id="tab-alder"
+            onclick="switchTab('alder')"
+          >
+            <img
+              src="/assets/Alder/alder-head.png"
+              style="width: 20px; height: auto; vertical-align: middle"
+              onerror="this.style.display = 'none'"
+            />
+            Ask Alder
           </button>
         </div>
         <div class="msg-list" id="msg-list">
-          <div class="loading-spinner">Loading...</div>
+          <div
+            class="conv-empty"
+            style="
+              padding: 24px 16px;
+              text-align: center;
+              color: var(--gray-500);
+              font-size: 13px;
+            "
+          >
+            🦁 Alder is in the chat area →
+          </div>
         </div>
       </div>
 
       <!-- RIGHT: chat area -->
       <div class="chat-area" id="chat-area">
-        <div class="chat-empty-state" id="chat-empty-state">
-          <div>&#128172;</div>
-          <p>Select a conversation to start</p>
+        <div class="alder-tab-header">
+          <div class="alder-tab-avatar">
+            <img
+              src="/assets/Alder/alder-head.png"
+              alt="Alder head"
+              style="width: 50px; height: auto; display: block"
+            />
+          </div>
+          <div>
+            <h4 style="font-size: 15px; font-weight: 700">Alder</h4>
+            <span style="font-size: 12px; color: var(--gray-500)"
+              >RPAS AI Assistant • ACI</span
+            >
+          </div>
+        </div>
+        <div class="chat-messages" id="alder-msgs-full">
+          <div class="chat-msg-row theirs">
+            <div class="chat-msg-bubble">
+              Hi! I'm Alder, your RPAS assistant 🦁 I can answer questions about
+              our services, check your request status, or connect you with the
+              admin. What can I help you with today?
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-bar">
+          <textarea
+            id="alder-input-full"
+            rows="1"
+            placeholder="Ask Alder anything..."
+            onkeydown="alderKeyFull(event)"
+          ></textarea
+          ><button
+            class="chat-send-btn"
+            onclick="sendAlderFull()"
+            id="alder-send-full"
+          >
+            ➤
+          </button>
         </div>
       </div>
-    </div>
-
-    <!-- ALDER BUBBLE (also on this page) -->
-    <div class="alder-bubble" id="alder-bubble-msgs">
-      <button
-        class="alder-face-btn"
-        onclick="switchTab('alder')"
-        title="Ask Alder"
-      >
-        <svg class="alder-face-svg" viewBox="0 0 38 38" fill="none">
-          <circle
-            cx="19"
-            cy="19"
-            r="17"
-            fill="#F5C200"
-            stroke="#E4A800"
-            stroke-width="1"
-          />
-          <ellipse cx="19" cy="21" rx="11" ry="12" fill="#E8A020" />
-          <ellipse cx="19" cy="19" rx="9" ry="10" fill="#F5C200" />
-          <circle cx="14" cy="17" r="2.5" fill="white" />
-          <circle cx="24" cy="17" r="2.5" fill="white" />
-          <circle cx="14.8" cy="17.2" r="1.2" fill="#2C1A0E" />
-          <circle cx="24.8" cy="17.2" r="1.2" fill="#2C1A0E" />
-          <ellipse cx="19" cy="22" rx="4" ry="2.5" fill="#E8A020" />
-          <path
-            d="M16 23.5 Q19 25.5 22 23.5"
-            stroke="#2C1A0E"
-            stroke-width="0.8"
-            fill="none"
-            stroke-linecap="round"
-          />
-          <rect x="7" y="12" width="5" height="6" rx="2" fill="#E8A020" />
-          <rect x="26" y="12" width="5" height="6" rx="2" fill="#E8A020" />
-        </svg>
-      </button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -565,7 +612,8 @@
       var allConvs = [];
       var alderHistory = [];
       var alderTyping = false;
-      var ALDER_WEBHOOK = "https://YOUR_VPS_IP:5678/webhook/rpas-chat";
+      var ALDER_WEBHOOK =
+        "https://rooky-mumblingly-magda.ngrok-free.dev/webhook/chat";
 
       (async () => {
         var auth = await requireAuth(null);
@@ -907,16 +955,7 @@
         document.getElementById("chat-area").innerHTML =
           '<div class="alder-tab-header">' +
           '<div class="alder-tab-avatar">' +
-          '<svg width="28" height="28" viewBox="0 0 38 38" fill="none">' +
-          '<circle cx="19" cy="19" r="17" fill="#F5C200" stroke="#E4A800" stroke-width="1"/>' +
-          '<ellipse cx="19" cy="21" rx="11" ry="12" fill="#E8A020"/>' +
-          '<ellipse cx="19" cy="19" rx="9" ry="10" fill="#F5C200"/>' +
-          '<circle cx="14" cy="17" r="2.5" fill="white"/><circle cx="24" cy="17" r="2.5" fill="white"/>' +
-          '<circle cx="14.8" cy="17.2" r="1.2" fill="#2C1A0E"/><circle cx="24.8" cy="17.2" r="1.2" fill="#2C1A0E"/>' +
-          '<ellipse cx="19" cy="22" rx="4" ry="2.5" fill="#E8A020"/>' +
-          '<path d="M16 23.5 Q19 25.5 22 23.5" stroke="#2C1A0E" stroke-width="0.8" fill="none" stroke-linecap="round"/>' +
-          '<rect x="7" y="12" width="5" height="6" rx="2" fill="#E8A020"/><rect x="26" y="12" width="5" height="6" rx="2" fill="#E8A020"/>' +
-          "</svg>" +
+          '<img src="/assets/Alder/alder-head.png" style="width:44px;height:auto;display:block;" alt="Alder">' +
           "</div>" +
           '<div><h4 style="font-size:15px;font-weight:700;">Alder</h4><span style="font-size:12px;color:var(--gray-500);">RPAS AI Assistant &bull; ACI</span></div>' +
           "</div>" +
@@ -1006,6 +1045,58 @@
           sendAlderFull();
         }
       }
+    </script>
+    <!-- Code injected by live-server -->
+    <script>
+      // <![CDATA[  <-- For SVG support
+      if ("WebSocket" in window) {
+        (function () {
+          function refreshCSS() {
+            var sheets = [].slice.call(document.getElementsByTagName("link"));
+            var head = document.getElementsByTagName("head")[0];
+            for (var i = 0; i < sheets.length; ++i) {
+              var elem = sheets[i];
+              var parent = elem.parentElement || head;
+              parent.removeChild(elem);
+              var rel = elem.rel;
+              if (
+                (elem.href && typeof rel != "string") ||
+                rel.length == 0 ||
+                rel.toLowerCase() == "stylesheet"
+              ) {
+                var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, "");
+                elem.href =
+                  url +
+                  (url.indexOf("?") >= 0 ? "&" : "?") +
+                  "_cacheOverride=" +
+                  new Date().valueOf();
+              }
+              parent.appendChild(elem);
+            }
+          }
+          var protocol =
+            window.location.protocol === "http:" ? "ws://" : "wss://";
+          var address =
+            protocol + window.location.host + window.location.pathname + "/ws";
+          var socket = new WebSocket(address);
+          socket.onmessage = function (msg) {
+            if (msg.data == "reload") window.location.reload();
+            else if (msg.data == "refreshcss") refreshCSS();
+          };
+          if (
+            sessionStorage &&
+            !sessionStorage.getItem("IsThisFirstTime_Log_From_LiveServer")
+          ) {
+            console.log("Live reload enabled.");
+            sessionStorage.setItem("IsThisFirstTime_Log_From_LiveServer", true);
+          }
+        })();
+      } else {
+        console.error(
+          "Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.",
+        );
+      }
+      // ]]>
     </script>
   </body>
 </html>
