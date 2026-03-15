@@ -2102,11 +2102,11 @@
           (t) => t.status === "for_revision",
         ).length;
         document.getElementById("stats-grid").innerHTML = `
-    <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${total}</div><div class="stat-label">Total Assigned</div></div></div>
-    <div class="stat-card"><div class="stat-icon blue">⚙️</div><div class="stat-info"><div class="stat-value">${active}</div><div class="stat-label">Active Tasks</div></div></div>
-    <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div></div>
-    <div class="stat-card"><div class="stat-icon red">✏️</div><div class="stat-info"><div class="stat-value">${revision}</div><div class="stat-label">For Revision</div></div></div>
-  `;
+        <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${total}</div><div class="stat-label">Total Assigned</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue">⚙️</div><div class="stat-info"><div class="stat-value">${active}</div><div class="stat-label">Active Tasks</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div></div>
+        <div class="stat-card"><div class="stat-icon red">✏️</div><div class="stat-info"><div class="stat-value">${revision}</div><div class="stat-label">For Revision</div></div></div>
+      `;
       }
 
       function renderActiveTable(list) {
@@ -2119,12 +2119,12 @@
         tbody.innerHTML = list
           .map(
             (t) => `<tr>
-    <td><strong>${t.researcher?.full_name || "Unknown"}</strong><div style="font-size:12px;color:var(--gray-400)">${t.researcher?.email || ""}</div></td>
-    <td>${t.service_type}</td>
-    <td>${formatDate(t.created_at)}</td>
-    <td><span class="badge badge-${t.status}">${STATUS_LABELS[t.status]}</span></td>
-    <td><button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">Open →</button>${t.status === "under_review" || t.status === "submitted" ? `<button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="openDecline('${t.id}')">Decline</button>` : ""}</td>
-  </tr>`,
+        <td><strong>${t.researcher?.full_name || "Unknown"}</strong><div style="font-size:12px;color:var(--gray-400)">${t.researcher?.email || ""}</div></td>
+        <td>${t.service_type}</td>
+        <td>${formatDate(t.created_at)}</td>
+        <td><span class="badge badge-${t.status}">${STATUS_LABELS[t.status]}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">Open →</button>${t.status === "under_review" || t.status === "submitted" ? `<button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="openDecline('${t.id}')">Decline</button>` : ""}</td>
+      </tr>`,
           )
           .join("");
       }
@@ -2153,16 +2153,16 @@
         tbody.innerHTML = list
           .map(
             (t) => `<tr>
-    <td><strong>${t.researcher?.full_name || "Unknown"}</strong></td>
-    <td>${t.service_type}</td>
-    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title || "—"}</td>
-    <td>${formatDate(t.created_at)}</td>
-    <td><span class="badge badge-${t.status}">${STATUS_LABELS[t.status]}</span></td>
-    <td style="display:flex;gap:6px;">
-      <button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">View</button>
-      <button class="btn btn-primary btn-sm" onclick="openUpdateStatus('${t.id}')">Update</button>
-    </td>
-  </tr>`,
+        <td><strong>${t.researcher?.full_name || "Unknown"}</strong></td>
+        <td>${t.service_type}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title || "—"}</td>
+        <td>${formatDate(t.created_at)}</td>
+        <td><span class="badge badge-${t.status}">${STATUS_LABELS[t.status]}</span></td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">View</button>
+          <button class="btn btn-primary btn-sm" onclick="openUpdateStatus('${t.id}')">Update</button>
+        </td>
+      </tr>`,
           )
           .join("");
       }
@@ -2179,10 +2179,10 @@
         const stepHtml = steps
           .map(
             (s, i) => `
-    <div class="step ${i < ci ? "done" : i === ci ? "active" : ""}">
-      <div class="step-dot">${i < ci ? "✓" : i + 1}</div>
-      <div class="step-label">${STATUS_LABELS[s]}</div>
-    </div>`,
+        <div class="step ${i < ci ? "done" : i === ci ? "active" : ""}">
+          <div class="step-dot">${i < ci ? "✓" : i + 1}</div>
+          <div class="step-label">${STATUS_LABELS[s]}</div>
+        </div>`,
           )
           .join("");
 
@@ -2201,9 +2201,9 @@
             .map((m) => {
               const isMe = m.sender_id === profile.id;
               return `<div class="chat-bubble ${isMe ? "me" : "them"}">
-      ${!isMe ? `<div style="font-size:11px;font-weight:600;margin-bottom:4px;opacity:.8">${m.sender?.full_name || "Researcher"}</div>` : ""}
-      ${m.message}<div class="time">${timeAgo(m.created_at)}</div>
-    </div>`;
+          ${!isMe ? `<div style="font-size:11px;font-weight:600;margin-bottom:4px;opacity:.8">${m.sender?.full_name || "Researcher"}</div>` : ""}
+          ${m.message}<div class="time">${timeAgo(m.created_at)}</div>
+        </div>`;
             })
             .join("") ||
           '<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:20px;">No messages yet</div>';
@@ -2212,10 +2212,10 @@
           (attachments || [])
             .map(
               (a) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;margin-bottom:6px;">
-      <span>📄</span><span style="flex:1;font-size:13px;">${a.filename}</span>
-      <a href="${a.url}" target="_blank" class="btn btn-ghost btn-sm">Download</a>
-    </div>`,
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;margin-bottom:6px;">
+          <span>📄</span><span style="flex:1;font-size:13px;">${a.filename}</span>
+          <a href="${a.url}" target="_blank" class="btn btn-ghost btn-sm">Download</a>
+        </div>`,
             )
             .join("") ||
           '<div style="color:var(--gray-400);font-size:13px;">No files</div>';
@@ -2227,45 +2227,45 @@
           updates
             .map(
               (u) => `
-    <div class="timeline-item">
-      <div class="timeline-date">${formatDate(u.created_at)}</div>
-      <div class="timeline-content">Status: <strong>${STATUS_LABELS[u.status] || u.status}</strong>${u.notes ? ` — ${u.notes}` : ""}</div>
-    </div>`,
+        <div class="timeline-item">
+          <div class="timeline-date">${formatDate(u.created_at)}</div>
+          <div class="timeline-content">Status: <strong>${STATUS_LABELS[u.status] || u.status}</strong>${u.notes ? ` — ${u.notes}` : ""}</div>
+        </div>`,
             )
             .join("") ||
           '<div style="color:var(--gray-400);font-size:13px;">No updates yet</div>';
 
         document.getElementById("task-modal-body").innerHTML = `
-    <div style="margin-bottom:24px;"><div class="stepper">${stepHtml}</div></div>
-    <div class="grid-2" style="margin-bottom:20px;">
-      <div><span class="text-muted">Researcher</span><div style="font-weight:600;">${task.researcher?.full_name || "—"}</div></div>
-      <div><span class="text-muted">Email</span><div style="font-weight:600;">${task.researcher?.email || "—"}</div></div>
-      <div><span class="text-muted">Service</span><div style="font-weight:600;">${task.service_type}</div></div>
-      <div><span class="text-muted">Status</span><div style="margin-top:2px;"><span class="badge badge-${task.status}">${STATUS_LABELS[task.status]}</span></div></div>
-    </div>
-    ${task.title ? `<div style="margin-bottom:12px;"><span class="text-muted">Title</span><div style="font-weight:600;">${task.title}</div></div>` : ""}
-    ${task.notes ? `<div style="margin-bottom:16px;"><span class="text-muted">Notes</span><div style="font-size:14px;">${task.notes}</div></div>` : ""}
-    <div style="margin-bottom:16px;text-align:right;">
-      <button class="btn btn-gold" onclick="closeModal('modal-task');openUpdateStatus('${id}')">📝 Update Status</button>
-      ${task.status === "in_progress" ? `<button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="closeModal('modal-task');openRequestTransfer('${id}')">🔄 Request Transfer</button>` : ""}
-      ${task.status === "under_review" || task.status === "submitted" ? `<button class="btn btn-danger btn-sm" style="margin-left:8px" onclick="closeModal('modal-task');openDecline('${id}')">✕ Decline</button>` : ""}
-    </div>
-    <div class="divider"></div>
-    <div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;">📎 Attachments (${(attachments || []).length})</h4>${attHtml}</div>
-    <div class="divider"></div>
-    <div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;">📅 Timeline</h4><div class="timeline">${timelineHtml}</div></div>
-    <div class="divider"></div>
-    <h4 style="margin-bottom:8px;">💬 Messages</h4>
-    <div class="card" style="border:1px solid var(--gray-200);">
-      <div class="chat-wrap">
-        <div class="chat-messages">${msgHtml}</div>
-        <div class="chat-input-row">
-          <input type="text" class="form-control" id="msg-input-${id}" placeholder="Message the researcher..." onkeydown="if(event.key==='Enter')sendMessage('${id}')">
-          <button class="btn btn-primary btn-sm" onclick="sendMessage('${id}')">Send</button>
+        <div style="margin-bottom:24px;"><div class="stepper">${stepHtml}</div></div>
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div><span class="text-muted">Researcher</span><div style="font-weight:600;">${task.researcher?.full_name || "—"}</div></div>
+          <div><span class="text-muted">Email</span><div style="font-weight:600;">${task.researcher?.email || "—"}</div></div>
+          <div><span class="text-muted">Service</span><div style="font-weight:600;">${task.service_type}</div></div>
+          <div><span class="text-muted">Status</span><div style="margin-top:2px;"><span class="badge badge-${task.status}">${STATUS_LABELS[task.status]}</span></div></div>
         </div>
-      </div>
-    </div>
-  `;
+        ${task.title ? `<div style="margin-bottom:12px;"><span class="text-muted">Title</span><div style="font-weight:600;">${task.title}</div></div>` : ""}
+        ${task.notes ? `<div style="margin-bottom:16px;"><span class="text-muted">Notes</span><div style="font-size:14px;">${task.notes}</div></div>` : ""}
+        <div style="margin-bottom:16px;text-align:right;">
+          <button class="btn btn-gold" onclick="closeModal('modal-task');openUpdateStatus('${id}')">📝 Update Status</button>
+          ${task.status === "in_progress" ? `<button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="closeModal('modal-task');openRequestTransfer('${id}')">🔄 Request Transfer</button>` : ""}
+          ${task.status === "under_review" || task.status === "submitted" ? `<button class="btn btn-danger btn-sm" style="margin-left:8px" onclick="closeModal('modal-task');openDecline('${id}')">✕ Decline</button>` : ""}
+        </div>
+        <div class="divider"></div>
+        <div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;">📎 Attachments (${(attachments || []).length})</h4>${attHtml}</div>
+        <div class="divider"></div>
+        <div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;">📅 Timeline</h4><div class="timeline">${timelineHtml}</div></div>
+        <div class="divider"></div>
+        <h4 style="margin-bottom:8px;">💬 Messages</h4>
+        <div class="card" style="border:1px solid var(--gray-200);">
+          <div class="chat-wrap">
+            <div class="chat-messages">${msgHtml}</div>
+            <div class="chat-input-row">
+              <input type="text" class="form-control" id="msg-input-${id}" placeholder="Message the researcher..." onkeydown="if(event.key==='Enter')sendMessage('${id}')">
+              <button class="btn btn-primary btn-sm" onclick="sendMessage('${id}')">Send</button>
+            </div>
+          </div>
+        </div>
+      `;
         setTimeout(() => {
           const c = document.querySelector(".chat-messages");
           if (c) c.scrollTop = c.scrollHeight;
@@ -2399,14 +2399,14 @@
         list.innerHTML = notifs
           .map(
             (n) => `
-    <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 20px;border-bottom:1px solid var(--gray-100);background:${n.is_read ? "" : "var(--gold-light)"};">
-      <div style="font-size:22px;flex-shrink:0;">🔔</div>
-      <div style="flex:1;">
-        <div style="font-size:14px;font-weight:${n.is_read ? "400" : "600"}">${n.message}</div>
-        <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${timeAgo(n.created_at)}</div>
-      </div>
-      ${!n.is_read ? `<button class="btn btn-ghost btn-sm" onclick="markRead('${n.id}')">✓</button>` : ""}
-    </div>`,
+        <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 20px;border-bottom:1px solid var(--gray-100);background:${n.is_read ? "" : "var(--gold-light)"};">
+          <div style="font-size:22px;flex-shrink:0;">🔔</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:${n.is_read ? "400" : "600"}">${n.message}</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${timeAgo(n.created_at)}</div>
+          </div>
+          ${!n.is_read ? `<button class="btn btn-ghost btn-sm" onclick="markRead('${n.id}')">✓</button>` : ""}
+        </div>`,
           )
           .join("");
       }
@@ -3313,7 +3313,9 @@
         //   USING (status = 'submitted' AND analyst_id IS NULL AND public.get_my_role() = 'analyst');
         var { data } = await sb
           .from("service_requests")
-          .select("*, researcher:researcher_id(full_name)")
+          .select(
+            "*, researcher:researcher_id(full_name, email, department, program)",
+          )
           .is("analyst_id", null)
           .eq("status", "submitted")
           .order("created_at", { ascending: false });
@@ -3400,16 +3402,31 @@
             var matchHtml = isMatch
               ? '<span style="color:var(--green);font-weight:600;font-size:12px">✓ Match</span>'
               : '<span style="color:var(--gray-400);font-size:12px">Outside spec</span>';
+            var abstract = (r.notes || r.abstract || "").substring(0, 100);
+            var rIdx = poolData.indexOf(r);
             return (
               "<tr>" +
               "<td><strong>" +
               (researcher.full_name || "—") +
-              "</strong></td>" +
+              "</strong>" +
+              (researcher.department
+                ? '<div style="font-size:11px;color:var(--gray-400)">' +
+                  researcher.department +
+                  "</div>"
+                : "") +
+              "</td>" +
               "<td>" +
               (r.service_type || "—") +
               "</td>" +
-              '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' +
+              '<td style="max-width:220px">' +
+              '<div style="font-weight:600;font-size:13px">' +
               (r.title || "—") +
+              "</div>" +
+              (abstract
+                ? '<div style="font-size:11px;color:var(--gray-500);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+                  abstract +
+                  "…</div>"
+                : "") +
               "</td>" +
               "<td>" +
               formatDate(r.created_at) +
@@ -3417,20 +3434,67 @@
               "<td>" +
               matchHtml +
               "</td>" +
-              '<td><button class="btn btn-gold btn-sm" onclick="openExpressInterest(' +
-              "'" +
+              '<td style="display:flex;gap:6px">' +
+              '<button class="btn btn-outline btn-sm" onclick="viewPoolRequest(' +
+              rIdx +
+              ')">View</button>' +
+              '<button class="btn btn-gold btn-sm" onclick="openExpressInterest(\'' +
               r.id +
               "','" +
               (r.service_type || "").replace(/'/g, "") +
               "','" +
               (researcher.full_name || "").replace(/'/g, "") +
-              "'" +
-              ')">Express Interest</button></td>' +
+              "')\">Express Interest</button>" +
+              "</td>" +
               "</tr>"
             );
           })
           .join("");
       }
+      function viewPoolRequest(idx) {
+        var r = poolData[idx];
+        if (!r) return;
+        var researcher = r.researcher || {};
+        document.getElementById("pool-view-title").textContent =
+          r.service_type + (r.title ? " — " + r.title : "");
+        document.getElementById("pool-view-body").innerHTML =
+          '<div class="grid-2" style="margin-bottom:16px">' +
+          '<div><span class="text-muted">Researcher</span><div style="font-weight:600">' +
+          (researcher.full_name || "—") +
+          "</div>" +
+          (researcher.email
+            ? '<div style="font-size:12px;color:var(--gray-400)">' +
+              researcher.email +
+              "</div>"
+            : "") +
+          "</div>" +
+          '<div><span class="text-muted">Service</span><div style="font-weight:600">' +
+          (r.service_type || "—") +
+          "</div></div>" +
+          '<div><span class="text-muted">Department</span><div style="font-weight:600">' +
+          (researcher.department || "—") +
+          "</div></div>" +
+          '<div><span class="text-muted">Submitted</span><div style="font-weight:600">' +
+          formatDate(r.created_at) +
+          "</div></div>" +
+          "</div>" +
+          (r.title
+            ? '<div style="margin-bottom:12px"><span class="text-muted">Research Title</span><div style="font-weight:600;font-size:15px;margin-top:4px">' +
+              r.title +
+              "</div></div>"
+            : "") +
+          (r.notes || r.abstract
+            ? '<div style="margin-bottom:12px"><span class="text-muted">Abstract / Notes</span><div style="font-size:14px;color:var(--gray-700);margin-top:4px;line-height:1.7;padding:12px;background:var(--gray-50);border-radius:8px">' +
+              (r.notes || r.abstract) +
+              "</div></div>"
+            : '<div style="color:var(--gray-400);font-size:13px;padding:12px;background:var(--gray-50);border-radius:8px">No abstract provided.</div>');
+        document.getElementById("pool-view-express-btn").onclick = function () {
+          closeModal("modal-pool-view");
+          openExpressInterest(r.id, r.service_type, researcher.full_name || "");
+        };
+        openModal("modal-pool-view");
+      }
+
       var currentInterestId = null;
       function openExpressInterest(reqId, serviceType, researcherName) {
         currentInterestId = reqId;
@@ -3443,6 +3507,12 @@
         openModal("modal-express-interest");
       }
       async function submitInterest() {
+        var req = poolData.find(function (r) {
+          return r.id === currentInterestId;
+        });
+        var reqLabel = req
+          ? req.service_type + (req.title ? ' "' + req.title + '"' : "")
+          : "a request";
         var { data: admins } = await sb
           .from("profiles")
           .select("id")
@@ -3455,7 +3525,9 @@
                 user_id: a.id,
                 message:
                   (profile.full_name || "An analyst") +
-                  " expressed interest in an open pool request. Please review and assign.",
+                  " expressed interest in: " +
+                  reqLabel +
+                  ". Please go to Open Pool to review and assign.",
                 type: "assignment",
               };
             }),
@@ -3751,6 +3823,34 @@
           </button>
           <button class="btn btn-primary" onclick="submitTransferRequest()">
             Submit Request
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: VIEW POOL REQUEST (Phase 3.4) ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-pool-view"
+      onclick="if (event.target === this) closeModal('modal-pool-view');"
+    >
+      <div class="modal modal-lg">
+        <div class="modal-header">
+          <span class="modal-title" id="pool-view-title">Request Details</span>
+          <button class="modal-close" onclick="closeModal('modal-pool-view')">
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body" id="pool-view-body"></div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-outline"
+            onclick="closeModal('modal-pool-view')"
+          >
+            Close
+          </button>
+          <button class="btn btn-gold" id="pool-view-express-btn">
+            Express Interest
           </button>
         </div>
       </div>

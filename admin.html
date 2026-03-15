@@ -1617,6 +1617,12 @@
           <button class="nav-item" onclick="showSection('open-pool', this)">
             <span class="nav-icon">🔓</span> Open Pool
           </button>
+          <button class="nav-item" onclick="showSection('transfers', this)">
+            <span class="nav-icon">🔄</span> Transfers
+            <span class="nav-badge" id="nb-transfers" style="display: none"
+              >0</span
+            >
+          </button>
           <button class="nav-item" onclick="showSection('reports', this)">
             <span class="nav-icon">📊</span> Reports
           </button>
@@ -2131,6 +2137,39 @@
               </div>
             </div>
 
+            <!-- ===== SECTION: TRANSFER REQUESTS (Phase 3.3) ===== -->
+            <div id="section-transfers" style="display: none">
+              <div
+                class="card-header"
+                style="padding: 0 0 20px 0; background: none; border: none"
+              >
+                <span class="card-title" style="font-size: 20px"
+                  >Transfer Requests</span
+                >
+              </div>
+              <div class="card">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Request</th>
+                        <th>From Analyst</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="transfers-tbody">
+                      <tr>
+                        <td colspan="6" class="loading">Loading</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
             <!-- ===== SECTION: SERVICE FEES (Phase 4.2) ===== -->
             <div id="section-fees" style="display: none">
               <div
@@ -2338,6 +2377,7 @@
         loadPayments();
         loadOpenPool();
         loadFees();
+        loadTransferRequests();
       }
 
       async function loadRequests() {
@@ -2388,11 +2428,11 @@
           (r) => r.status === "completed",
         ).length;
         document.getElementById("stats-grid").innerHTML = `
-    <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${total}</div><div class="stat-label">Total Requests</div></div></div>
-    <div class="stat-card"><div class="stat-icon red">🆕</div><div class="stat-info"><div class="stat-value">${pending}</div><div class="stat-label">New / Pending</div></div></div>
-    <div class="stat-card"><div class="stat-icon blue">⚙️</div><div class="stat-info"><div class="stat-value">${active}</div><div class="stat-label">In Progress</div></div></div>
-    <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div></div>
-  `;
+        <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${total}</div><div class="stat-label">Total Requests</div></div></div>
+        <div class="stat-card"><div class="stat-icon red">🆕</div><div class="stat-info"><div class="stat-value">${pending}</div><div class="stat-label">New / Pending</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue">⚙️</div><div class="stat-info"><div class="stat-value">${active}</div><div class="stat-label">In Progress</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div></div>
+      `;
         const tbody = document.getElementById("dash-requests-tbody");
         const recent = allRequests.slice(0, 6);
         if (!recent.length) {
@@ -2403,11 +2443,11 @@
         tbody.innerHTML = recent
           .map(
             (r) => `<tr>
-    <td><strong>${r.researcher?.full_name || "—"}</strong></td>
-    <td style="font-size:13px;">${r.service_type}</td>
-    <td><span class="badge badge-${r.status}">${STATUS_LABELS[r.status]}</span></td>
-    <td><button class="btn btn-ghost btn-sm" onclick="openAssign('${r.id}')">Manage</button></td>
-  </tr>`,
+        <td><strong>${r.researcher?.full_name || "—"}</strong></td>
+        <td style="font-size:13px;">${r.service_type}</td>
+        <td><span class="badge badge-${r.status}">${STATUS_LABELS[r.status]}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="openAssign('${r.id}')">Manage</button></td>
+      </tr>`,
           )
           .join("");
       }
@@ -2422,17 +2462,17 @@
         el.innerHTML = list
           .map(
             (u) => `
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--gray-100);">
-      <div class="user-avatar" style="background:var(--gold-light);color:var(--green-dark);width:36px;height:36px;font-size:14px;">${u.full_name?.[0] || "?"}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:600;font-size:14px;">${u.full_name || "Unknown"}</div>
-        <div style="font-size:12px;color:var(--gray-400);">${u.email}</div>
-      </div>
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-primary btn-sm" onclick="approveUser('${u.id}')">✓ Approve</button>
-        <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">✗</button>
-      </div>
-    </div>`,
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--gray-100);">
+          <div class="user-avatar" style="background:var(--gold-light);color:var(--green-dark);width:36px;height:36px;font-size:14px;">${u.full_name?.[0] || "?"}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:14px;">${u.full_name || "Unknown"}</div>
+            <div style="font-size:12px;color:var(--gray-400);">${u.email}</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="approveUser('${u.id}')">✓ Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">✗</button>
+          </div>
+        </div>`,
           )
           .join("");
       }
@@ -2452,36 +2492,36 @@
               : `<span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:99px;">⏳ Awaiting Email Verification</span>`;
             const actionButtons = emailVerified
               ? `<button class="btn btn-primary btn-sm" onclick="approveUserWithRole('${u.id}')">✓ Approve</button>
-                   <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">✗ Reject</button>`
+                       <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">✗ Reject</button>`
               : `<button class="btn btn-sm" disabled style="opacity:0.4;cursor:not-allowed;">✓ Approve</button>
-                   <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">✗ Reject</button>`;
+                       <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">✗ Reject</button>`;
             return `
-    <div style="display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid var(--gray-100);">
-      <div class="user-avatar" style="background:var(--gold-light);color:var(--green-dark);width:44px;height:44px;">${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : u.full_name?.[0] || "?"}</div>
-      <div style="flex:1;">
-        <div style="font-weight:600;font-size:15px;">${u.full_name || "Unknown"}</div>
-        <div style="font-size:13px;color:var(--gray-400);">${u.email}</div>
-        <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">Registered: ${formatDate(u.created_at)}</div>
-        <div style="margin-top:5px;">${verifiedBadge}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-        ${
-          emailVerified
-            ? `<div class="form-group" style="margin:0;display:flex;gap:6px;align-items:center;">
-          <label style="font-size:12px;color:var(--gray-500);">Role:</label>
-          <select class="form-control" id="role-${u.id}" style="width:auto;font-size:13px;padding:5px 8px;">
-            <option value="researcher">Researcher</option>
-            <option value="analyst">Data Analyst</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>`
-            : `<div style="font-size:12px;color:var(--gray-400);max-width:160px;text-align:right;">User must verify email before approval</div>`
-        }
-        <div style="display:flex;gap:6px;">
-          ${actionButtons}
-        </div>
-      </div>
-    </div>`;
+        <div style="display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid var(--gray-100);">
+          <div class="user-avatar" style="background:var(--gold-light);color:var(--green-dark);width:44px;height:44px;">${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : u.full_name?.[0] || "?"}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:15px;">${u.full_name || "Unknown"}</div>
+            <div style="font-size:13px;color:var(--gray-400);">${u.email}</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">Registered: ${formatDate(u.created_at)}</div>
+            <div style="margin-top:5px;">${verifiedBadge}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+            ${
+              emailVerified
+                ? `<div class="form-group" style="margin:0;display:flex;gap:6px;align-items:center;">
+              <label style="font-size:12px;color:var(--gray-500);">Role:</label>
+              <select class="form-control" id="role-${u.id}" style="width:auto;font-size:13px;padding:5px 8px;">
+                <option value="researcher">Researcher</option>
+                <option value="analyst">Data Analyst</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>`
+                : `<div style="font-size:12px;color:var(--gray-400);max-width:160px;text-align:right;">User must verify email before approval</div>`
+            }
+            <div style="display:flex;gap:6px;">
+              ${actionButtons}
+            </div>
+          </div>
+        </div>`;
           })
           .join("");
       }
@@ -2570,14 +2610,14 @@
         tbody.innerHTML = list
           .map(
             (r, i) => `<tr>
-    <td style="color:var(--gray-400);font-size:12px;">#${String(i + 1).padStart(3, "0")}</td>
-    <td><strong>${r.researcher?.full_name || "—"}</strong><div style="font-size:12px;color:var(--gray-400)">${r.researcher?.email || ""}</div></td>
-    <td style="font-size:13px;">${r.service_type}</td>
-    <td>${formatDate(r.created_at)}</td>
-    <td><span class="badge badge-${r.status}">${STATUS_LABELS[r.status]}</span></td>
-    <td>${r.analyst?.full_name || '<span style="color:var(--gray-400);font-size:13px;">Unassigned</span>'}</td>
-    <td><button class="btn btn-gold btn-sm" onclick="openAssign('${r.id}')">Manage</button></td>
-  </tr>`,
+        <td style="color:var(--gray-400);font-size:12px;">#${String(i + 1).padStart(3, "0")}</td>
+        <td><strong>${r.researcher?.full_name || "—"}</strong><div style="font-size:12px;color:var(--gray-400)">${r.researcher?.email || ""}</div></td>
+        <td style="font-size:13px;">${r.service_type}</td>
+        <td>${formatDate(r.created_at)}</td>
+        <td><span class="badge badge-${r.status}">${STATUS_LABELS[r.status]}</span></td>
+        <td>${r.analyst?.full_name || '<span style="color:var(--gray-400);font-size:13px;">Unassigned</span>'}</td>
+        <td><button class="btn btn-gold btn-sm" onclick="openAssign('${r.id}')">Manage</button></td>
+      </tr>`,
           )
           .join("");
       }
@@ -2760,24 +2800,24 @@
         tbody.innerHTML = list
           .map(
             (u) => `<tr>
-    <td>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="user-avatar" style="background:var(--gold-light);color:var(--green-dark);width:32px;height:32px;font-size:13px;">
-          ${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : (u.full_name || "?")[0].toUpperCase()}
-        </div>
-        <strong>${u.full_name || "—"}</strong>
-      </div>
-    </td>
-    <td style="font-size:13px;">${u.email}</td>
-    <td><span style="font-size:13px;text-transform:capitalize;">${u.role === "analyst" ? "Data Analyst" : u.role}</span></td>
-    <td><span class="badge badge-${u.status}">${u.status}</span></td>
-    <td>${formatDate(u.created_at)}</td>
-    <td style="display:flex;gap:6px;">
-      <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.id}')">Edit</button>
-      ${u.status === "pending" ? `<button class="btn btn-primary btn-sm" onclick="approveUser('${u.id}')">Approve</button>` : ""}
-      ${u.role === "analyst" ? `<button class="btn btn-outline btn-sm" onclick="openSpecialization('${u.id}','${(u.full_name || "").replace(/'/g, "")}',' + "'${u.specialization || ""}'" + ')">⚡ Spec</button>` : ""}
-    </td>
-  </tr>`,
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="user-avatar" style="background:var(--gold-light);color:var(--green-dark);width:32px;height:32px;font-size:13px;">
+              ${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : (u.full_name || "?")[0].toUpperCase()}
+            </div>
+            <strong>${u.full_name || "—"}</strong>
+          </div>
+        </td>
+        <td style="font-size:13px;">${u.email}</td>
+        <td><span style="font-size:13px;text-transform:capitalize;">${u.role === "analyst" ? "Data Analyst" : u.role}</span></td>
+        <td><span class="badge badge-${u.status}">${u.status}</span></td>
+        <td>${formatDate(u.created_at)}</td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.id}')">Edit</button>
+          ${u.status === "pending" ? `<button class="btn btn-primary btn-sm" onclick="approveUser('${u.id}')">Approve</button>` : ""}
+          ${u.role === "analyst" ? `<button class="btn btn-outline btn-sm" onclick="openSpecialization('${u.id}','${(u.full_name || "").replace(/'/g, "")}',' + "'${u.specialization || ""}'" + ')">⚡ Spec</button>` : ""}
+        </td>
+      </tr>`,
           )
           .join("");
       }
@@ -2825,14 +2865,14 @@
         )
           .map(
             ([s, c]) => `
-    <div style="margin-bottom:14px;">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
-        <span>${s}</span><strong>${c}</strong>
-      </div>
-      <div style="height:8px;background:var(--gray-100);border-radius:4px;overflow:hidden;">
-        <div style="height:100%;width:${(c / maxSvc) * 100}%;background:var(--green);border-radius:4px;transition:width .5s;"></div>
-      </div>
-    </div>`,
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+            <span>${s}</span><strong>${c}</strong>
+          </div>
+          <div style="height:8px;background:var(--gray-100);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${(c / maxSvc) * 100}%;background:var(--green);border-radius:4px;transition:width .5s;"></div>
+          </div>
+        </div>`,
           )
           .join("");
 
@@ -2848,14 +2888,14 @@
         )
           .map(
             ([s, c]) => `
-    <div style="margin-bottom:14px;">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
-        <span><span class="badge badge-${s}" style="font-size:11px;">${STATUS_LABELS[s]}</span></span><strong>${c}</strong>
-      </div>
-      <div style="height:8px;background:var(--gray-100);border-radius:4px;overflow:hidden;">
-        <div style="height:100%;width:${(c / maxSt) * 100}%;background:var(--gold-dark);border-radius:4px;transition:width .5s;"></div>
-      </div>
-    </div>`,
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+            <span><span class="badge badge-${s}" style="font-size:11px;">${STATUS_LABELS[s]}</span></span><strong>${c}</strong>
+          </div>
+          <div style="height:8px;background:var(--gray-100);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${(c / maxSt) * 100}%;background:var(--gold-dark);border-radius:4px;transition:width .5s;"></div>
+          </div>
+        </div>`,
           )
           .join("");
 
@@ -2875,20 +2915,20 @@
         document.getElementById("report-analyst-load").innerHTML =
           analystRows.length
             ? `
-    <table style="width:100%">
-      <thead><tr><th>Analyst</th><th>Active Tasks</th><th>Completed</th><th>Total</th></tr></thead>
-      <tbody>${analystRows
-        .map(
-          (a) => `<tr>
-        <td><strong>${a.name}</strong></td>
-        <td><span class="badge badge-in_progress">${a.active}</span></td>
-        <td><span class="badge badge-completed">${a.completed}</span></td>
-        <td><strong>${a.active + a.completed}</strong></td>
-      </tr>`,
-        )
-        .join("")}</tbody>
-    </table>
-  `
+        <table style="width:100%">
+          <thead><tr><th>Analyst</th><th>Active Tasks</th><th>Completed</th><th>Total</th></tr></thead>
+          <tbody>${analystRows
+            .map(
+              (a) => `<tr>
+            <td><strong>${a.name}</strong></td>
+            <td><span class="badge badge-in_progress">${a.active}</span></td>
+            <td><span class="badge badge-completed">${a.completed}</span></td>
+            <td><strong>${a.active + a.completed}</strong></td>
+          </tr>`,
+            )
+            .join("")}</tbody>
+        </table>
+      `
             : '<div class="empty-state" style="padding:24px;"><h3>No analysts assigned yet</h3></div>';
 
         // Report stats
@@ -2897,25 +2937,63 @@
         ).length;
         const totalAnalysts = analysts.length;
         document.getElementById("report-stats").innerHTML = `
-    <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${allRequests.length}</div><div class="stat-label">Total Requests</div></div></div>
-    <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${allRequests.filter((r) => r.status === "completed").length}</div><div class="stat-label">Completed</div></div></div>
-    <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-info"><div class="stat-value">${totalUsers}</div><div class="stat-label">Active Users</div></div></div>
-    <div class="stat-card"><div class="stat-icon gold">🔬</div><div class="stat-info"><div class="stat-value">${totalAnalysts}</div><div class="stat-label">Data Analysts</div></div></div>
-  `;
+        <div class="stat-card"><div class="stat-icon gold">📋</div><div class="stat-info"><div class="stat-value">${allRequests.length}</div><div class="stat-label">Total Requests</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="stat-value">${allRequests.filter((r) => r.status === "completed").length}</div><div class="stat-label">Completed</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-info"><div class="stat-value">${totalUsers}</div><div class="stat-label">Active Users</div></div></div>
+        <div class="stat-card"><div class="stat-icon gold">🔬</div><div class="stat-info"><div class="stat-value">${totalAnalysts}</div><div class="stat-label">Data Analysts</div></div></div>
+      `;
       }
 
       function showSection(id, btn) {
+        // Top-level sections
         [
           "dashboard",
           "all-requests",
           "pending-users",
           "users",
           "reports",
-        ].forEach(
-          (s) =>
-            (document.getElementById(`section-${s}`).style.display =
-              s === id ? "" : "none"),
-        );
+        ].forEach((s) => {
+          const el = document.getElementById("section-" + s);
+          if (el) el.style.display = s === id ? "" : "none";
+        });
+        // Sub-sections nested inside section-reports
+        [
+          "advisers",
+          "appointments",
+          "payments",
+          "open-pool",
+          "fees",
+          "transfers",
+        ].forEach((s) => {
+          const el = document.getElementById("section-" + s);
+          if (el) el.style.display = s === id ? "" : "none";
+        });
+        // When showing a sub-section: keep reports parent visible but hide its own content
+        const reportsSection = document.getElementById("section-reports");
+        if (reportsSection) {
+          const subSections = [
+            "advisers",
+            "appointments",
+            "payments",
+            "open-pool",
+            "fees",
+            "transfers",
+          ];
+          if (subSections.includes(id)) {
+            reportsSection.style.display = "";
+            // Hide the reports-only content (stats grid + charts)
+            const statsGrid = document.getElementById("report-stats");
+            if (statsGrid) statsGrid.style.display = "none";
+            const gridCols = reportsSection.querySelectorAll(".grid-2");
+            gridCols.forEach((el) => (el.style.display = "none"));
+          } else if (id === "reports") {
+            reportsSection.style.display = "";
+            const statsGrid = document.getElementById("report-stats");
+            if (statsGrid) statsGrid.style.display = "";
+            const gridCols = reportsSection.querySelectorAll(".grid-2");
+            gridCols.forEach((el) => (el.style.display = ""));
+          }
+        }
         document
           .querySelectorAll(".nav-item")
           .forEach((el) => el.classList.remove("active"));
@@ -2926,9 +3004,16 @@
           "pending-users": "Pending Users",
           users: "User Management",
           reports: "Reports & Analytics",
+          appointments: "Appointments",
+          payments: "Payments",
+          "open-pool": "Open Request Pool",
+          fees: "Service Fees",
+          transfers: "Transfer Requests",
+          advisers: "Advisers",
         };
         document.getElementById("page-title").textContent = titles[id] || id;
-        document.getElementById("sidebar").classList.remove("open");
+        const sidebarEl = document.getElementById("sidebar");
+        if (sidebarEl) sidebarEl.classList.remove("open");
       }
 
       function openModal(id) {
@@ -4087,6 +4172,7 @@
       // PHASE 3.3 — TRANSFER REQUESTS
       // ============================================================
       var currentTransferId = null;
+      var allTransfers = [];
 
       async function loadTransferRequests() {
         var { data } = await sb
@@ -4094,12 +4180,76 @@
           .select(
             "*, request:request_id(service_type,title), from_analyst:from_analyst(full_name), to_analyst:to_analyst(full_name)",
           )
-          .eq("status", "pending");
-        if (!data || !data.length) return;
-        var badge = document.getElementById("nb-requests");
-        if (badge)
-          badge.textContent = parseInt(badge.textContent || 0) + data.length;
-        return data;
+          .order("created_at", { ascending: false });
+        allTransfers = data || [];
+        var pending = allTransfers.filter(function (t) {
+          return t.status === "pending";
+        });
+        var badge = document.getElementById("nb-transfers");
+        if (badge) {
+          if (pending.length) {
+            badge.textContent = pending.length;
+            badge.style.display = "";
+          } else {
+            badge.style.display = "none";
+          }
+        }
+        renderTransfers();
+      }
+
+      function renderTransfers() {
+        var tbody = document.getElementById("transfers-tbody");
+        if (!tbody) return;
+        if (!allTransfers.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">🔄</div><h3>No transfer requests</h3><p>No analysts have requested workload transfers yet.</p></div></td></tr>';
+          return;
+        }
+        var statusMap = {
+          pending: "badge-pending",
+          approved: "badge-approved",
+          declined: "badge-for_revision",
+        };
+        tbody.innerHTML = allTransfers
+          .map(function (t) {
+            var req = t.request || {};
+            var fromName = (t.from_analyst && t.from_analyst.full_name) || "—";
+            var actions =
+              t.status === "pending"
+                ? '<button class="btn btn-gold btn-sm" onclick="openTransferDetail(\'' +
+                  t.id +
+                  "')\">Review</button>"
+                : '<span style="font-size:12px;color:var(--gray-400)">' +
+                  t.status +
+                  "</span>";
+            return (
+              "<tr>" +
+              "<td><strong>" +
+              (req.service_type || "—") +
+              "</strong><div style='font-size:12px;color:var(--gray-400)'>" +
+              (req.title || "") +
+              "</div></td>" +
+              "<td>" +
+              fromName +
+              "</td>" +
+              "<td style='font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis'>" +
+              (t.reason || "—") +
+              "</td>" +
+              "<td><span class='badge " +
+              (statusMap[t.status] || "badge-submitted") +
+              "'>" +
+              t.status +
+              "</span></td>" +
+              "<td>" +
+              formatDate(t.created_at) +
+              "</td>" +
+              "<td>" +
+              actions +
+              "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
       }
 
       async function openTransferDetail(transferId) {
@@ -4112,21 +4262,42 @@
           .eq("id", transferId)
           .single();
         if (!t) return;
+        // Load available analysts to assign to
+        var { data: analysts } = await sb
+          .from("profiles")
+          .select("id,full_name")
+          .eq("role", "analyst")
+          .eq("status", "approved");
+        var analystOptions = (analysts || [])
+          .filter(function (a) {
+            return (
+              a.id !== ((t.from_analyst && t.from_analyst.id) || t.from_analyst)
+            );
+          })
+          .map(function (a) {
+            return '<option value="' + a.id + '">' + a.full_name + "</option>";
+          })
+          .join("");
         var body = document.getElementById("transfer-detail-body");
         body.innerHTML =
-          '<div class="form-group"><div class="text-muted">Request</div><strong>' +
+          '<div class="form-group"><div class="text-muted" style="font-size:12px;margin-bottom:4px">Request</div><strong>' +
           ((t.request && t.request.service_type) || "—") +
-          "</strong> — " +
-          ((t.request && t.request.title) || "") +
+          "</strong>" +
+          (t.request && t.request.title ? " — " + t.request.title : "") +
           "</div>" +
-          '<div class="grid-2"><div><div class="text-muted">From Analyst</div><strong>' +
+          '<div class="grid-2" style="margin-bottom:16px"><div><div class="text-muted" style="font-size:12px">From Analyst</div><strong>' +
           ((t.from_analyst && t.from_analyst.full_name) || "—") +
-          '</strong></div><div><div class="text-muted">To Analyst</div><strong>' +
-          ((t.to_analyst && t.to_analyst.full_name) || "Not selected") +
+          '</strong></div><div><div class="text-muted" style="font-size:12px">Current Status</div><strong>' +
+          t.status +
           "</strong></div></div>" +
-          '<div class="form-group" style="margin-top:16px"><label class="form-label">Reason for Transfer</label><p style="font-size:14px;color:var(--gray-600);padding:12px;background:var(--gray-50);border-radius:8px">' +
+          '<div class="form-group"><label class="form-label">Reason for Transfer</label><p style="font-size:14px;color:var(--gray-600);padding:12px;background:var(--gray-50);border-radius:8px;">' +
           (t.reason || "No reason provided") +
-          "</p></div>";
+          "</p></div>" +
+          (t.status === "pending"
+            ? '<div class="form-group"><label class="form-label">Assign To Analyst *</label><select class="form-control" id="transfer-to-analyst"><option value="">— Select analyst —</option>' +
+              analystOptions +
+              "</select></div>"
+            : "");
         openModal("modal-transfer");
       }
 
@@ -4136,33 +4307,61 @@
           .select("*")
           .eq("id", currentTransferId)
           .single();
+        if (!t) return;
+        var toAnalystId = t.to_analyst;
+        if (decision === "approved") {
+          var sel = document.getElementById("transfer-to-analyst");
+          if (sel && sel.value) toAnalystId = sel.value;
+          if (!toAnalystId) {
+            showToast("Please select an analyst to transfer to", "error");
+            return;
+          }
+        }
         await sb
           .from("transfer_requests")
-          .update({ status: decision, reviewed_by: adminProfile.id })
+          .update({
+            status: decision,
+            reviewed_by: adminProfile.id,
+            to_analyst: toAnalystId || null,
+          })
           .eq("id", currentTransferId);
-        if (decision === "approved" && t) {
+        if (decision === "approved") {
           await sb
             .from("service_requests")
-            .update({ analyst_id: t.to_analyst })
+            .update({ analyst_id: toAnalystId })
             .eq("id", t.request_id);
-          await sb.from("notifications").insert([
+          var notifs = [
             {
               user_id: t.from_analyst,
               message: "Your workload transfer request has been approved.",
               type: "system",
             },
-            {
-              user_id: t.to_analyst,
+          ];
+          if (toAnalystId)
+            notifs.push({
+              user_id: toAnalystId,
               message:
                 "A request has been transferred to you. Please check your tasks.",
               type: "assignment",
-            },
-          ]);
+            });
+          await sb.from("notifications").insert(notifs);
+        } else {
+          await sb
+            .from("notifications")
+            .insert([
+              {
+                user_id: t.from_analyst,
+                message: "Your transfer request was declined by the admin.",
+                type: "system",
+              },
+            ]);
         }
         closeModal("modal-transfer");
         showToast(
           decision === "approved" ? "Transfer approved!" : "Transfer declined",
         );
+        loadTransferRequests();
+        loadRequests();
       }
 
       // ============================================================
@@ -4171,13 +4370,14 @@
       var allOpenPool = [];
 
       async function loadOpenPool() {
+        // Show all unassigned submitted requests (not just is_open_pool=true)
         var { data } = await sb
           .from("service_requests")
           .select(
             "*, researcher:researcher_id(full_name), analyst:analyst_id(full_name)",
           )
-          .eq("is_open_pool", true)
-          .eq("analyst_id", null)
+          .is("analyst_id", null)
+          .eq("status", "submitted")
           .order("created_at", { ascending: false });
         allOpenPool = data || [];
         renderOpenPool(allOpenPool);
@@ -4188,7 +4388,7 @@
         if (!tbody) return;
         if (!list.length) {
           tbody.innerHTML =
-            '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px">No open requests in pool.</td></tr>';
+            '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">🔓</div><h3>No open requests</h3><p>All submitted requests have been assigned to an analyst.</p></div></td></tr>';
           return;
         }
         tbody.innerHTML = list

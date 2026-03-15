@@ -1888,6 +1888,78 @@
             />
             <div id="file-list" style="margin-top: 8px"></div>
           </div>
+
+          <!-- Phase 2.1: Adviser -->
+          <div
+            style="
+              border-top: 1px solid var(--gray-100);
+              padding-top: 16px;
+              margin-top: 4px;
+            "
+          >
+            <div
+              style="
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--green);
+                margin-bottom: 12px;
+              "
+            >
+              👨‍🏫 Adviser (Optional)
+            </div>
+            <div class="form-group">
+              <label class="form-label">Select Adviser</label>
+              <select class="form-control" id="new-adviser-id">
+                <option value="">— No adviser —</option>
+              </select>
+              <div class="form-hint">
+                Advisers must first be registered in the system.
+              </div>
+            </div>
+          </div>
+
+          <!-- Phase 2.2: Co-Researchers -->
+          <div
+            style="
+              border-top: 1px solid var(--gray-100);
+              padding-top: 16px;
+              margin-top: 4px;
+            "
+          >
+            <div
+              style="
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--green);
+                margin-bottom: 12px;
+              "
+            >
+              👥 Co-Researchers (Optional)
+            </div>
+            <div class="form-group">
+              <label class="form-label">Add Co-Researcher by Email</label>
+              <div style="display: flex; gap: 8px">
+                <input
+                  type="email"
+                  class="form-control"
+                  id="co-researcher-email"
+                  placeholder="e.g. coauthor@aldersgate.edu.ph"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline btn-sm"
+                  onclick="addCoResearcher()"
+                  style="white-space: nowrap"
+                >
+                  + Add
+                </button>
+              </div>
+              <div class="form-hint">
+                They must have an approved RPAS account.
+              </div>
+            </div>
+            <div id="co-researcher-list" style="margin-top: 8px"></div>
+          </div>
         </div>
         <!-- Phase 2.3: Consultation appointment fields -->
         <div
@@ -2039,7 +2111,29 @@
           console.error("loadRequests error:", error.message);
           return;
         }
-        allRequests = data || [];
+        let requests = data || [];
+        // RLS may block the analyst join — fetch missing analyst profiles separately
+        const missingAnalystIds = [
+          ...new Set(
+            requests
+              .filter((r) => r.analyst_id && !r.analyst)
+              .map((r) => r.analyst_id),
+          ),
+        ];
+        if (missingAnalystIds.length) {
+          const { data: aProfiles } = await sb
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", missingAnalystIds);
+          const aMap = Object.fromEntries(
+            (aProfiles || []).map((p) => [p.id, p]),
+          );
+          requests = requests.map((r) => ({
+            ...r,
+            analyst: r.analyst || aMap[r.analyst_id] || null,
+          }));
+        }
+        allRequests = requests;
         document.getElementById("nb-requests").textContent = allRequests.filter(
           (r) => r.status !== "completed" && r.status !== "cancelled",
         ).length;
@@ -2245,6 +2339,8 @@
     </div>
     ${req.title ? `<div style="margin-bottom:16px;"><span class="text-muted">Research Title</span><div style="font-weight:600;margin-top:2px;">${req.title}</div></div>` : ""}
     ${req.abstract ? `<div style="margin-bottom:20px;"><span class="text-muted">Abstract</span><div style="margin-top:4px;font-size:14px;color:var(--gray-700);">${req.abstract}</div></div>` : ""}
+    ${req.notes ? `<div style="margin-bottom:20px;"><span class="text-muted">Notes / Abstract</span><div style="margin-top:4px;font-size:14px;color:var(--gray-700);">${req.notes}</div></div>` : ""}
+    ${req.adviser_id ? `<div style="margin-bottom:12px;"><span class="text-muted">Adviser</span><div style="font-weight:600;margin-top:2px;">${req.adviser?.full_name || "Linked"} <span class="badge badge-${req.adviser_status || "none"}" style="margin-left:6px">${req.adviser_status || "none"}</span></div></div>` : ""}
     <div class="divider"></div>
     <div style="margin-bottom:20px;">
       <h4 style="margin-bottom:12px;">📎 Attachments</h4>
@@ -2404,12 +2500,101 @@
         await loadNotifications();
       }
 
+      var coResearchers = []; // {id, email, full_name}
+
+      async function loadAdviserOptions() {
+        var sel = document.getElementById("new-adviser-id");
+        if (!sel) return;
+        var { data } = await sb
+          .from("profiles")
+          .select("id,full_name,email,department")
+          .eq("role", "adviser")
+          .eq("status", "approved");
+        sel.innerHTML = '<option value="">— No adviser —</option>';
+        (data || []).forEach(function (a) {
+          sel.innerHTML +=
+            '<option value="' +
+            a.id +
+            '">' +
+            a.full_name +
+            (a.department ? " (" + a.department + ")" : "") +
+            "</option>";
+        });
+      }
+
+      async function addCoResearcher() {
+        var emailEl = document.getElementById("co-researcher-email");
+        var email = emailEl.value.trim();
+        if (!email) return;
+        if (
+          coResearchers.find(function (c) {
+            return c.email === email;
+          })
+        ) {
+          showToast("Already added", "error");
+          return;
+        }
+        var { data } = await sb
+          .from("profiles")
+          .select("id,full_name,email")
+          .eq("email", email)
+          .eq("role", "researcher")
+          .eq("status", "approved")
+          .single();
+        if (!data) {
+          showToast("No approved researcher found with that email", "error");
+          return;
+        }
+        if (data.id === profile.id) {
+          showToast("You cannot add yourself", "error");
+          return;
+        }
+        coResearchers.push(data);
+        emailEl.value = "";
+        renderCoResearcherList();
+        showToast(data.full_name + " added as co-researcher");
+      }
+
+      function removeCoResearcher(idx) {
+        coResearchers.splice(idx, 1);
+        renderCoResearcherList();
+      }
+
+      function renderCoResearcherList() {
+        var el = document.getElementById("co-researcher-list");
+        if (!el) return;
+        el.innerHTML = coResearchers
+          .map(function (c, i) {
+            return (
+              '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;margin-bottom:6px;">' +
+              '<div class="user-avatar" style="width:28px;height:28px;font-size:12px;flex-shrink:0">' +
+              c.full_name[0].toUpperCase() +
+              "</div>" +
+              '<div style="flex:1"><div style="font-size:13px;font-weight:600">' +
+              c.full_name +
+              '</div><div style="font-size:11px;color:var(--gray-400)">' +
+              c.email +
+              "</div></div>" +
+              '<button class="btn btn-ghost btn-sm" onclick="removeCoResearcher(' +
+              i +
+              ')" style="color:var(--danger)">✕</button>' +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+
       function openNewRequestModal() {
+        coResearchers = [];
         document.getElementById("new-service").value = "";
         document.getElementById("new-title").value = "";
         document.getElementById("new-notes").value = "";
         document.getElementById("file-list").innerHTML = "";
         selectedFiles = [];
+        renderCoResearcherList();
+        loadAdviserOptions();
+        var advSel = document.getElementById("new-adviser-id");
+        if (advSel) advSel.value = "";
         openModal("modal-new-request");
       }
 
@@ -2471,6 +2656,8 @@
         btn.disabled = true;
         btn.textContent = "Submitting...";
 
+        const adviserId =
+          document.getElementById("new-adviser-id")?.value || null;
         const { data: req, error } = await sb
           .from("service_requests")
           .insert({
@@ -2479,6 +2666,8 @@
             title,
             abstract: notes,
             status: "submitted",
+            adviser_id: adviserId || null,
+            adviser_status: adviserId ? "pending" : "none",
           })
           .select()
           .single();
@@ -2550,6 +2739,50 @@
           type: "request_submitted",
         });
 
+        // Phase 2.2: create research group + members for co-researchers
+        if (coResearchers.length && req) {
+          const { data: grp } = await sb
+            .from("research_groups")
+            .insert({
+              request_id: req.id,
+              leader_id: profile.id,
+              title: title || service,
+            })
+            .select()
+            .single();
+          if (grp) {
+            await sb.from("group_members").insert([
+              {
+                group_id: grp.id,
+                profile_id: profile.id,
+                role: "leader",
+                status: "accepted",
+              },
+              ...coResearchers.map((c) => ({
+                group_id: grp.id,
+                profile_id: c.id,
+                role: "member",
+                status: "pending",
+              })),
+            ]);
+            await sb.from("notifications").insert(
+              coResearchers.map((c) => ({
+                user_id: c.id,
+                message: `${profile.full_name || "A researcher"} invited you as co-researcher on: ${title || service}`,
+                type: "system",
+              })),
+            );
+          }
+        }
+        // Phase 2.1: notify adviser
+        if (adviserId && req) {
+          await sb.from("notifications").insert({
+            user_id: adviserId,
+            message: `${profile.full_name || "A researcher"} linked you as adviser on: ${title || service}. Please review.`,
+            type: "assignment",
+          });
+        }
+        coResearchers = [];
         closeModal("modal-new-request");
         showToast("Request submitted successfully!", "success");
         btn.disabled = false;
