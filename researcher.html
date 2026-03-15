@@ -1889,6 +1889,56 @@
             <div id="file-list" style="margin-top: 8px"></div>
           </div>
         </div>
+        <!-- Phase 2.3: Consultation appointment fields -->
+        <div
+          id="consultation-fields"
+          style="
+            display: none;
+            border-top: 1px solid var(--gray-100);
+            padding-top: 16px;
+            margin-top: 4px;
+          "
+        >
+          <div
+            style="
+              font-size: 13px;
+              font-weight: 600;
+              color: var(--green);
+              margin-bottom: 12px;
+            "
+          >
+            📅 Consultation Details
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preferred Date *</label>
+            <input type="date" class="form-control" id="new-appt-date" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preferred Time Slot</label>
+            <input
+              type="text"
+              class="form-control"
+              id="new-appt-time"
+              placeholder="e.g. 10:00 AM – 11:00 AM"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mode</label>
+            <select class="form-control" id="new-appt-mode">
+              <option value="online">💻 Online</option>
+              <option value="face_to_face">🏢 Face-to-Face</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Agenda</label>
+            <textarea
+              class="form-control"
+              id="new-appt-agenda"
+              rows="2"
+              placeholder="Topics to discuss..."
+            ></textarea>
+          </div>
+        </div>
         <div class="modal-footer">
           <button
             class="btn btn-outline"
@@ -2206,6 +2256,24 @@
       <div class="timeline">${timelineHtml}</div>
     </div>
     <div class="divider"></div>
+    ${
+      req.status === "under_review" ||
+      req.status === "in_progress" ||
+      req.status === "completed"
+        ? `
+    <div style="margin-bottom:20px;">
+      <h4 style="margin-bottom:12px;">💳 Payment</h4>
+      <div id="payment-status-${req.id}">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div id="payment-badge-${req.id}" style="font-size:13px;color:var(--gray-500)">Loading payment status...</div>
+          <button class="btn btn-primary btn-sm" onclick="openPaymentSubmit('${req.id}','${req.service_type}','before_processing')">💳 Submit Payment</button>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    `
+        : ""
+    }
     <h4 style="margin-bottom:8px;">💬 Messages</h4>
     <div class="card" style="margin-bottom:0;border:1px solid var(--gray-200);">
       <div class="chat-wrap">
@@ -2265,6 +2333,8 @@
         if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
 
         openModal("modal-view-request");
+        // Load payment status for this request
+        loadPaymentStatus(id);
       }
 
       async function sendMessage(requestId) {
@@ -2447,6 +2517,24 @@
               attachment_name: file.name,
             })
             .eq("id", req.id);
+        }
+
+        // Phase 2.3: save appointment if Research Consultation
+        if (service === "Research Consultation") {
+          var apptDateEl = document.getElementById("new-appt-date");
+          var apptTimeEl = document.getElementById("new-appt-time");
+          var apptModeEl = document.getElementById("new-appt-mode");
+          var apptAgendaEl = document.getElementById("new-appt-agenda");
+          if (apptDateEl && apptDateEl.value) {
+            await sb.from("appointments").insert({
+              request_id: req.id,
+              preferred_date: apptDateEl.value,
+              time_slot: apptTimeEl ? apptTimeEl.value : "",
+              mode: apptModeEl ? apptModeEl.value : "online",
+              agenda: apptAgendaEl ? apptAgendaEl.value : "",
+              status: "pending",
+            });
+          }
         }
 
         // Log status
@@ -2761,15 +2849,20 @@
       let pendingAvatarFile = null;
 
       var DEPT_MAP = {
-        College: ["CASE", "CBMA", "SOC"],
         "Basic Education": ["Junior High School", "Senior High School"],
+        College: ["CASE-IT", "CBMA", "CTE", "SMS", "SOC"],
+        "Graduate School": ["MAED", "MBA"],
       };
       var PROG_MAP = {
-        CASE: ["BEEd", "BSEd - English"],
+        "CASE-IT": ["BEEd", "BSEd - English", "BSIT"],
         CBMA: ["BSA", "BSBA", "BSHM", "BSTM"],
+        SMS: ["BSN"],
+        CTE: ["BSCE", "BSGE", "BSEE"],
         SOC: ["BSCrim"],
-        "Junior High School": ["JHS"],
-        "Senior High School": ["STEM", "SEC"],
+        "Junior High School": ["Science Education Curriculum"],
+        "Senior High School": ["STEM", "ABM", "HUMSS", "GAS", "TVL"],
+        MAED: ["MAED-EM", "MAED-ELE"],
+        MBA: ["MBA", "MPA"],
       };
 
       function updateProfileDeptOptions() {
@@ -3276,6 +3369,217 @@
         }
         return s;
       }
+
+      // ============================================================
+      // PHASE 2.3 — CONSULTATION APPOINTMENT: toggle fields
+      // ============================================================
+      (function () {
+        function setupConsultationToggle() {
+          var svc = document.getElementById("new-service");
+          if (!svc) {
+            setTimeout(setupConsultationToggle, 500);
+            return;
+          }
+          svc.addEventListener("change", function () {
+            var f = document.getElementById("consultation-fields");
+            if (f)
+              f.style.display =
+                this.value === "Research Consultation" ? "block" : "none";
+          });
+        }
+        setupConsultationToggle();
+      })();
+
+      // Extend submitRequest to save appointment
+      var _origSubmitRequest = submitRequest;
+      // Override handled inline by patching the insert call below in submitRequest
+
+      // ============================================================
+      // PHASE 2.5 + 5.2 — PAYMENT SUBMISSION & STATUS TRACKING
+      // ============================================================
+      var currentPayReqId = null;
+      var currentPayCheckpoint = null;
+
+      function openPaymentSubmit(reqId, serviceType, checkpoint) {
+        currentPayReqId = reqId;
+        currentPayCheckpoint = checkpoint;
+        document.getElementById("pay-req-id").value = reqId;
+        document.getElementById("pay-checkpoint").value = checkpoint;
+        document.getElementById("pay-amount").value = "";
+        document.getElementById("pay-or-num").value = "";
+        document.getElementById("pay-file-name").textContent = "";
+        var info = document.getElementById("pay-info");
+        if (info)
+          info.innerHTML =
+            "<strong>" +
+            serviceType +
+            "</strong><br>" +
+            '<span style="color:var(--gray-500)">Checkpoint: ' +
+            (checkpoint === "before_processing"
+              ? "Before Processing begins"
+              : "Before Completion / Results release") +
+            "</span>";
+        openModal("modal-payment-submit");
+      }
+
+      function showPayFile(input) {
+        var el = document.getElementById("pay-file-name");
+        if (el && input.files[0]) el.textContent = "📎 " + input.files[0].name;
+      }
+
+      async function submitPayment() {
+        var reqId = document.getElementById("pay-req-id").value;
+        var checkpoint = document.getElementById("pay-checkpoint").value;
+        var amount = parseFloat(document.getElementById("pay-amount").value);
+        var orNum = document.getElementById("pay-or-num").value.trim();
+        var orFile = document.getElementById("pay-or-file").files[0];
+        if (!amount || amount <= 0) {
+          showToast("Please enter the amount paid", "error");
+          return;
+        }
+        if (!orNum) {
+          showToast("Please enter the OR number", "error");
+          return;
+        }
+        if (!orFile) {
+          showToast("Please upload the OR photo", "error");
+          return;
+        }
+
+        var btn = document.querySelector("#modal-payment-submit .btn-primary");
+        btn.disabled = true;
+        btn.textContent = "Uploading...";
+
+        var orUrl = null;
+        try {
+          var path =
+            profile.id +
+            "/payments/" +
+            reqId +
+            "_" +
+            Date.now() +
+            "_" +
+            orFile.name;
+          var { error: upErr } = await sb.storage
+            .from("attachments")
+            .upload(path, orFile, { upsert: true });
+          if (!upErr) {
+            var { data: urlData } = sb.storage
+              .from("attachments")
+              .getPublicUrl(path);
+            orUrl = urlData.publicUrl;
+          }
+        } catch (e) {
+          console.warn("OR upload failed", e);
+        }
+
+        var { error } = await sb.from("payments").insert({
+          request_id: reqId,
+          checkpoint: checkpoint,
+          amount: amount,
+          or_number: orNum,
+          or_url: orUrl,
+          status: "submitted",
+        });
+        if (error) {
+          showToast("Error submitting payment", "error");
+          btn.disabled = false;
+          btn.textContent = "Submit Payment";
+          return;
+        }
+
+        var { data: admins } = await sb
+          .from("profiles")
+          .select("id")
+          .eq("role", "admin")
+          .eq("status", "approved");
+        if (admins && admins.length) {
+          await sb.from("notifications").insert(
+            admins.map(function (a) {
+              return {
+                user_id: a.id,
+                message:
+                  (profile.full_name || "A researcher") +
+                  " submitted a payment for verification.",
+                type: "payment",
+              };
+            }),
+          );
+        }
+        btn.disabled = false;
+        btn.textContent = "Submit Payment";
+        closeModal("modal-payment-submit");
+        showToast("Payment submitted! Admin will verify shortly.");
+        loadPaymentStatus(reqId);
+      }
+
+      async function loadPaymentStatus(reqId) {
+        var badgeEl = document.getElementById("payment-badge-" + reqId);
+        if (!badgeEl) return;
+        var { data: payments } = await sb
+          .from("payments")
+          .select("*")
+          .eq("request_id", reqId)
+          .order("created_at", { ascending: false });
+        if (!payments || !payments.length) {
+          badgeEl.innerHTML =
+            '<span style="color:var(--gray-400);font-size:13px">No payment submitted yet.</span>';
+          return;
+        }
+        var latest = payments[0];
+        var statusColors = {
+          unpaid: "var(--gray-400)",
+          submitted: "#b45309",
+          verified: "var(--green)",
+          rejected: "var(--danger)",
+        };
+        var statusIcons = {
+          unpaid: "⏳",
+          submitted: "📋",
+          verified: "✅",
+          rejected: "❌",
+        };
+        var color = statusColors[latest.status] || "var(--gray-500)";
+        var icon = statusIcons[latest.status] || "💳";
+        var html =
+          '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+          '<span style="color:' +
+          color +
+          ';font-weight:600;font-size:13px">' +
+          icon +
+          " Payment: " +
+          latest.status.charAt(0).toUpperCase() +
+          latest.status.slice(1) +
+          "</span>";
+        if (latest.amount)
+          html +=
+            '<span style="font-size:13px;color:var(--gray-600)">₱' +
+            parseFloat(latest.amount).toLocaleString() +
+            "</span>";
+        if (latest.or_number)
+          html +=
+            '<span style="font-size:12px;color:var(--gray-400)">OR: ' +
+            latest.or_number +
+            "</span>";
+        if (latest.status === "rejected") {
+          html +=
+            '</div><div style="margin-top:8px;font-size:13px;color:var(--danger)">Rejected: ' +
+            (latest.rejection_reason || "No reason given") +
+            '</div><div style="margin-top:8px"><button class="btn btn-primary btn-sm" onclick="openPaymentSubmit(\'' +
+            reqId +
+            "','before_processing')\">Resubmit Payment</button></div>";
+        } else {
+          html += "</div>";
+        }
+        badgeEl.innerHTML = html;
+        // Hide submit button if already submitted/verified
+        if (latest.status === "submitted" || latest.status === "verified") {
+          var btn =
+            badgeEl.parentElement &&
+            badgeEl.parentElement.querySelector("button");
+          if (btn) btn.style.display = "none";
+        }
+      }
     </script>
 
     <!-- PROFILE EDIT MODAL (Phase 1.2) -->
@@ -3357,8 +3661,9 @@
               onchange="updateProfileDeptOptions()"
             >
               <option value="">— Select Level —</option>
-              <option value="College">College</option>
               <option value="Basic Education">Basic Education</option>
+              <option value="College">College</option>
+              <option value="Graduate School">Graduate School</option>
             </select>
           </div>
           <div class="form-group">
@@ -3508,6 +3813,98 @@
             <path d="M2 21L23 12 2 3v7l15 2-15 2z" />
           </svg>
         </button>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: SUBMIT PAYMENT (Phase 2.5) ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-payment-submit"
+      onclick="if (event.target === this) closeModal('modal-payment-submit');"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Submit Payment</span>
+          <button
+            class="modal-close"
+            onclick="closeModal('modal-payment-submit')"
+          >
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="pay-req-id" />
+          <input type="hidden" id="pay-checkpoint" />
+          <div
+            id="pay-info"
+            style="
+              background: var(--gray-50);
+              border-radius: 8px;
+              padding: 12px 14px;
+              margin-bottom: 16px;
+              font-size: 13px;
+              color: var(--gray-600);
+            "
+          ></div>
+          <div class="form-group">
+            <label class="form-label">Amount Paid (PHP) *</label>
+            <input
+              type="number"
+              class="form-control"
+              id="pay-amount"
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Official Receipt (OR) Number *</label>
+            <input
+              type="text"
+              class="form-control"
+              id="pay-or-num"
+              placeholder="e.g. OR-2024-001"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Upload OR Photo *</label>
+            <div
+              class="file-drop"
+              onclick="document.getElementById('pay-or-file').click()"
+              style="padding: 20px"
+            >
+              <div class="file-drop-icon">📄</div>
+              <div>Click to upload OR photo</div>
+              <div
+                style="font-size: 12px; color: var(--gray-400); margin-top: 4px"
+              >
+                JPG, PNG, PDF — max 10MB
+              </div>
+            </div>
+            <input
+              type="file"
+              id="pay-or-file"
+              accept=".jpg,.jpeg,.png,.pdf"
+              style="display: none"
+              onchange="showPayFile(this)"
+            />
+            <div
+              id="pay-file-name"
+              style="font-size: 12px; color: var(--green); margin-top: 6px"
+            ></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-outline"
+            onclick="closeModal('modal-payment-submit')"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="submitPayment()">
+            Submit Payment
+          </button>
+        </div>
       </div>
     </div>
   </body>

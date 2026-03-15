@@ -1612,6 +1612,29 @@
           <button class="nav-item" onclick="showSection('reports', this)">
             <span class="nav-icon">📊</span> Reports
           </button>
+          <div class="nav-section-label" style="margin-top: 8px">
+            Management
+          </div>
+          <button class="nav-item" onclick="showSection('advisers', this)">
+            <span class="nav-icon">🎓</span> Advisers
+          </button>
+          <button class="nav-item" onclick="showSection('appointments', this)">
+            <span class="nav-icon">📅</span> Appointments
+          </button>
+          <button class="nav-item" onclick="showSection('payments', this)">
+            <span class="nav-icon">💳</span> Payments
+          </button>
+          <button class="nav-item" onclick="showSection('open-pool', this)">
+            <span class="nav-icon">🔓</span> Open Pool
+          </button>
+          <div class="nav-section-label" style="margin-top: 8px">System</div>
+          <button
+            class="nav-item"
+            onclick="showSection('fees', this)"
+            id="nav-fees"
+          >
+            <span class="nav-icon">💰</span> Service Fees
+          </button>
         </nav>
         <div class="sidebar-footer">
           <div class="sidebar-user">
@@ -1867,6 +1890,7 @@
                 <option value="researcher">Researcher</option>
                 <option value="analyst">Data Analyst</option>
                 <option value="admin">Admin</option>
+                <option value="adviser">Adviser</option>
               </select>
               <select
                 class="form-control"
@@ -1906,6 +1930,244 @@
           <!-- REPORTS -->
           <section id="section-reports" style="display: none">
             <div class="stats-grid" id="report-stats"></div>
+
+            <!-- ===== SECTION: ADVISERS (Phase 2.1) ===== -->
+            <div id="section-advisers" style="display: none">
+              <div
+                class="card-header"
+                style="padding: 0 0 20px 0; background: none; border: none"
+              >
+                <span class="card-title" style="font-size: 20px">Advisers</span>
+                <button
+                  class="btn btn-primary btn-sm"
+                  onclick="openAddAdviser()"
+                >
+                  + Add Adviser
+                </button>
+              </div>
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title">All Advisers</span>
+                  <div class="filter-bar" style="margin: 0">
+                    <div class="search-input-wrap">
+                      <span class="search-icon">🔍</span>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="adviser-search"
+                        placeholder="Search advisers..."
+                        oninput="filterAdvisers()"
+                        style="padding-left: 36px; min-width: 200px"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Linked Requests</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="advisers-tbody">
+                      <tr>
+                        <td colspan="6" class="loading">Loading</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===== SECTION: APPOINTMENTS (Phase 2.3) ===== -->
+            <div id="section-appointments" style="display: none">
+              <div
+                class="card-header"
+                style="padding: 0 0 20px 0; background: none; border: none"
+              >
+                <span class="card-title" style="font-size: 20px"
+                  >Consultation Appointments</span
+                >
+              </div>
+              <div class="filter-bar">
+                <select
+                  class="form-control"
+                  id="appt-status-filter"
+                  onchange="filterAppointments()"
+                  style="width: 180px"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="reschedule_proposed">
+                    Reschedule Proposed
+                  </option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="card">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Researcher</th>
+                        <th>Preferred Date</th>
+                        <th>Mode</th>
+                        <th>Agenda</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="appointments-tbody">
+                      <tr>
+                        <td colspan="6" class="loading">Loading</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===== SECTION: PAYMENTS (Phase 2.5 / Phase 5) ===== -->
+            <div id="section-payments" style="display: none">
+              <div
+                class="card-header"
+                style="padding: 0 0 20px 0; background: none; border: none"
+              >
+                <span class="card-title" style="font-size: 20px"
+                  >Payment Management</span
+                >
+              </div>
+              <div
+                class="stats-grid"
+                id="payment-stats"
+                style="margin-bottom: 20px"
+              ></div>
+              <div class="filter-bar">
+                <select
+                  class="form-control"
+                  id="pay-status-filter"
+                  onchange="filterPayments()"
+                  style="width: 160px"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="unpaid">Unpaid</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="verified">Verified</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <select
+                  class="form-control"
+                  id="pay-checkpoint-filter"
+                  onchange="filterPayments()"
+                  style="width: 200px"
+                >
+                  <option value="">All Checkpoints</option>
+                  <option value="before_processing">Before Processing</option>
+                  <option value="before_completion">Before Completion</option>
+                </select>
+              </div>
+              <div class="card">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Researcher</th>
+                        <th>Service</th>
+                        <th>Checkpoint</th>
+                        <th>Amount</th>
+                        <th>OR #</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="payments-tbody">
+                      <tr>
+                        <td colspan="7" class="loading">Loading</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===== SECTION: OPEN POOL (Phase 3.4) ===== -->
+            <div id="section-open-pool" style="display: none">
+              <div
+                class="card-header"
+                style="padding: 0 0 20px 0; background: none; border: none"
+              >
+                <span class="card-title" style="font-size: 20px"
+                  >Open Request Pool</span
+                >
+              </div>
+              <p
+                style="
+                  color: var(--gray-500);
+                  font-size: 14px;
+                  margin-bottom: 20px;
+                "
+              >
+                Unassigned requests that analysts can express interest in.
+                Review and assign from here.
+              </p>
+              <div class="card">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Researcher</th>
+                        <th>Service</th>
+                        <th>Title</th>
+                        <th>Submitted</th>
+                        <th>Interests</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="open-pool-tbody">
+                      <tr>
+                        <td colspan="6" class="loading">Loading</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===== SECTION: SERVICE FEES (Phase 4.2) ===== -->
+            <div id="section-fees" style="display: none">
+              <div
+                class="card-header"
+                style="padding: 0 0 20px 0; background: none; border: none"
+              >
+                <span class="card-title" style="font-size: 20px"
+                  >Service Fees</span
+                >
+                <span
+                  id="fees-super-only"
+                  style="font-size: 12px; color: var(--gray-400)"
+                  >🔒 Only the Super Admin can edit fees</span
+                >
+              </div>
+              <div class="card">
+                <div class="card-body">
+                  <div
+                    id="fees-grid"
+                    style="
+                      display: grid;
+                      grid-template-columns: 1fr 1fr;
+                      gap: 16px;
+                    "
+                  ></div>
+                </div>
+              </div>
+            </div>
+
             <div class="grid-2">
               <div class="card">
                 <div class="card-header">
@@ -2013,6 +2275,7 @@
               <option value="researcher">Researcher</option>
               <option value="analyst">Data Analyst</option>
               <option value="admin">Admin</option>
+              <option value="adviser">Adviser</option>
             </select>
           </div>
           <div class="form-group">
@@ -2078,6 +2341,11 @@
 
       async function loadAll() {
         await Promise.all([loadRequests(), loadUsers()]);
+        loadAdvisers();
+        loadAppointments();
+        loadPayments();
+        loadOpenPool();
+        loadFees();
       }
 
       async function loadRequests() {
@@ -2515,6 +2783,7 @@
     <td style="display:flex;gap:6px;">
       <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.id}')">Edit</button>
       ${u.status === "pending" ? `<button class="btn btn-primary btn-sm" onclick="approveUser('${u.id}')">Approve</button>` : ""}
+      ${u.role === "analyst" ? `<button class="btn btn-outline btn-sm" onclick="openSpecialization('${u.id}','${(u.full_name || "").replace(/'/g, "")}',' + "'${u.specialization || ""}'" + ')">⚡ Spec</button>` : ""}
     </td>
   </tr>`,
           )
@@ -3300,10 +3569,752 @@
       function alderGetSession() {
         var s = sessionStorage.getItem("alder_rpas");
         if (!s) {
-          s = "r" + Math.random().toString(36).substr(2, 9);
+          s = "r" + Math.ran;
+          // Specialization button is added via openEditUser for analysts
+          dom().toString(36).substr(2, 9);
           sessionStorage.setItem("alder_rpas", s);
         }
         return s;
+      }
+
+      // ============================================================
+      // PHASE 2.1 — ADVISERS
+      // ============================================================
+      var allAdvisers = [];
+      var currentAdviserId = null;
+
+      async function loadAdvisers() {
+        var { data } = await sb
+          .from("profiles")
+          .select(
+            "id,full_name,email,department,contact_number,status,created_at",
+          )
+          .eq("role", "adviser")
+          .order("full_name");
+        allAdvisers = data || [];
+        renderAdvisers(allAdvisers);
+      }
+
+      function filterAdvisers() {
+        var q = document.getElementById("adviser-search").value.toLowerCase();
+        renderAdvisers(
+          allAdvisers.filter(function (a) {
+            return (
+              (a.full_name || "").toLowerCase().includes(q) ||
+              (a.email || "").toLowerCase().includes(q)
+            );
+          }),
+        );
+      }
+
+      function renderAdvisers(list) {
+        var tbody = document.getElementById("advisers-tbody");
+        if (!tbody) return;
+        if (!list.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px">No advisers found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list
+          .map(function (a) {
+            return (
+              "<tr><td><strong>" +
+              (a.full_name || "—") +
+              "</strong></td><td>" +
+              (a.email || "—") +
+              "</td><td>" +
+              (a.department || "—") +
+              '</td><td>—</td><td><span class="badge badge-' +
+              a.status +
+              '">' +
+              (a.status || "pending") +
+              '</span></td><td><button class="btn btn-ghost btn-sm" onclick="openEditAdviser(\'' +
+              a.id +
+              '\')">Edit</button><button class="btn btn-ghost btn-sm" onclick="approveUserWithRole(\'' +
+              a.id +
+              "','adviser')\">Approve</button></td></tr>"
+            );
+          })
+          .join("");
+      }
+
+      function openAddAdviser() {
+        currentAdviserId = null;
+        document.getElementById("adviser-modal-title").textContent =
+          "Add Adviser";
+        [
+          "adviser-name",
+          "adviser-email",
+          "adviser-dept",
+          "adviser-contact",
+          "adviser-edit-id",
+        ].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+        openModal("modal-adviser");
+      }
+
+      function openEditAdviser(id) {
+        var a = allAdvisers.find(function (x) {
+          return x.id === id;
+        });
+        if (!a) return;
+        currentAdviserId = id;
+        document.getElementById("adviser-modal-title").textContent =
+          "Edit Adviser";
+        document.getElementById("adviser-edit-id").value = id;
+        document.getElementById("adviser-name").value = a.full_name || "";
+        document.getElementById("adviser-email").value = a.email || "";
+        document.getElementById("adviser-dept").value = a.department || "";
+        document.getElementById("adviser-contact").value =
+          a.contact_number || "";
+        openModal("modal-adviser");
+      }
+
+      async function saveAdviser() {
+        var name = document.getElementById("adviser-name").value.trim();
+        var email = document.getElementById("adviser-email").value.trim();
+        var dept = document.getElementById("adviser-dept").value.trim();
+        var contact = document.getElementById("adviser-contact").value.trim();
+        if (!name || !email) {
+          showToast("Name and email are required", "error");
+          return;
+        }
+        var editId = document.getElementById("adviser-edit-id").value;
+        if (editId) {
+          await sb
+            .from("profiles")
+            .update({
+              full_name: name,
+              department: dept,
+              contact_number: contact,
+            })
+            .eq("id", editId);
+        } else {
+          var { data: existing } = await sb
+            .from("profiles")
+            .select("id")
+            .eq("email", email)
+            .single();
+          if (existing) {
+            await sb
+              .from("profiles")
+              .update({
+                role: "adviser",
+                full_name: name,
+                department: dept,
+                contact_number: contact,
+              })
+              .eq("id", existing.id);
+          } else {
+            await sb.from("profiles").insert({
+              email: email,
+              full_name: name,
+              role: "adviser",
+              status: "approved",
+              department: dept,
+              contact_number: contact,
+            });
+          }
+        }
+        closeModal("modal-adviser");
+        showToast("Adviser saved!");
+        loadAdvisers();
+      }
+
+      // ============================================================
+      // PHASE 2.3 — APPOINTMENTS
+      // ============================================================
+      var allAppointments = [];
+      var currentApptId = null;
+
+      async function loadAppointments() {
+        var { data } = await sb
+          .from("appointments")
+          .select(
+            "*, request:request_id(id,service_type,title,researcher:researcher_id(full_name,email))",
+          )
+          .order("created_at", { ascending: false });
+        allAppointments = data || [];
+        renderAppointments(allAppointments);
+      }
+
+      function filterAppointments() {
+        var sv = document.getElementById("appt-status-filter").value;
+        var filtered = sv
+          ? allAppointments.filter(function (a) {
+              return a.status === sv;
+            })
+          : allAppointments;
+        renderAppointments(filtered);
+      }
+
+      function renderAppointments(list) {
+        var tbody = document.getElementById("appointments-tbody");
+        if (!tbody) return;
+        if (!list.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px">No appointments.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list
+          .map(function (a) {
+            var req = a.request || {};
+            var researcher = req.researcher || {};
+            var statusColors = {
+              pending: "badge-pending",
+              confirmed: "badge-approved",
+              reschedule_proposed: "badge-under_review",
+              cancelled: "badge-cancelled",
+            };
+            return (
+              "<tr><td><strong>" +
+              (researcher.full_name || "—") +
+              '</strong><div style="font-size:12px;color:var(--gray-400)">' +
+              (researcher.email || "") +
+              "</div></td><td>" +
+              (a.preferred_date || "—") +
+              '<div style="font-size:12px;color:var(--gray-400)">' +
+              (a.time_slot || "") +
+              "</div></td><td>" +
+              (a.mode === "online" ? "💻 Online" : "🏢 Face-to-Face") +
+              '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' +
+              (a.agenda || "—") +
+              '</td><td><span class="badge ' +
+              (statusColors[a.status] || "badge-submitted") +
+              '">' +
+              (a.status || "") +
+              '</span></td><td><button class="btn btn-ghost btn-sm" onclick="openAppointmentDetail(\'' +
+              a.id +
+              "')\">Manage</button></td></tr>"
+            );
+          })
+          .join("");
+      }
+
+      function openAppointmentDetail(id) {
+        currentApptId = id;
+        var a = allAppointments.find(function (x) {
+          return x.id === id;
+        });
+        if (!a) return;
+        var req = a.request || {};
+        var researcher = req.researcher || {};
+        var body = document.getElementById("appt-detail-body");
+        body.innerHTML =
+          '<div class="grid-2" style="margin-bottom:16px"><div><div class="text-muted">Researcher</div><strong>' +
+          (researcher.full_name || "—") +
+          '</strong><div style="font-size:12px">' +
+          (researcher.email || "") +
+          '</div></div><div><div class="text-muted">Service</div><strong>' +
+          (req.service_type || "—") +
+          "</strong></div></div>" +
+          '<div class="form-group"><label class="form-label">Preferred Date</label><input type="date" class="form-control" id="appt-confirmed-date" value="' +
+          (a.preferred_date || "") +
+          '"></div>' +
+          '<div class="form-group"><label class="form-label">Confirmed Time</label><input type="text" class="form-control" id="appt-confirmed-time" placeholder="e.g. 10:00 AM" value="' +
+          (a.confirmed_time || a.time_slot || "") +
+          '"></div>' +
+          '<div class="form-group"><label class="form-label">Mode</label><select class="form-control" id="appt-mode"><option value="online"' +
+          (a.mode === "online" ? " selected" : "") +
+          '>Online</option><option value="face_to_face"' +
+          (a.mode === "face_to_face" ? " selected" : "") +
+          ">Face-to-Face</option></select></div>" +
+          '<div class="form-group"><label class="form-label">Notes for Researcher</label><textarea class="form-control" id="appt-admin-notes" rows="3">' +
+          (a.admin_notes || "") +
+          "</textarea></div>";
+        openModal("modal-appointment");
+      }
+
+      async function saveApptAction() {
+        var date = document.getElementById("appt-confirmed-date").value;
+        var time = document.getElementById("appt-confirmed-time").value;
+        var mode = document.getElementById("appt-mode").value;
+        var notes = document.getElementById("appt-admin-notes").value;
+        await sb
+          .from("appointments")
+          .update({
+            status: "confirmed",
+            confirmed_date: date,
+            confirmed_time: time,
+            mode: mode,
+            admin_notes: notes,
+            confirmed_by: adminProfile.id,
+          })
+          .eq("id", currentApptId);
+        var appt = allAppointments.find(function (x) {
+          return x.id === currentApptId;
+        });
+        if (appt && appt.request) {
+          await sb.from("notifications").insert({
+            user_id: appt.request.researcher_id || appt.request.researcher?.id,
+            message:
+              "Your consultation appointment has been confirmed for " +
+              date +
+              " at " +
+              time,
+            type: "appointment",
+          });
+        }
+        closeModal("modal-appointment");
+        showToast("Appointment confirmed!");
+        loadAppointments();
+      }
+
+      // ============================================================
+      // PHASE 2.5 / PHASE 5 — PAYMENTS
+      // ============================================================
+      var allPayments = [];
+      var currentPaymentId = null;
+
+      async function loadPayments() {
+        var { data } = await sb
+          .from("payments")
+          .select(
+            "*, request:request_id(id,service_type,title,researcher:researcher_id(full_name,email))",
+          )
+          .order("created_at", { ascending: false });
+        allPayments = data || [];
+        renderPaymentStats();
+        renderPayments(allPayments);
+      }
+
+      function renderPaymentStats() {
+        var el = document.getElementById("payment-stats");
+        if (!el) return;
+        var total = allPayments.length;
+        var submitted = allPayments.filter(function (p) {
+          return p.status === "submitted";
+        }).length;
+        var verified = allPayments.filter(function (p) {
+          return p.status === "verified";
+        }).length;
+        var rejected = allPayments.filter(function (p) {
+          return p.status === "rejected";
+        }).length;
+        var totalAmt = allPayments
+          .filter(function (p) {
+            return p.status === "verified";
+          })
+          .reduce(function (s, p) {
+            return s + (p.amount || 0);
+          }, 0);
+        el.innerHTML = [
+          { icon: "💳", label: "Total", value: total, cls: "gold" },
+          { icon: "📋", label: "Submitted", value: submitted, cls: "blue" },
+          { icon: "✅", label: "Verified", value: verified, cls: "green" },
+          { icon: "❌", label: "Rejected", value: rejected, cls: "red" },
+          {
+            icon: "💰",
+            label: "Total Verified",
+            value: "₱" + totalAmt.toLocaleString(),
+            cls: "gold",
+          },
+        ]
+          .map(function (s) {
+            return (
+              '<div class="stat-card"><div class="stat-icon ' +
+              s.cls +
+              '">' +
+              s.icon +
+              '</div><div class="stat-info"><div class="stat-value">' +
+              s.value +
+              '</div><div class="stat-label">' +
+              s.label +
+              "</div></div></div>"
+            );
+          })
+          .join("");
+      }
+
+      function filterPayments() {
+        var sv = document.getElementById("pay-status-filter").value;
+        var cv = document.getElementById("pay-checkpoint-filter").value;
+        var filtered = allPayments.filter(function (p) {
+          return (!sv || p.status === sv) && (!cv || p.checkpoint === cv);
+        });
+        renderPayments(filtered);
+      }
+
+      function renderPayments(list) {
+        var tbody = document.getElementById("payments-tbody");
+        if (!tbody) return;
+        if (!list.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:32px">No payments found.</td></tr>';
+          return;
+        }
+        var statusMap = {
+          unpaid: "badge-submitted",
+          submitted: "badge-under_review",
+          verified: "badge-completed",
+          rejected: "badge-for_revision",
+        };
+        tbody.innerHTML = list
+          .map(function (p) {
+            var req = p.request || {};
+            var researcher = req.researcher || {};
+            return (
+              "<tr><td><strong>" +
+              (researcher.full_name || "—") +
+              '</strong><div style="font-size:12px;color:var(--gray-400)">' +
+              (researcher.email || "") +
+              "</div></td><td>" +
+              (req.service_type || "—") +
+              '</td><td style="font-size:12px">' +
+              (p.checkpoint === "before_processing"
+                ? "Before Processing"
+                : "Before Completion") +
+              "</td><td>" +
+              (p.amount ? "₱" + (p.amount || 0).toLocaleString() : "—") +
+              "</td><td>" +
+              (p.or_number || "—") +
+              '</td><td><span class="badge ' +
+              (statusMap[p.status] || "badge-submitted") +
+              '">' +
+              (p.status || "") +
+              '</span></td><td><button class="btn btn-ghost btn-sm" onclick="openPaymentDetail(\'' +
+              p.id +
+              "')\">Review</button></td></tr>"
+            );
+          })
+          .join("");
+      }
+
+      function openPaymentDetail(id) {
+        currentPaymentId = id;
+        var p = allPayments.find(function (x) {
+          return x.id === id;
+        });
+        if (!p) return;
+        var req = p.request || {};
+        var researcher = req.researcher || {};
+        var body = document.getElementById("payment-detail-body");
+        body.innerHTML =
+          '<div class="grid-2" style="margin-bottom:16px"><div><div class="text-muted">Researcher</div><strong>' +
+          (researcher.full_name || "—") +
+          '</strong><br><span style="font-size:12px">' +
+          (researcher.email || "") +
+          '</span></div><div><div class="text-muted">Service</div><strong>' +
+          (req.service_type || "—") +
+          "</strong></div></div>" +
+          '<div class="grid-2" style="margin-bottom:16px"><div><div class="text-muted">Amount</div><strong>₱' +
+          (p.amount || 0).toLocaleString() +
+          '</strong></div><div><div class="text-muted">OR Number</div><strong>' +
+          (p.or_number || "—") +
+          "</strong></div></div>" +
+          '<div class="text-muted" style="margin-bottom:8px">Checkpoint</div><p style="margin-bottom:16px">' +
+          (p.checkpoint === "before_processing"
+            ? "Before Processing"
+            : "Before Completion") +
+          "</p>" +
+          (p.or_url
+            ? '<div class="form-group"><label class="form-label">OR Image</label><a href="' +
+              p.or_url +
+              '" target="_blank" class="btn btn-outline btn-sm">📄 View OR</a></div>'
+            : '<div style="color:var(--gray-400);font-size:13px">No OR image uploaded.</div>') +
+          '<div class="form-group" style="margin-top:16px"><label class="form-label">Rejection Reason (if rejecting)</label><textarea class="form-control" id="pay-reject-reason" rows="2" placeholder="Optional reason..."></textarea></div>';
+        openModal("modal-payment");
+      }
+
+      async function verifyPayment() {
+        await sb
+          .from("payments")
+          .update({ status: "verified", verified_by: adminProfile.id })
+          .eq("id", currentPaymentId);
+        var p = allPayments.find(function (x) {
+          return x.id === currentPaymentId;
+        });
+        if (p && p.request) {
+          await sb.from("notifications").insert({
+            user_id: p.request.researcher_id || p.request.researcher?.id,
+            message: "Your payment has been verified. ✅",
+            type: "payment",
+          });
+        }
+        closeModal("modal-payment");
+        showToast("Payment verified!");
+        loadPayments();
+      }
+
+      async function rejectPayment() {
+        var reason = document.getElementById("pay-reject-reason").value.trim();
+        await sb
+          .from("payments")
+          .update({
+            status: "rejected",
+            rejection_reason: reason || "No reason provided",
+          })
+          .eq("id", currentPaymentId);
+        var p = allPayments.find(function (x) {
+          return x.id === currentPaymentId;
+        });
+        if (p && p.request) {
+          await sb.from("notifications").insert({
+            user_id: p.request.researcher_id || p.request.researcher?.id,
+            message:
+              "Your payment submission was rejected. " +
+              (reason
+                ? "Reason: " + reason
+                : "Please resubmit with correct details."),
+            type: "payment",
+          });
+        }
+        closeModal("modal-payment");
+        showToast("Payment rejected", "error");
+        loadPayments();
+      }
+
+      // ============================================================
+      // PHASE 3.1 — ANALYST SPECIALIZATION
+      // ============================================================
+      var currentSpecAnalystId = null;
+
+      function openSpecialization(analystId, analystName, currentSpec) {
+        currentSpecAnalystId = analystId;
+        document.getElementById("spec-analyst-id").value = analystId;
+        document.getElementById("spec-analyst-name").textContent =
+          "Setting specialization for: " + analystName;
+        document.getElementById("spec-type").value = currentSpec || "mixed";
+        openModal("modal-specialization");
+      }
+
+      async function saveSpecialization() {
+        var spec = document.getElementById("spec-type").value;
+        await sb
+          .from("profiles")
+          .update({ specialization: spec })
+          .eq("id", currentSpecAnalystId);
+        closeModal("modal-specialization");
+        showToast("Specialization saved!");
+        loadUsers();
+      }
+
+      // ============================================================
+      // PHASE 3.3 — TRANSFER REQUESTS
+      // ============================================================
+      var currentTransferId = null;
+
+      async function loadTransferRequests() {
+        var { data } = await sb
+          .from("transfer_requests")
+          .select(
+            "*, request:request_id(service_type,title), from_analyst:from_analyst(full_name), to_analyst:to_analyst(full_name)",
+          )
+          .eq("status", "pending");
+        if (!data || !data.length) return;
+        var badge = document.getElementById("nb-requests");
+        if (badge)
+          badge.textContent = parseInt(badge.textContent || 0) + data.length;
+        return data;
+      }
+
+      async function openTransferDetail(transferId) {
+        currentTransferId = transferId;
+        var { data: t } = await sb
+          .from("transfer_requests")
+          .select(
+            "*, request:request_id(service_type,title), from_analyst:from_analyst(full_name), to_analyst:to_analyst(full_name)",
+          )
+          .eq("id", transferId)
+          .single();
+        if (!t) return;
+        var body = document.getElementById("transfer-detail-body");
+        body.innerHTML =
+          '<div class="form-group"><div class="text-muted">Request</div><strong>' +
+          ((t.request && t.request.service_type) || "—") +
+          "</strong> — " +
+          ((t.request && t.request.title) || "") +
+          "</div>" +
+          '<div class="grid-2"><div><div class="text-muted">From Analyst</div><strong>' +
+          ((t.from_analyst && t.from_analyst.full_name) || "—") +
+          '</strong></div><div><div class="text-muted">To Analyst</div><strong>' +
+          ((t.to_analyst && t.to_analyst.full_name) || "Not selected") +
+          "</strong></div></div>" +
+          '<div class="form-group" style="margin-top:16px"><label class="form-label">Reason for Transfer</label><p style="font-size:14px;color:var(--gray-600);padding:12px;background:var(--gray-50);border-radius:8px">' +
+          (t.reason || "No reason provided") +
+          "</p></div>";
+        openModal("modal-transfer");
+      }
+
+      async function decideTransfer(decision) {
+        var { data: t } = await sb
+          .from("transfer_requests")
+          .select("*")
+          .eq("id", currentTransferId)
+          .single();
+        await sb
+          .from("transfer_requests")
+          .update({ status: decision, reviewed_by: adminProfile.id })
+          .eq("id", currentTransferId);
+        if (decision === "approved" && t) {
+          await sb
+            .from("service_requests")
+            .update({ analyst_id: t.to_analyst })
+            .eq("id", t.request_id);
+          await sb.from("notifications").insert([
+            {
+              user_id: t.from_analyst,
+              message: "Your workload transfer request has been approved.",
+              type: "system",
+            },
+            {
+              user_id: t.to_analyst,
+              message:
+                "A request has been transferred to you. Please check your tasks.",
+              type: "assignment",
+            },
+          ]);
+        }
+        closeModal("modal-transfer");
+        showToast(
+          decision === "approved" ? "Transfer approved!" : "Transfer declined",
+        );
+      }
+
+      // ============================================================
+      // PHASE 3.4 — OPEN POOL
+      // ============================================================
+      var allOpenPool = [];
+
+      async function loadOpenPool() {
+        var { data } = await sb
+          .from("service_requests")
+          .select(
+            "*, researcher:researcher_id(full_name), analyst:analyst_id(full_name)",
+          )
+          .eq("is_open_pool", true)
+          .eq("analyst_id", null)
+          .order("created_at", { ascending: false });
+        allOpenPool = data || [];
+        renderOpenPool(allOpenPool);
+      }
+
+      function renderOpenPool(list) {
+        var tbody = document.getElementById("open-pool-tbody");
+        if (!tbody) return;
+        if (!list.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px">No open requests in pool.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list
+          .map(function (r) {
+            var researcher = r.researcher || {};
+            return (
+              "<tr><td><strong>" +
+              (researcher.full_name || "—") +
+              "</strong></td><td>" +
+              (r.service_type || "—") +
+              '</td><td style="max-width:200px">' +
+              (r.title || "—") +
+              "</td><td>" +
+              formatDate(r.created_at) +
+              '</td><td>—</td><td><button class="btn btn-gold btn-sm" onclick="openAssign(\'' +
+              r.id +
+              '\')">Assign</button><button class="btn btn-ghost btn-sm" onclick="removeFromPool(\'' +
+              r.id +
+              "')\">Remove</button></td></tr>"
+            );
+          })
+          .join("");
+      }
+
+      async function removeFromPool(requestId) {
+        await sb
+          .from("service_requests")
+          .update({ is_open_pool: false })
+          .eq("id", requestId);
+        showToast("Removed from open pool");
+        loadOpenPool();
+      }
+
+      // ============================================================
+      // PHASE 4.2 — SERVICE FEES
+      // ============================================================
+      var allFees = [];
+      var currentFeeService = null;
+
+      async function loadFees() {
+        var { data } = await sb
+          .from("service_fees")
+          .select("*")
+          .order("service_type");
+        allFees = data || [];
+        renderFees();
+      }
+
+      function renderFees() {
+        var grid = document.getElementById("fees-grid");
+        if (!grid) return;
+        var isSuperAdmin = adminProfile && adminProfile.is_super_admin;
+        var superOnlyMsg = document.getElementById("fees-super-only");
+        if (superOnlyMsg)
+          superOnlyMsg.style.display = isSuperAdmin ? "none" : "inline";
+        if (!allFees.length) {
+          grid.innerHTML =
+            '<p style="color:var(--gray-400);grid-column:span 2">No service fees configured.</p>';
+          return;
+        }
+        grid.innerHTML = allFees
+          .map(function (f) {
+            return (
+              '<div class="card" style="padding:20px"><div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-weight:600;margin-bottom:4px">' +
+              f.service_type +
+              '</div><div style="font-size:20px;font-weight:700;color:var(--green)">₱' +
+              (f.amount || 0).toLocaleString() +
+              "</div></div>" +
+              (isSuperAdmin
+                ? '<button class="btn btn-outline btn-sm" onclick="openEditFee(\'' +
+                  f.service_type.replace(/'/g, "&apos;") +
+                  "'," +
+                  (f.amount || 0) +
+                  ')">Edit</button>'
+                : "") +
+              "</div></div>"
+            );
+          })
+          .join("");
+      }
+
+      function openEditFee(serviceType, currentAmount) {
+        if (!adminProfile || !adminProfile.is_super_admin) {
+          showToast("Only Super Admin can edit fees", "error");
+          return;
+        }
+        currentFeeService = serviceType;
+        document.getElementById("fee-service-type").value = serviceType;
+        document.getElementById("fee-service-label").textContent = serviceType;
+        document.getElementById("fee-amount").value = currentAmount || 0;
+        openModal("modal-fee");
+      }
+
+      async function saveFee() {
+        var amount =
+          parseFloat(document.getElementById("fee-amount").value) || 0;
+        var oldFee = allFees.find(function (f) {
+          return f.service_type === currentFeeService;
+        });
+        await sb
+          .from("service_fees")
+          .update({
+            amount: amount,
+            updated_by: adminProfile.id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("service_type", currentFeeService);
+        if (oldFee) {
+          await sb.from("fee_history").insert({
+            service_fee_id: oldFee.id,
+            old_amount: oldFee.amount,
+            new_amount: amount,
+            changed_by: adminProfile.id,
+          });
+        }
+        closeModal("modal-fee");
+        showToast("Fee updated!");
+        loadFees();
       }
     </script>
 
@@ -3501,6 +4512,241 @@
             <path d="M2 21L23 12 2 3v7l15 2-15 2z" />
           </svg>
         </button>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: ADD/EDIT ADVISER ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-adviser"
+      onclick="if (event.target === this) closeModal('modal-adviser');"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title" id="adviser-modal-title">Add Adviser</span>
+          <button class="modal-close" onclick="closeModal('modal-adviser')">
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="adviser-edit-id" />
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input
+              type="text"
+              class="form-control"
+              id="adviser-name"
+              placeholder="e.g. Dr. Juan dela Cruz"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input
+              type="email"
+              class="form-control"
+              id="adviser-email"
+              placeholder="adviser@aldersgate.edu.ph"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <input
+              type="text"
+              class="form-control"
+              id="adviser-dept"
+              placeholder="e.g. CBMA"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Number</label>
+            <input
+              type="text"
+              class="form-control"
+              id="adviser-contact"
+              placeholder="09xx-xxx-xxxx"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-adviser')">
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="saveAdviser()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: APPOINTMENT DETAIL ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-appointment"
+      onclick="if (event.target === this) closeModal('modal-appointment');"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Appointment Detail</span>
+          <button class="modal-close" onclick="closeModal('modal-appointment')">
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body" id="appt-detail-body"></div>
+        <div class="modal-footer" id="appt-detail-footer">
+          <button
+            class="btn btn-outline"
+            onclick="closeModal('modal-appointment')"
+          >
+            Close
+          </button>
+          <button class="btn btn-primary" onclick="saveApptAction()">
+            Confirm Schedule
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: PAYMENT DETAIL ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-payment"
+      onclick="if (event.target === this) closeModal('modal-payment');"
+    >
+      <div class="modal modal-lg">
+        <div class="modal-header">
+          <span class="modal-title">Payment Detail</span>
+          <button class="modal-close" onclick="closeModal('modal-payment')">
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body" id="payment-detail-body"></div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-payment')">
+            Close
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="rejectPayment()">
+            Reject
+          </button>
+          <button class="btn btn-primary" onclick="verifyPayment()">
+            ✓ Verify Payment
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: EDIT SERVICE FEE ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-fee"
+      onclick="if (event.target === this) closeModal('modal-fee');"
+    >
+      <div class="modal" style="max-width: 380px">
+        <div class="modal-header">
+          <span class="modal-title">Edit Service Fee</span>
+          <button class="modal-close" onclick="closeModal('modal-fee')">
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="fee-service-type" />
+          <div class="form-group">
+            <label class="form-label" id="fee-service-label">Service</label>
+            <input
+              type="number"
+              class="form-control"
+              id="fee-amount"
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+            />
+            <div class="form-hint">
+              Enter 0 for free service. Amount in Philippine Peso (PHP).
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-fee')">
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="saveFee()">Save Fee</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: ANALYST SPECIALIZATION ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-specialization"
+      onclick="if (event.target === this) closeModal('modal-specialization');"
+    >
+      <div class="modal" style="max-width: 400px">
+        <div class="modal-header">
+          <span class="modal-title">Set Analyst Specialization</span>
+          <button
+            class="modal-close"
+            onclick="closeModal('modal-specialization')"
+          >
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="spec-analyst-id" />
+          <p
+            style="font-size: 14px; color: var(--gray-600); margin-bottom: 16px"
+            id="spec-analyst-name"
+          ></p>
+          <div class="form-group">
+            <label class="form-label">Specialization Type</label>
+            <select class="form-control" id="spec-type">
+              <option value="qualitative">Qualitative Data Analyst</option>
+              <option value="quantitative">Quantitative Data Analyst</option>
+              <option value="mixed">Mixed (All Services)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-outline"
+            onclick="closeModal('modal-specialization')"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="saveSpecialization()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: TRANSFER REQUEST REVIEW ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-transfer"
+      onclick="if (event.target === this) closeModal('modal-transfer');"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Review Transfer Request</span>
+          <button class="modal-close" onclick="closeModal('modal-transfer')">
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body" id="transfer-detail-body"></div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-outline"
+            onclick="closeModal('modal-transfer')"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-danger btn-sm"
+            onclick="decideTransfer('declined')"
+          >
+            Decline
+          </button>
+          <button class="btn btn-primary" onclick="decideTransfer('approved')">
+            Approve Transfer
+          </button>
+        </div>
       </div>
     </div>
   </body>

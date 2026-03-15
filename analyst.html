@@ -1577,6 +1577,14 @@
             <span class="nav-icon">🔔</span> Notifications
             <span class="nav-badge" id="nb-notifs" style="display: none"></span>
           </button>
+          <div class="nav-section-label" style="margin-top: 8px">Workload</div>
+          <button class="nav-item" onclick="showSection('open-pool', this)">
+            <span class="nav-icon">🔓</span> Open Pool
+            <span class="nav-badge" id="nb-pool" style="display: none">0</span>
+          </button>
+          <button class="nav-item" onclick="showSection('my-transfers', this)">
+            <span class="nav-icon">🔄</span> My Transfers
+          </button>
         </nav>
         <div class="sidebar-footer">
           <div class="sidebar-user">
@@ -1584,6 +1592,20 @@
             <div class="user-info">
               <div class="user-name" id="sidebar-name">Loading...</div>
               <div class="user-role">Data Analyst</div>
+              <div
+                id="analyst-spec-badge"
+                style="
+                  display: none;
+                  font-size: 10px;
+                  background: rgba(245, 194, 0, 0.18);
+                  color: var(--gold);
+                  padding: 2px 8px;
+                  border-radius: 10px;
+                  margin-top: 4px;
+                  font-weight: 600;
+                  width: fit-content;
+                "
+              ></div>
             </div>
           </div>
           <button
@@ -1774,6 +1796,121 @@
               </div>
               <div id="notif-list"></div>
             </div>
+
+            <!-- ===== SECTION: OPEN POOL (Phase 3.4) ===== -->
+            <div id="section-open-pool" style="display: none">
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  margin-bottom: 20px;
+                "
+              >
+                <div>
+                  <h2
+                    style="
+                      font-size: 20px;
+                      font-family: &quot;DM Sans&quot;, sans-serif;
+                      font-weight: 700;
+                    "
+                  >
+                    Open Request Pool
+                  </h2>
+                  <p
+                    style="
+                      color: var(--gray-500);
+                      font-size: 14px;
+                      margin-top: 4px;
+                    "
+                  >
+                    Unassigned requests matching your specialization. Express
+                    interest and admin will assign.
+                  </p>
+                </div>
+              </div>
+              <div
+                id="pool-spec-notice"
+                style="
+                  display: none;
+                  background: var(--gold-light);
+                  border-radius: 8px;
+                  padding: 12px 16px;
+                  margin-bottom: 16px;
+                  font-size: 13px;
+                  color: var(--green-dark);
+                "
+              ></div>
+              <div class="card">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Researcher</th>
+                        <th>Service</th>
+                        <th>Title</th>
+                        <th>Submitted</th>
+                        <th>Match</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="pool-tbody">
+                      <tr>
+                        <td colspan="6" class="loading">Loading</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===== SECTION: MY TRANSFERS (Phase 3.3) ===== -->
+            <div id="section-my-transfers" style="display: none">
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  margin-bottom: 20px;
+                "
+              >
+                <h2
+                  style="
+                    font-size: 20px;
+                    font-family: &quot;DM Sans&quot;, sans-serif;
+                    font-weight: 700;
+                  "
+                >
+                  My Transfer Requests
+                </h2>
+                <button
+                  class="btn btn-outline btn-sm"
+                  onclick="openRequestTransfer(null)"
+                >
+                  + New Transfer Request
+                </button>
+              </div>
+              <div class="card">
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Request</th>
+                        <th>Direction</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody id="transfers-tbody">
+                      <tr>
+                        <td colspan="5" class="loading">Loading</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </div>
@@ -1905,6 +2042,9 @@
 
       async function loadAll() {
         await Promise.all([loadTasks(), loadNotifications()]);
+        loadOpenPool();
+        loadMyTransfers();
+        showSpecBadge();
       }
 
       async function loadTasks() {
@@ -1958,7 +2098,7 @@
     <td>${t.service_type}</td>
     <td>${formatDate(t.created_at)}</td>
     <td><span class="badge badge-${t.status}">${STATUS_LABELS[t.status]}</span></td>
-    <td><button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">Open →</button></td>
+    <td><button class="btn btn-ghost btn-sm" onclick="openTask('${t.id}')">Open →</button>${t.status === "under_review" || t.status === "submitted" ? `<button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="openDecline('${t.id}')">Decline</button>` : ""}</td>
   </tr>`,
           )
           .join("");
@@ -2082,6 +2222,8 @@
     ${task.notes ? `<div style="margin-bottom:16px;"><span class="text-muted">Notes</span><div style="font-size:14px;">${task.notes}</div></div>` : ""}
     <div style="margin-bottom:16px;text-align:right;">
       <button class="btn btn-gold" onclick="closeModal('modal-task');openUpdateStatus('${id}')">📝 Update Status</button>
+      ${task.status === "in_progress" ? `<button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="closeModal('modal-task');openRequestTransfer('${id}')">🔄 Request Transfer</button>` : ""}
+      ${task.status === "under_review" || task.status === "submitted" ? `<button class="btn btn-danger btn-sm" style="margin-left:8px" onclick="closeModal('modal-task');openDecline('${id}')">✕ Decline</button>` : ""}
     </div>
     <div class="divider"></div>
     <div style="margin-bottom:16px;"><h4 style="margin-bottom:10px;">📎 Attachments (${(attachments || []).length})</h4>${attHtml}</div>
@@ -2874,6 +3016,361 @@
         }
         return s;
       }
+
+      // ============================================================
+      // PHASE 3.1 — SPECIALIZATION BADGE
+      // ============================================================
+      function showSpecBadge() {
+        if (!profile) return;
+        var spec = profile.specialization;
+        var labels = {
+          qualitative: "⚡ Qualitative Analyst",
+          quantitative: "⚡ Quantitative Analyst",
+          mixed: "⚡ Mixed — All Services",
+        };
+        if (spec && labels[spec]) {
+          var badge = document.getElementById("analyst-spec-badge");
+          if (badge) {
+            badge.textContent = labels[spec];
+            badge.style.display = "inline";
+          }
+        }
+        var notice = document.getElementById("pool-spec-notice");
+        if (notice && spec && spec !== "mixed") {
+          var svcMap = {
+            qualitative:
+              "Qualitative Data Analysis, Manuscript Review, Research Consultation",
+            quantitative:
+              "Quantitative Data Analysis, Questionnaire Validation, Reliability Test",
+          };
+          notice.textContent =
+            "🔍 Showing requests matching your specialization: " + svcMap[spec];
+          notice.style.display = "block";
+        }
+      }
+
+      // ============================================================
+      // PHASE 3.2 — DECLINE REQUEST
+      // ============================================================
+      var currentDeclineId = null;
+      function openDecline(requestId) {
+        currentDeclineId = requestId;
+        document.getElementById("decline-request-id").value = requestId;
+        document.getElementById("decline-reason").value = "";
+        openModal("modal-decline");
+      }
+      async function submitDecline() {
+        var reason = document.getElementById("decline-reason").value.trim();
+        if (!reason) {
+          showToast("Please provide a reason", "error");
+          return;
+        }
+        var requestId = document.getElementById("decline-request-id").value;
+        await sb
+          .from("service_requests")
+          .update({
+            analyst_id: null,
+            declination_reason: reason,
+            status: "submitted",
+          })
+          .eq("id", requestId);
+        await sb.from("request_updates").insert({
+          request_id: requestId,
+          status: "submitted",
+          notes: "Analyst declined: " + reason,
+          updated_by: profile.id,
+        });
+        var { data: admins } = await sb
+          .from("profiles")
+          .select("id")
+          .eq("role", "admin")
+          .eq("status", "approved");
+        if (admins && admins.length) {
+          await sb.from("notifications").insert(
+            admins.map(function (a) {
+              return {
+                user_id: a.id,
+                message:
+                  (profile.full_name || "An analyst") +
+                  " declined a request. Reassignment needed.",
+                type: "system",
+              };
+            }),
+          );
+        }
+        closeModal("modal-decline");
+        showToast("Request declined. Admin has been notified.");
+        loadAll();
+      }
+
+      // ============================================================
+      // PHASE 3.3 — WORKLOAD TRANSFER
+      // ============================================================
+      var allMyTransfers = [];
+      async function loadMyTransfers() {
+        var { data } = await sb
+          .from("transfer_requests")
+          .select("*, request:request_id(service_type, title)")
+          .or("from_analyst.eq." + profile.id + ",to_analyst.eq." + profile.id)
+          .order("created_at", { ascending: false });
+        allMyTransfers = data || [];
+        renderMyTransfers();
+      }
+      function renderMyTransfers() {
+        var tbody = document.getElementById("transfers-tbody");
+        if (!tbody) return;
+        if (!allMyTransfers.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:32px">No transfer requests yet.</td></tr>';
+          return;
+        }
+        var statusMap = {
+          pending: "badge-pending",
+          approved: "badge-approved",
+          declined: "badge-for_revision",
+        };
+        tbody.innerHTML = allMyTransfers
+          .map(function (t) {
+            var req = t.request || {};
+            var dir =
+              t.from_analyst === profile.id ? "Outgoing ↗" : "Incoming ↙";
+            var dirStyle =
+              t.from_analyst === profile.id
+                ? "color:#dc2626;font-size:12px;font-weight:600"
+                : "color:#065f46;font-size:12px;font-weight:600";
+            return (
+              "<tr>" +
+              "<td><strong>" +
+              (req.service_type || "—") +
+              '</strong><div style="font-size:12px;color:var(--gray-400)">' +
+              (req.title || "") +
+              "</div></td>" +
+              '<td><span style="' +
+              dirStyle +
+              '">' +
+              dir +
+              "</span></td>" +
+              '<td style="font-size:13px;max-width:200px;overflow:hidden;text-overflow:ellipsis">' +
+              (t.reason || "—") +
+              "</td>" +
+              '<td><span class="badge ' +
+              (statusMap[t.status] || "badge-submitted") +
+              '">' +
+              t.status +
+              "</span></td>" +
+              "<td>" +
+              formatDate(t.created_at) +
+              "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+      }
+      async function openRequestTransfer(preSelectedId) {
+        var { data: tasks } = await sb
+          .from("service_requests")
+          .select("id, service_type, title")
+          .eq("analyst_id", profile.id)
+          .in("status", ["in_progress", "under_review"]);
+        var sel = document.getElementById("transfer-req-select");
+        sel.innerHTML = '<option value="">— Select a request —</option>';
+        (tasks || []).forEach(function (t) {
+          sel.innerHTML +=
+            '<option value="' +
+            t.id +
+            '"' +
+            (t.id === preSelectedId ? " selected" : "") +
+            ">" +
+            t.service_type +
+            " — " +
+            (t.title || "Untitled") +
+            "</option>";
+        });
+        document.getElementById("transfer-reason").value = "";
+        openModal("modal-transfer-req");
+      }
+      async function submitTransferRequest() {
+        var requestId = document.getElementById("transfer-req-select").value;
+        var reason = document.getElementById("transfer-reason").value.trim();
+        if (!requestId) {
+          showToast("Please select a request", "error");
+          return;
+        }
+        if (!reason) {
+          showToast("Please provide a reason", "error");
+          return;
+        }
+        await sb.from("transfer_requests").insert({
+          request_id: requestId,
+          from_analyst: profile.id,
+          reason: reason,
+          status: "pending",
+        });
+        var { data: admins } = await sb
+          .from("profiles")
+          .select("id")
+          .eq("role", "admin")
+          .eq("status", "approved");
+        if (admins && admins.length) {
+          await sb.from("notifications").insert(
+            admins.map(function (a) {
+              return {
+                user_id: a.id,
+                message:
+                  (profile.full_name || "An analyst") +
+                  " requested a workload transfer. Please review.",
+                type: "system",
+              };
+            }),
+          );
+        }
+        closeModal("modal-transfer-req");
+        showToast("Transfer request submitted. Admin will review.");
+        loadMyTransfers();
+      }
+
+      // ============================================================
+      // PHASE 3.4 — OPEN POOL
+      // ============================================================
+      var poolData = [];
+      async function loadOpenPool() {
+        var spec = profile && profile.specialization;
+        var qualServices = [
+          "Qualitative Data Analysis",
+          "Manuscript Review",
+          "Research Consultation",
+        ];
+        var quantServices = [
+          "Quantitative Data Analysis",
+          "Questionnaire Validation",
+          "Reliability Test",
+        ];
+        var { data } = await sb
+          .from("service_requests")
+          .select("*, researcher:researcher_id(full_name)")
+          .eq("is_open_pool", true)
+          .is("analyst_id", null)
+          .order("created_at", { ascending: false });
+        var all = data || [];
+        // Filter by specialization
+        poolData =
+          !spec || spec === "mixed"
+            ? all
+            : all.filter(function (r) {
+                return spec === "qualitative"
+                  ? qualServices.includes(r.service_type)
+                  : spec === "quantitative"
+                    ? quantServices.includes(r.service_type)
+                    : true;
+              });
+        // Update badge
+        var badge = document.getElementById("nb-pool");
+        if (badge) {
+          if (poolData.length) {
+            badge.textContent = poolData.length;
+            badge.style.display = "flex";
+          } else {
+            badge.style.display = "none";
+          }
+        }
+        renderPool();
+      }
+      function renderPool() {
+        var tbody = document.getElementById("pool-tbody");
+        if (!tbody) return;
+        if (!poolData.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:40px">No open requests matching your specialization right now.</td></tr>';
+          return;
+        }
+        var spec = profile && profile.specialization;
+        var qualServices = [
+          "Qualitative Data Analysis",
+          "Manuscript Review",
+          "Research Consultation",
+        ];
+        var quantServices = [
+          "Quantitative Data Analysis",
+          "Questionnaire Validation",
+          "Reliability Test",
+        ];
+        tbody.innerHTML = poolData
+          .map(function (r) {
+            var researcher = r.researcher || {};
+            var isMatch =
+              !spec ||
+              spec === "mixed" ||
+              (spec === "qualitative" &&
+                qualServices.includes(r.service_type)) ||
+              (spec === "quantitative" &&
+                quantServices.includes(r.service_type));
+            var matchHtml = isMatch
+              ? '<span style="color:var(--green);font-weight:600;font-size:12px">✓ Match</span>'
+              : '<span style="color:var(--gray-400);font-size:12px">Outside spec</span>';
+            return (
+              "<tr>" +
+              "<td><strong>" +
+              (researcher.full_name || "—") +
+              "</strong></td>" +
+              "<td>" +
+              (r.service_type || "—") +
+              "</td>" +
+              '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' +
+              (r.title || "—") +
+              "</td>" +
+              "<td>" +
+              formatDate(r.created_at) +
+              "</td>" +
+              "<td>" +
+              matchHtml +
+              "</td>" +
+              '<td><button class="btn btn-gold btn-sm" onclick="openExpressInterest(' +
+              "'" +
+              r.id +
+              "','" +
+              (r.service_type || "").replace(/'/g, "") +
+              "','" +
+              (researcher.full_name || "").replace(/'/g, "") +
+              "'" +
+              ')">Express Interest</button></td>' +
+              "</tr>"
+            );
+          })
+          .join("");
+      }
+      var currentInterestId = null;
+      function openExpressInterest(reqId, serviceType, researcherName) {
+        currentInterestId = reqId;
+        document.getElementById("interest-req-id").value = reqId;
+        document.getElementById("interest-detail").textContent =
+          serviceType +
+          " requested by " +
+          researcherName +
+          ". If you express interest, the admin will review and may assign this request to you.";
+        openModal("modal-express-interest");
+      }
+      async function submitInterest() {
+        var { data: admins } = await sb
+          .from("profiles")
+          .select("id")
+          .eq("role", "admin")
+          .eq("status", "approved");
+        if (admins && admins.length) {
+          await sb.from("notifications").insert(
+            admins.map(function (a) {
+              return {
+                user_id: a.id,
+                message:
+                  (profile.full_name || "An analyst") +
+                  " expressed interest in an open pool request. Please review and assign.",
+                type: "assignment",
+              };
+            }),
+          );
+        }
+        closeModal("modal-express-interest");
+        showToast("Interest submitted! Admin will review and assign.");
+      }
     </script>
 
     <!-- PROFILE EDIT MODAL (Phase 1.2) -->
@@ -3070,6 +3567,149 @@
             <path d="M2 21L23 12 2 3v7l15 2-15 2z" />
           </svg>
         </button>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: DECLINE REQUEST (Phase 3.2) ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-decline"
+      onclick="if (event.target === this) closeModal('modal-decline');"
+    >
+      <div class="modal" style="max-width: 440px">
+        <div class="modal-header">
+          <span class="modal-title">Decline Request</span>
+          <button class="modal-close" onclick="closeModal('modal-decline')">
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning" style="margin-bottom: 16px">
+            ⚠️ The admin will be notified and will reassign this request. This
+            action is logged permanently.
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reason for Declining *</label>
+            <textarea
+              class="form-control"
+              id="decline-reason"
+              rows="4"
+              placeholder="e.g. I am currently at full capacity and cannot accept additional requests at this time."
+            ></textarea>
+          </div>
+          <input type="hidden" id="decline-request-id" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-decline')">
+            Cancel
+          </button>
+          <button class="btn btn-danger" onclick="submitDecline()">
+            Confirm Decline
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: REQUEST TRANSFER (Phase 3.3) ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-transfer-req"
+      onclick="if (event.target === this) closeModal('modal-transfer-req');"
+    >
+      <div class="modal" style="max-width: 460px">
+        <div class="modal-header">
+          <span class="modal-title">Request Workload Transfer</span>
+          <button
+            class="modal-close"
+            onclick="closeModal('modal-transfer-req')"
+          >
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p
+            style="color: var(--gray-600); font-size: 14px; margin-bottom: 16px"
+          >
+            Admin will review and approve the transfer. Select the request you
+            need to transfer.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Request *</label>
+            <select class="form-control" id="transfer-req-select">
+              <option value="">— Select a request —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reason for Transfer *</label>
+            <textarea
+              class="form-control"
+              id="transfer-reason"
+              rows="3"
+              placeholder="Explain why you need to transfer this request..."
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-outline"
+            onclick="closeModal('modal-transfer-req')"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="submitTransferRequest()">
+            Submit Request
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: EXPRESS INTEREST (Phase 3.4) ===== -->
+    <div
+      class="modal-overlay"
+      id="modal-express-interest"
+      onclick="if (event.target === this) closeModal('modal-express-interest');"
+    >
+      <div class="modal" style="max-width: 400px">
+        <div class="modal-header">
+          <span class="modal-title">Express Interest</span>
+          <button
+            class="modal-close"
+            onclick="closeModal('modal-express-interest')"
+          >
+            &#x2715;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p
+            id="interest-detail"
+            style="font-size: 14px; color: var(--gray-600); margin-bottom: 16px"
+          ></p>
+          <div
+            class="alert"
+            style="
+              background: var(--green-light);
+              color: var(--green-dark);
+              border-radius: 8px;
+              padding: 12px;
+              font-size: 13px;
+            "
+          >
+            ✅ Admin will be notified and will review your interest before
+            assigning.
+          </div>
+          <input type="hidden" id="interest-req-id" />
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-outline"
+            onclick="closeModal('modal-express-interest')"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-gold" onclick="submitInterest()">
+            Confirm Interest
+          </button>
+        </div>
       </div>
     </div>
   </body>
