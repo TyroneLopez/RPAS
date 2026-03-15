@@ -1790,7 +1790,10 @@
             <div class="card">
               <div class="card-header">
                 <span class="card-title">Notifications</span>
-                <button class="btn btn-ghost btn-sm" onclick="markAllRead()">
+                <button
+                  class="btn btn-ghost btn-sm"
+                  onclick="markAllReadPage()"
+                >
                   Mark all read
                 </button>
               </div>
@@ -2055,7 +2058,29 @@
           )
           .eq("analyst_id", profile.id)
           .order("created_at", { ascending: false });
-        allTasks = data || [];
+        let tasks = data || [];
+        // RLS may block the foreign-key join — fetch missing researcher profiles separately
+        const missingIds = [
+          ...new Set(
+            tasks
+              .filter((t) => !t.researcher && t.researcher_id)
+              .map((t) => t.researcher_id),
+          ),
+        ];
+        if (missingIds.length) {
+          const { data: rProfiles } = await sb
+            .from("profiles")
+            .select("id, full_name, email")
+            .in("id", missingIds);
+          const rMap = Object.fromEntries(
+            (rProfiles || []).map((p) => [p.id, p]),
+          );
+          tasks = tasks.map((t) => ({
+            ...t,
+            researcher: t.researcher || rMap[t.researcher_id] || null,
+          }));
+        }
+        allTasks = tasks;
         const active = allTasks.filter(
           (t) => !["completed", "cancelled"].includes(t.status),
         );
@@ -2361,10 +2386,8 @@
         if (unread > 0) {
           badge.textContent = unread;
           badge.style.display = "";
-          document.getElementById("notif-dot").classList.add("show");
         } else {
           badge.style.display = "none";
-          document.getElementById("notif-dot").classList.remove("show");
         }
 
         const list = document.getElementById("notif-list");
@@ -2392,7 +2415,7 @@
         await sb.from("notifications").update({ is_read: true }).eq("id", id);
         await loadNotifications();
       }
-      async function markAllRead() {
+      async function markAllReadPage() {
         await sb
           .from("notifications")
           .update({ is_read: true })
@@ -2401,11 +2424,30 @@
       }
 
       function showSection(id, btn) {
-        ["dashboard", "my-tasks", "notifications"].forEach(
-          (s) =>
-            (document.getElementById(`section-${s}`).style.display =
-              s === id ? "" : "none"),
-        );
+        // Hide/show top-level sections
+        ["dashboard", "my-tasks", "notifications"].forEach((s) => {
+          const el = document.getElementById("section-" + s);
+          if (el) el.style.display = s === id ? "" : "none";
+        });
+        // Show/hide sub-sections nested inside section-notifications
+        ["open-pool", "my-transfers"].forEach((s) => {
+          const el = document.getElementById("section-" + s);
+          if (el) el.style.display = s === id ? "" : "none";
+        });
+        // When showing a workload sub-section, keep notifications visible
+        // but hide the notifications card so only the sub-section shows
+        const notifSection = document.getElementById("section-notifications");
+        if (notifSection) {
+          if (id === "open-pool" || id === "my-transfers") {
+            notifSection.style.display = "";
+            const notifCard = notifSection.querySelector(".card");
+            if (notifCard) notifCard.style.display = "none";
+          } else if (id === "notifications") {
+            notifSection.style.display = "";
+            const notifCard = notifSection.querySelector(".card");
+            if (notifCard) notifCard.style.display = "";
+          }
+        }
         document
           .querySelectorAll(".nav-item")
           .forEach((el) => el.classList.remove("active"));
@@ -2414,9 +2456,21 @@
           dashboard: "Dashboard",
           "my-tasks": "Assigned Tasks",
           notifications: "Notifications",
+          "open-pool": "Open Request Pool",
+          "my-transfers": "My Transfers",
         };
         document.getElementById("page-title").textContent = titles[id] || id;
-        document.getElementById("sidebar").classList.remove("open");
+        const sidebarEl = document.getElementById("sidebar");
+        if (sidebarEl) sidebarEl.classList.remove("open");
+      }
+
+      function toggleSidebar() {
+        const sb2 = document.getElementById("sidebar");
+        if (sb2) sb2.classList.toggle("open");
+      }
+      function closeSidebar() {
+        const sb2 = document.getElementById("sidebar");
+        if (sb2) sb2.classList.remove("open");
       }
 
       function openModal(id) {
@@ -3066,13 +3120,20 @@
           return;
         }
         var requestId = document.getElementById("decline-request-id").value;
+        // Step 1: update status+reason while still the assigned analyst (RLS requires analyst_id match)
+        var { error: decErr } = await sb
+          .from("service_requests")
+          .update({ declination_reason: reason, status: "submitted" })
+          .eq("id", requestId)
+          .eq("analyst_id", profile.id);
+        if (decErr) {
+          showToast("Could not decline: " + decErr.message, "error");
+          return;
+        }
+        // Step 2: now clear analyst_id
         await sb
           .from("service_requests")
-          .update({
-            analyst_id: null,
-            declination_reason: reason,
-            status: "submitted",
-          })
+          .update({ analyst_id: null })
           .eq("id", requestId);
         await sb.from("request_updates").insert({
           request_id: requestId,
@@ -3121,7 +3182,7 @@
         if (!tbody) return;
         if (!allMyTransfers.length) {
           tbody.innerHTML =
-            '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:32px">No transfer requests yet.</td></tr>';
+            '<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🔄</div><h3>No transfer requests yet</h3><p>Use the button above to request a workload transfer.</p></div></td></tr>';
           return;
         }
         var statusMap = {
@@ -3245,13 +3306,45 @@
           "Questionnaire Validation",
           "Reliability Test",
         ];
+        // Fetch ALL unassigned submitted requests (not just is_open_pool=true).
+        // NOTE: for this to return results, add this RLS policy in Supabase:
+        //   CREATE POLICY "requests: analysts see submitted unassigned"
+        //   ON public.service_requests FOR SELECT
+        //   USING (status = 'submitted' AND analyst_id IS NULL AND public.get_my_role() = 'analyst');
         var { data } = await sb
           .from("service_requests")
           .select("*, researcher:researcher_id(full_name)")
-          .eq("is_open_pool", true)
           .is("analyst_id", null)
+          .eq("status", "submitted")
           .order("created_at", { ascending: false });
         var all = data || [];
+        // RLS may block the researcher join — fetch separately if needed
+        var missingPoolIds = [
+          ...new Set(
+            all
+              .filter(function (r) {
+                return !r.researcher && r.researcher_id;
+              })
+              .map(function (r) {
+                return r.researcher_id;
+              }),
+          ),
+        ];
+        if (missingPoolIds.length) {
+          var { data: pProfiles } = await sb
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", missingPoolIds);
+          var pMap = {};
+          (pProfiles || []).forEach(function (p) {
+            pMap[p.id] = p;
+          });
+          all = all.map(function (r) {
+            return Object.assign({}, r, {
+              researcher: r.researcher || pMap[r.researcher_id] || null,
+            });
+          });
+        }
         // Filter by specialization
         poolData =
           !spec || spec === "mixed"
@@ -3280,7 +3373,7 @@
         if (!tbody) return;
         if (!poolData.length) {
           tbody.innerHTML =
-            '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:40px">No open requests matching your specialization right now.</td></tr>';
+            '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">🔓</div><h3>No open requests right now</h3><p>There are no unassigned requests matching your specialization.</p></div></td></tr>';
           return;
         }
         var spec = profile && profile.specialization;
